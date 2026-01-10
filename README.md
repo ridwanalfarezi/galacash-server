@@ -43,22 +43,23 @@ GalaCash is a comprehensive backend API for managing class finances. It provides
 
 ## 🛠️ Tech Stack
 
-| Technology            | Purpose             |
-| --------------------- | ------------------- |
-| **Node.js 20**        | Runtime environment |
-| **Express.js**        | Web framework       |
-| **TypeScript**        | Type safety         |
-| **PostgreSQL**        | Primary database    |
-| **Prisma**            | ORM and migrations  |
-| **Redis**             | Caching layer       |
-| **JWT**               | Authentication      |
-| **bcrypt**            | Password hashing    |
-| **GCP Cloud Storage** | File uploads        |
-| **Winston**           | Logging             |
-| **Joi**               | Input validation    |
-| **node-cron**         | Scheduled jobs      |
-| **Swagger UI**        | API documentation   |
-| **Docker**            | Containerization    |
+| Technology             | Purpose                                          |
+| ---------------------- | ------------------------------------------------ |
+| **Node.js 20**         | Runtime environment                              |
+| **Express.js**         | Web framework                                    |
+| **TypeScript**         | Type safety                                      |
+| **PostgreSQL**         | Primary database                                 |
+| **Prisma v7**          | ORM and migrations (with prisma-client provider) |
+| **@prisma/adapter-pg** | PostgreSQL adapter for Prisma                    |
+| **Redis**              | Caching layer                                    |
+| **JWT**                | Authentication (HS256)                           |
+| **bcrypt**             | Password hashing                                 |
+| **GCP Cloud Storage**  | File uploads                                     |
+| **Winston**            | Logging                                          |
+| **Joi**                | Input validation                                 |
+| **node-cron**          | Scheduled jobs                                   |
+| **Swagger UI**         | API documentation                                |
+| **Docker**             | Containerization                                 |
 
 ---
 
@@ -125,8 +126,8 @@ pnpm prisma:generate
 # Run database migrations
 pnpm prisma:migrate
 
-# Seed database with test data
-pnpm seed
+# Seed database with test data (automatic via migrations)
+pnpm prisma:migrate
 ```
 
 This will create:
@@ -157,27 +158,55 @@ galacash-server/
 │   │   ├── redis.config.ts
 │   │   ├── storage.config.ts
 │   │   └── multer.config.ts
-│   ├── repositories/        # Data access layer
+│   ├── controllers/         # HTTP request handlers
+│   ├── routes/              # API route definitions
 │   ├── services/            # Business logic layer
-│   ├── controllers/         # HTTP handlers
-│   ├── routes/              # Route definitions
+│   ├── repositories/        # Data access layer
 │   ├── middlewares/         # Express middlewares
+│   │   ├── auth.middleware.ts
+│   │   ├── upload.middleware.ts
+│   │   ├── validator.middleware.ts
+│   │   └── index.ts
 │   ├── validators/          # Input validation schemas
 │   ├── utils/               # Utilities and helpers
-│   │   ├── errors/          # Error handling
-│   │   ├── logger.ts
-│   │   └── generate-tokens.ts
+│   │   ├── errors/          # Error handling & codes
+│   │   ├── logger.ts        # Winston logger
+│   │   ├── generate-tokens.ts # JWT token generation
+│   │   └── prisma-client.ts # Prisma singleton with adapter
+│   ├── types/               # TypeScript type definitions
+│   │   ├── express.d.ts
+│   │   └── index.ts
 │   ├── jobs/                # Scheduled tasks
-│   ├── types/               # TypeScript types
-│   └── index.ts             # Main application
+│   │   └── bill-generator.job.ts
+│   └── index.ts             # Application entry point
+├── src/generated/prisma/    # Auto-generated Prisma Client
+│   ├── client.ts
+│   ├── browser.ts
+│   ├── enums.ts
+│   ├── commonInputTypes.ts
+│   ├── models/
+│   └── internal/
 ├── prisma/
-│   ├── schema.prisma        # Database schema
-│   └── seed.ts              # Database seeding
+│   ├── schema.prisma        # Database schema (Prisma v7 format)
+│   ├── seed.ts              # Database seeding
+│   ├── migrations/          # Database migrations
+│   │   └── migration_lock.toml
+│   └── config.ts            # Prisma v7 configuration
+├── scripts/
+│   └── endpoint_smoke.py     # Automated endpoint testing
 ├── docker-compose.yml       # Local development services
 ├── Dockerfile               # Production container
+├── prisma.config.ts         # Prisma v7 configuration (datasource, migrations, seed)
+├── tsconfig.json
 ├── .env                     # Environment variables (git-ignored)
 ├── .env.example             # Environment template
-└── package.json
+├── eslint.config.js         # ESLint flat config
+├── pnpm-workspace.yaml
+├── package.json
+├── BACKEND_API_SPECIFICATION.md
+├── TECHNICAL_REQUIREMENTS.md
+├── openapi.yaml
+└── README.md
 ```
 
 ---
@@ -188,13 +217,13 @@ Key environment variables (see `.env.example` for complete list):
 
 | Variable                   | Description                  | Default                                                        |
 | -------------------------- | ---------------------------- | -------------------------------------------------------------- |
-| `DATABASE_URL`             | PostgreSQL connection string | `postgresql://galacash:galacash123@localhost:5432/galacash_db` |
+| `DATABASE_URL`             | PostgreSQL connection string | `postgresql://galacash:galacash123@localhost:5433/galacash_db` |
 | `REDIS_URL`                | Redis connection string      | `redis://localhost:6379`                                       |
 | `JWT_SECRET`               | JWT access token secret      | _Change in production_                                         |
 | `JWT_REFRESH_SECRET`       | JWT refresh token secret     | _Change in production_                                         |
 | `GCP_PROJECT_ID`           | Google Cloud project ID      | _(Optional)_                                                   |
 | `GCP_BUCKET_NAME`          | GCS bucket name              | `galacash-bucket`                                              |
-| `BILL_GENERATION_SCHEDULE` | Cron for monthly bills       | `0 0 1 * *`                                                    |
+| `BILL_GENERATION_SCHEDULE` | Cron for monthly bills       | `0 0 1 * *` (1st of each month at midnight)                    |
 | `PORT`                     | Server port                  | `3000`                                                         |
 | `NODE_ENV`                 | Environment                  | `development`                                                  |
 
@@ -266,13 +295,13 @@ curl -X GET http://localhost:3000/api/dashboard/summary \
 | `pnpm dev`             | Start development server with hot reload |
 | `pnpm build`           | Build for production                     |
 | `pnpm start`           | Start production server                  |
-| `pnpm lint`            | Run ESLint                               |
+| `pnpm lint`            | Run ESLint (flat config)                 |
 | `pnpm lint:fix`        | Fix ESLint issues                        |
 | `pnpm format`          | Format code with Prettier                |
-| `pnpm prisma:generate` | Generate Prisma Client                   |
+| `pnpm prisma:generate` | Generate Prisma Client to src/generated/ |
 | `pnpm prisma:migrate`  | Run database migrations                  |
-| `pnpm prisma:studio`   | Open Prisma Studio (DB GUI)              |
-| `pnpm seed`            | Seed database with test data             |
+| `pnpm prisma:studio`   | Open Prisma Studio (interactive DB GUI)  |
+| `pnpm test:smoke`      | Run smoke test (Python endpoint tests)   |
 
 ### Database Management
 
@@ -294,6 +323,23 @@ pnpm prisma migrate dev --name your_migration_name
 pnpm prisma migrate reset
 ```
 
+### Testing
+
+**Run endpoint smoke test:**
+
+```bash
+python scripts/endpoint_smoke.py
+```
+
+Tests all major endpoints using stdlib (no external dependencies):
+
+- Authentication (login, token refresh)
+- Dashboard endpoints
+- Transaction management
+- Fund applications
+- Cash bills
+- Bendahara administrative endpoints
+
 ### Debugging
 
 Logs are stored in the `logs/` directory:
@@ -301,9 +347,41 @@ Logs are stored in the `logs/` directory:
 - `logs/combined.log` - All logs
 - `logs/error.log` - Errors only
 
----
+## 🏗️ Architecture & Design
 
-## 🐳 Deployment
+### Prisma v7 Setup
+
+The project uses **Prisma v7** with modern best practices:
+
+- **Provider**: `prisma-client` (not `prisma-client-js`)
+- **Custom Output Path**: Generated client lives in `src/generated/prisma/`
+- **Configuration**: Database URL and seed config in `prisma.config.ts` (not schema.prisma)
+- **Adapter**: Uses `@prisma/adapter-pg` for direct PostgreSQL connection
+- **Seeding**: Automatic seeding via `seed: "tsx prisma/seed.ts"` in migrations config
+
+### Authentication Flow
+
+1. User logs in with NIM + Password
+2. Server validates credentials and hashes password with bcrypt
+3. JWT tokens generated:
+   - Access token (1 hour expiry)
+   - Refresh token (7 days expiry)
+4. Tokens stored in secure HTTP-only cookies or headers
+
+### Role-Based Access Control
+
+- **user**: Regular student - can view own transactions and apply for funds
+- **bendahara**: Treasurer - can manage all finances and approve applications
+
+### Request Validation
+
+All endpoints use Joi schema validation via `validator.middleware.ts`:
+
+- Validates request body, params, and query
+- Returns 400 Bad Request with error details on validation failure
+- Supports both application/json and application/x-www-form-urlencoded
+
+---
 
 ### Docker Build
 
@@ -379,53 +457,25 @@ docker-compose restart
 ### Database connection errors
 
 ```bash
-# Verify PostgreSQL is running
+# Verify PostgreSQL is running on port 5433
 docker-compose ps
 
-# Test connection
+# Test connection (note: port 5433, not 5432)
 docker exec -it galacash-postgres psql -U galacash -d galacash_db
 
 # Reset database
 pnpm prisma migrate reset
 ```
 
-### Redis connection errors
+### Port conflicts
 
-The app will work without Redis, but caching will be disabled. Check logs for warnings.
+The Docker setup uses:
 
-### GCP file upload errors
+- PostgreSQL on **port 5433** (to avoid default 5432 conflicts)
+- Redis on **port 6379**
+- Express on **port 3000**
 
-File uploads are optional. If GCP credentials are not configured:
-
-- App will log a warning on startup
-- File upload endpoints will return an error
-- To enable: Set `GCP_PROJECT_ID` and `GOOGLE_APPLICATION_CREDENTIALS` in `.env`
-
-### Port already in use
-
-```bash
-# Change PORT in .env file
-PORT=3001
-
-# Or kill process using port 3000
-# Windows:
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
-
-# Linux/Mac:
-lsof -i :3000
-kill -9 <PID>
-```
-
-### Prisma Client errors
-
-```bash
-# Regenerate Prisma Client
-pnpm prisma:generate
-
-# If schema changed, create migration
-pnpm prisma migrate dev --name fix_schema
-```
+To use different ports, edit `docker-compose.yml` and update `.env`.
 
 ---
 
@@ -434,15 +484,51 @@ pnpm prisma migrate dev --name fix_schema
 - [API Specification](./BACKEND_API_SPECIFICATION.md)
 - [Technical Requirements](./TECHNICAL_REQUIREMENTS.md)
 - [OpenAPI Schema](./openapi.yaml)
-- [Prisma Documentation](https://www.prisma.io/docs)
+- [Prisma v7 Documentation](https://www.prisma.io/docs)
 - [Express.js Guide](https://expressjs.com/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+
+---
+
+## 🤖 Testing
+
+### Smoke Test
+
+The project includes a comprehensive endpoint smoke test using Python (stdlib only):
+
+```bash
+python scripts/endpoint_smoke.py
+```
+
+This test:
+
+- Logs in as both student and bendahara
+- Tests all major endpoint groups
+- Validates response status codes
+- Measures response times
+- Handles conflicts gracefully
+- Requires no external Python dependencies
+
+**Expected Output**: ✅ All tests passed
+
+---
+
+## ✨ Project Highlights
+
+- **Type-Safe**: Full TypeScript with strict mode
+- **Tested**: Comprehensive endpoint smoke test included
+- **Documented**: Swagger UI, OpenAPI spec, and detailed README
+- **Modern Stack**: Express 5.x, Prisma v7, PostgreSQL 16
+- **Production-Ready**: Docker support, proper error handling, structured logging
+- **Developer-Friendly**: Hot reload, Prisma Studio, formatted code
 
 ---
 
 ## 👥 Team
 
 - **Role**: Backend Developer
-- **Tech Stack**: Node.js + TypeScript + PostgreSQL
+- **Tech Stack**: Node.js + TypeScript + PostgreSQL + Prisma v7
+- **Repository**: https://github.com/ridwanalfarezi/galacash-server (private)
 
 ---
 
