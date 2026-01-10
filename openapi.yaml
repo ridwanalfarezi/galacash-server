@@ -1,0 +1,1015 @@
+openapi: 3.0.3
+info:
+  title: GalaCash API
+  description: |
+    Backend API for GalaCash - A modern financial management application for class treasurers.
+
+    ## Authentication
+    This API uses JWT Bearer tokens for authentication. Include the token in the `Authorization` header:
+    ```
+    Authorization: Bearer <access_token>
+    ```
+
+    ## Roles
+    - `user` - Regular student (siswa)
+    - `bendahara` - Class treasurer (bendahara)
+  version: 1.0.0
+  contact:
+    name: GalaCash Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.galacash.com/api
+    description: Production server
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Users
+    description: User profile management
+  - name: Dashboard
+    description: Dashboard data endpoints
+  - name: Transactions
+    description: Transaction management
+  - name: Fund Applications
+    description: Fund request (Aju Dana) management
+  - name: Cash Bills
+    description: Cash bill (Tagihan Kas) management
+  - name: Bendahara
+    description: Treasurer-only endpoints
+
+paths:
+  # ========== AUTH ==========
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with NIM and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nim, password]
+              properties:
+                nim:
+                  type: string
+                  pattern: '^13136\d{5}$'
+                  example: '1313612345'
+                password:
+                  type: string
+                  minLength: 8
+                  example: 'password123'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      expiresIn:
+                        type: integer
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout and invalidate tokens
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user info
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  # ========== USERS ==========
+  /users/profile:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    put:
+      tags: [Users]
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Profile updated
+
+  /users/password:
+    put:
+      tags: [Users]
+      summary: Change password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [oldPassword, newPassword, confirmPassword]
+              properties:
+                oldPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+                confirmPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password changed
+
+  /users/avatar:
+    post:
+      tags: [Users]
+      summary: Upload avatar
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Avatar uploaded
+
+  # ========== DASHBOARD ==========
+  /dashboard/summary:
+    get:
+      tags: [Dashboard]
+      summary: Get financial summary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Financial summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+
+  /dashboard/pending-bills:
+    get:
+      tags: [Dashboard]
+      summary: Get pending bills summary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pending bills
+
+  /dashboard/pending-applications:
+    get:
+      tags: [Dashboard]
+      summary: Get pending fund applications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pending applications
+
+  # ========== TRANSACTIONS ==========
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: Get transactions list
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [date, amount, type]
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+
+  /transactions/{id}:
+    get:
+      tags: [Transactions]
+      summary: Get transaction details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction details
+
+  /transactions/chart-data:
+    get:
+      tags: [Transactions]
+      summary: Get chart data
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [income, expense]
+      responses:
+        '200':
+          description: Chart data
+
+  /transactions/export:
+    post:
+      tags: [Transactions]
+      summary: Export transactions
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '200':
+          description: Export URL
+
+  # ========== FUND APPLICATIONS ==========
+  /fund-applications:
+    get:
+      tags: [Fund Applications]
+      summary: Get all fund applications
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [education, health, emergency, equipment]
+        - name: minAmount
+          in: query
+          schema:
+            type: number
+        - name: maxAmount
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: List of fund applications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundApplicationListResponse'
+    post:
+      tags: [Fund Applications]
+      summary: Create fund application
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [purpose, category, amount]
+              properties:
+                purpose:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                category:
+                  type: string
+                  enum: [education, health, emergency, equipment]
+                amount:
+                  type: number
+                  minimum: 1
+                attachment:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Application created
+
+  /fund-applications/my:
+    get:
+      tags: [Fund Applications]
+      summary: Get my fund applications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: My applications
+
+  /fund-applications/{id}:
+    get:
+      tags: [Fund Applications]
+      summary: Get fund application details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Application details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundApplicationDetail'
+
+  # ========== CASH BILLS ==========
+  /cash-bills:
+    get:
+      tags: [Cash Bills]
+      summary: Get my cash bills
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [belum_dibayar, menunggu_konfirmasi, sudah_dibayar]
+        - name: month
+          in: query
+          schema:
+            type: string
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of cash bills
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBillListResponse'
+
+  /cash-bills/{id}:
+    get:
+      tags: [Cash Bills]
+      summary: Get cash bill details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Bill details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashBillDetail'
+
+  /cash-bills/{id}/pay:
+    post:
+      tags: [Cash Bills]
+      summary: Submit payment proof
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [paymentMethod, paymentProof]
+              properties:
+                paymentMethod:
+                  type: string
+                  enum: [bank, ewallet, cash]
+                paymentProof:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Payment submitted
+
+  /cash-bills/{id}/cancel-payment:
+    post:
+      tags: [Cash Bills]
+      summary: Cancel payment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment cancelled
+
+  # ========== BENDAHARA ==========
+  /bendahara/dashboard:
+    get:
+      tags: [Bendahara]
+      summary: Get treasurer dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Treasurer dashboard
+
+  /bendahara/fund-applications:
+    get:
+      tags: [Bendahara]
+      summary: Get all fund applications for review
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Applications for review
+
+  /bendahara/fund-applications/{id}/approve:
+    post:
+      tags: [Bendahara]
+      summary: Approve fund application
+      description: Approves the application and automatically creates an expense transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Application approved
+
+  /bendahara/fund-applications/{id}/reject:
+    post:
+      tags: [Bendahara]
+      summary: Reject fund application
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rejectionReason]
+              properties:
+                rejectionReason:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: Application rejected
+
+  /bendahara/cash-bills:
+    get:
+      tags: [Bendahara]
+      summary: Get all cash bills
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: All cash bills
+
+  /bendahara/cash-bills/{id}/confirm:
+    post:
+      tags: [Bendahara]
+      summary: Confirm payment
+      description: Confirms the payment and automatically creates an income transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment confirmed
+
+  /bendahara/cash-bills/{id}/reject:
+    post:
+      tags: [Bendahara]
+      summary: Reject payment proof
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment rejected
+
+  /bendahara/rekap-kas:
+    get:
+      tags: [Bendahara]
+      summary: Get financial recap
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: groupBy
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+      responses:
+        '200':
+          description: Financial recap
+
+  /bendahara/rekap-kas/export:
+    post:
+      tags: [Bendahara]
+      summary: Export financial recap
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '200':
+          description: Export URL
+
+  /bendahara/students:
+    get:
+      tags: [Bendahara]
+      summary: Get class students
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of students
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+
+  responses:
+    Unauthorized:
+      description: Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ===== Common =====
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalItems:
+          type: integer
+        totalPages:
+          type: integer
+
+    # ===== User =====
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nim:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [user, bendahara]
+        classId:
+          type: string
+          format: uuid
+        className:
+          type: string
+        avatarUrl:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/User'
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            tokens:
+              type: object
+              properties:
+                accessToken:
+                  type: string
+                refreshToken:
+                  type: string
+                expiresIn:
+                  type: integer
+
+    # ===== Dashboard =====
+    DashboardSummary:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            totalBalance:
+              type: number
+            totalIncome:
+              type: number
+            totalExpense:
+              type: number
+            period:
+              type: object
+              properties:
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+
+    # ===== Transaction =====
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [income, expense]
+        description:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+          format: date
+
+    TransactionListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            transactions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    # ===== Fund Application =====
+    FundApplication:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+        purpose:
+          type: string
+        category:
+          type: string
+          enum: [education, health, emergency, equipment]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        amount:
+          type: number
+        applicant:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+
+    FundApplicationDetail:
+      allOf:
+        - $ref: '#/components/schemas/FundApplication'
+        - type: object
+          properties:
+            description:
+              type: string
+            attachmentUrl:
+              type: string
+            rejectionReason:
+              type: string
+            reviewedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+            reviewedAt:
+              type: string
+              format: date-time
+            createdAt:
+              type: string
+              format: date-time
+
+    FundApplicationListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            applications:
+              type: array
+              items:
+                $ref: '#/components/schemas/FundApplication'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    # ===== Cash Bill =====
+    CashBill:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        billId:
+          type: string
+        month:
+          type: string
+        year:
+          type: integer
+        status:
+          type: string
+          enum: [belum_dibayar, menunggu_konfirmasi, sudah_dibayar]
+        dueDate:
+          type: string
+          format: date
+        totalAmount:
+          type: number
+
+    CashBillDetail:
+      allOf:
+        - $ref: '#/components/schemas/CashBill'
+        - type: object
+          properties:
+            name:
+              type: string
+            kasKelas:
+              type: number
+            biayaAdmin:
+              type: number
+            paymentMethod:
+              type: string
+              enum: [bank, ewallet, cash]
+            paymentProofUrl:
+              type: string
+            paidAt:
+              type: string
+              format: date-time
+            confirmedAt:
+              type: string
+              format: date-time
+
+    CashBillListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            bills:
+              type: array
+              items:
+                $ref: '#/components/schemas/CashBill'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    # ===== Export =====
+    ExportRequest:
+      type: object
+      properties:
+        format:
+          type: string
+          enum: [xlsx, pdf]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date

@@ -1,0 +1,118 @@
+import { cashBillService } from "@/services";
+import { asyncHandler } from "@/utils/errors";
+import { Request, Response } from "express";
+
+/**
+ * Get user's cash bills
+ * GET /api/cash-bills/my
+ */
+export const getMyBills = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user?.sub;
+  const { page = 1, limit = 10, status } = req.query;
+
+  if (!userId) {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "User not authenticated",
+      },
+    });
+    return;
+  }
+
+  const statusFilter =
+    typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
+
+  const bills = await cashBillService.getMyBills(userId, {
+    page: Number(page),
+    limit: Number(limit),
+    status: statusFilter,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: bills,
+    message: "User cash bills fetched",
+  });
+});
+
+/**
+ * Get cash bill by ID
+ * GET /api/cash-bills/:id
+ */
+export const getById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const userId = req.user?.sub;
+
+  const billId = Array.isArray(id) ? id[0] : id;
+
+  const bill = await cashBillService.getBillById(billId, userId ?? "");
+
+  res.status(200).json({
+    success: true,
+    data: bill,
+    message: "Cash bill fetched",
+  });
+});
+
+/**
+ * Pay cash bill
+ * POST /api/cash-bills/:id/pay
+ */
+export const pay = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user?.sub;
+  const { id } = req.params;
+  const { paymentMethod, paymentProofUrl } = req.body;
+
+  const billId = Array.isArray(id) ? id[0] : id;
+
+  if (!userId) {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "User not authenticated",
+      },
+    });
+    return;
+  }
+
+  const result = await cashBillService.payBill(billId, userId, paymentMethod, paymentProofUrl);
+
+  res.status(200).json({
+    success: true,
+    data: result,
+    message: "Cash bill paid",
+  });
+});
+
+/**
+ * Cancel payment for cash bill
+ * POST /api/cash-bills/:id/cancel-payment
+ */
+export const cancelPayment = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user?.sub;
+  const { id } = req.params;
+
+  const billId = Array.isArray(id) ? id[0] : id;
+
+  if (!userId) {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "User not authenticated",
+      },
+    });
+    return;
+  }
+
+  const result = await cashBillService.cancelPayment(billId, userId);
+
+  res.status(200).json({
+    success: true,
+    data: result,
+    message: "Payment cancelled",
+  });
+});

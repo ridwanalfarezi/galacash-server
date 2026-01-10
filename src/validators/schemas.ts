@@ -1,0 +1,151 @@
+import Joi from "joi";
+
+// ============ AUTHENTICATION SCHEMAS ============
+
+export const loginSchema = Joi.object({
+  nim: Joi.string()
+    .pattern(/^13136[0-9]{5}$/)
+    .required()
+    .messages({
+      "string.pattern.base": "NIM harus 10 digit dan dimulai dengan 13136",
+      "any.required": "NIM wajib diisi",
+    }),
+  password: Joi.string().min(8).required().messages({
+    "string.min": "Password minimal 8 karakter",
+    "any.required": "Password wajib diisi",
+  }),
+});
+
+export const refreshTokenSchema = Joi.object({
+  refreshToken: Joi.string().required().messages({
+    "any.required": "Refresh token wajib diisi",
+  }),
+});
+
+// ============ USER SCHEMAS ============
+
+export const updateProfileSchema = Joi.object({
+  name: Joi.string().min(3).max(100).messages({
+    "string.min": "Nama minimal 3 karakter",
+    "string.max": "Nama maksimal 100 karakter",
+  }),
+  email: Joi.string().email().messages({
+    "string.email": "Format email tidak valid",
+  }),
+}).min(1);
+
+export const changePasswordSchema = Joi.object({
+  oldPassword: Joi.string().required().messages({
+    "any.required": "Password lama wajib diisi",
+  }),
+  newPassword: Joi.string().min(8).required().messages({
+    "string.min": "Password baru minimal 8 karakter",
+    "any.required": "Password baru wajib diisi",
+  }),
+  confirmPassword: Joi.string().valid(Joi.ref("newPassword")).required().messages({
+    "any.only": "Konfirmasi password tidak cocok",
+    "any.required": "Konfirmasi password wajib diisi",
+  }),
+});
+
+// ============ FUND APPLICATION SCHEMAS ============
+
+export const createFundApplicationSchema = Joi.object({
+  purpose: Joi.string().max(255).required().messages({
+    "string.max": "Tujuan maksimal 255 karakter",
+    "any.required": "Tujuan wajib diisi",
+  }),
+  description: Joi.string().allow("").optional(),
+  category: Joi.string()
+    .valid("education", "health", "emergency", "equipment")
+    .required()
+    .messages({
+      "any.only": "Kategori tidak valid",
+      "any.required": "Kategori wajib diisi",
+    }),
+  amount: Joi.number().positive().required().messages({
+    "number.positive": "Jumlah harus lebih dari 0",
+    "any.required": "Jumlah wajib diisi",
+  }),
+});
+
+export const reviewFundApplicationSchema = Joi.object({
+  rejectionReason: Joi.string().when("$action", {
+    is: "reject",
+    then: Joi.required().messages({
+      "any.required": "Alasan penolakan wajib diisi",
+    }),
+    otherwise: Joi.optional(),
+  }),
+});
+
+// ============ CASH BILL SCHEMAS ============
+
+export const payBillSchema = Joi.object({
+  paymentMethod: Joi.string().valid("bank", "ewallet", "cash").required().messages({
+    "any.only": "Metode pembayaran tidak valid",
+    "any.required": "Metode pembayaran wajib diisi",
+  }),
+});
+
+// ============ TRANSACTION SCHEMAS ============
+
+export const exportTransactionSchema = Joi.object({
+  format: Joi.string().valid("xlsx", "pdf").required().messages({
+    "any.only": "Format harus xlsx atau pdf",
+    "any.required": "Format wajib diisi",
+  }),
+  startDate: Joi.date().iso().optional(),
+  endDate: Joi.date().iso().min(Joi.ref("startDate")).optional().messages({
+    "date.min": "Tanggal akhir harus setelah tanggal awal",
+  }),
+  type: Joi.string().valid("all", "income", "expense").optional(),
+});
+
+// ============ QUERY PARAMETER SCHEMAS ============
+
+export const paginationSchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(20),
+});
+
+export const dateRangeSchema = Joi.object({
+  startDate: Joi.date().iso().optional(),
+  endDate: Joi.date().iso().min(Joi.ref("startDate")).optional().messages({
+    "date.min": "Tanggal akhir harus setelah tanggal awal",
+  }),
+});
+
+export const transactionFilterSchema = paginationSchema.keys({
+  ...dateRangeSchema.describe().keys,
+  type: Joi.string().valid("income", "expense").optional(),
+  sortBy: Joi.string().valid("date", "amount", "type").optional(),
+  sortOrder: Joi.string().valid("asc", "desc").optional(),
+});
+
+export const fundApplicationFilterSchema = paginationSchema.keys({
+  status: Joi.string().valid("pending", "approved", "rejected").optional(),
+  category: Joi.string().valid("education", "health", "emergency", "equipment").optional(),
+  applicantId: Joi.string().uuid().optional(),
+  minAmount: Joi.number().positive().optional(),
+  maxAmount: Joi.number().positive().min(Joi.ref("minAmount")).optional(),
+  sortBy: Joi.string().valid("date", "amount", "status").optional(),
+  sortOrder: Joi.string().valid("asc", "desc").optional(),
+});
+
+export const cashBillFilterSchema = paginationSchema.keys({
+  status: Joi.string().valid("belum_dibayar", "menunggu_konfirmasi", "sudah_dibayar").optional(),
+  month: Joi.string().optional(),
+  year: Joi.number().integer().min(2020).max(2100).optional(),
+  userId: Joi.string().uuid().optional(),
+  sortBy: Joi.string().valid("dueDate", "month", "status").optional(),
+  sortOrder: Joi.string().valid("asc", "desc").optional(),
+});
+
+// ============ BENDAHARA SCHEMAS ============
+
+export const rekapKasFilterSchema = Joi.object({
+  startDate: Joi.date().iso().optional(),
+  endDate: Joi.date().iso().min(Joi.ref("startDate")).optional(),
+  groupBy: Joi.string().valid("day", "week", "month", "year").optional(),
+});

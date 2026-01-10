@@ -1,0 +1,46 @@
+# Dependencies
+node_modules
+pnpm-lock.yaml
+
+# Build output
+dist
+build
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+
+# Logs
+logs
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+.cache
+temp
+tmp
+README.md
+.prettierrc
+.eslintrc.json
+tsconfig.json
+.husky

@@ -1,0 +1,183 @@
+// Prisma Schema for GalaCash
+// Database: PostgreSQL
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+// ============ ENUMS ============
+
+enum UserRole {
+    user
+    bendahara
+}
+
+enum TransactionType {
+    income
+    expense
+}
+
+enum FundCategory {
+    education
+    health
+    emergency
+    equipment
+}
+
+enum FundStatus {
+    pending
+    approved
+    rejected
+}
+
+enum BillStatus {
+    belum_dibayar
+    menunggu_konfirmasi
+    sudah_dibayar
+}
+
+enum PaymentMethod {
+    bank
+    ewallet
+    cash
+}
+
+// ============ MODELS ============
+
+model Class {
+    id        String   @id @default(uuid())
+    name      String   @unique
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    users            User[]
+    transactions     Transaction[]
+    fundApplications FundApplication[]
+    cashBills        CashBill[]
+
+    @@map("classes")
+}
+
+model User {
+    id        String   @id @default(uuid())
+    nim       String   @unique
+    name      String
+    email     String?
+    password  String
+    role      UserRole @default(user)
+    avatarUrl String?
+    classId   String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    class                    Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
+    refreshTokens            RefreshToken[]
+    fundApplications         FundApplication[] @relation("Applicant")
+    reviewedFundApplications FundApplication[] @relation("Reviewer")
+    cashBills                CashBill[]        @relation("Student")
+    confirmedCashBills       CashBill[]        @relation("Confirmer")
+
+    @@index([classId])
+    @@index([nim])
+    @@map("users")
+}
+
+model RefreshToken {
+    id        String   @id @default(uuid())
+    token     String   @unique
+    userId    String
+    expiresAt DateTime
+    createdAt DateTime @default(now())
+
+    // Relations
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([expiresAt])
+    @@map("refresh_tokens")
+}
+
+model Transaction {
+    id          String          @id @default(uuid())
+    classId     String
+    type        TransactionType
+    description String
+    amount      Float
+    date        DateTime        @default(now())
+    createdAt   DateTime        @default(now())
+
+    // Relations
+    class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+    @@index([classId])
+    @@index([date])
+    @@index([type])
+    @@map("transactions")
+}
+
+model FundApplication {
+    id              String       @id @default(uuid())
+    userId          String
+    classId         String
+    purpose         String
+    description     String?
+    category        FundCategory
+    amount          Float
+    status          FundStatus   @default(pending)
+    attachmentUrl   String?
+    rejectionReason String?
+    reviewedBy      String?
+    reviewedAt      DateTime?
+    createdAt       DateTime     @default(now())
+    updatedAt       DateTime     @updatedAt
+
+    // Relations
+    applicant Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+    user      User  @relation("Applicant", fields: [userId], references: [id], onDelete: Cascade)
+    reviewer  User? @relation("Reviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+    @@index([userId])
+    @@index([classId])
+    @@index([status])
+    @@index([createdAt])
+    @@map("fund_applications")
+}
+
+model CashBill {
+    id              String         @id @default(uuid())
+    userId          String
+    classId         String
+    billId          String         @unique
+    month           String
+    year            Int
+    dueDate         DateTime
+    kasKelas        Float
+    biayaAdmin      Float
+    totalAmount     Float
+    status          BillStatus     @default(belum_dibayar)
+    paymentMethod   PaymentMethod?
+    paymentProofUrl String?
+    paidAt          DateTime?
+    confirmedBy     String?
+    confirmedAt     DateTime?
+    createdAt       DateTime       @default(now())
+    updatedAt       DateTime       @updatedAt
+
+    // Relations
+    user      User  @relation("Student", fields: [userId], references: [id], onDelete: Cascade)
+    class     Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+    confirmer User? @relation("Confirmer", fields: [confirmedBy], references: [id], onDelete: SetNull)
+
+    @@unique([userId, month, year])
+    @@index([userId])
+    @@index([classId])
+    @@index([status])
+    @@index([dueDate])
+    @@map("cash_bills")
+}
