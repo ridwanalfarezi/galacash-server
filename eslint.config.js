@@ -1,15 +1,18 @@
 export default [
   {
-    ignores: ['node_modules/', 'dist/', '.pnpm-store/', '**/*.d.ts']
+    ignores: ["node_modules/", "dist/", ".pnpm-store/", "**/*.d.ts", "logs/", "prisma/"],
   },
   {
-    files: ['src/**/*.ts'],
+    files: ["src/**/*.ts"],
     languageOptions: {
       ecmaVersion: 2021,
-      sourceType: 'module'
+      sourceType: "module",
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: false,
+        },
+      },
     },
-    rules: {
-      'no-unused-vars': 'warn'
-    }
-  }
+    rules: {},
+  },
 ];
