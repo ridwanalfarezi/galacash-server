@@ -103,22 +103,23 @@
 
 ## Test Categories
 
-| Category           | Count | Description                              |
-|--------------------|-------|------------------------------------------|
-| `transactions`     | 32    | Transaction list, filters, charts        |
-| `bendahara`        | 28    | Treasurer-specific operations            |
-| `fund-applications`| 14    | Fund request management                  |
-| `cash-bills`       | 12    | Monthly bill management                  |
-| `labels`           | 7     | Helper endpoints for dropdowns           |
-| `exports`          | 4     | Excel/CSV file generation                |
-| `dashboard`        | 3     | Summary statistics                       |
-| `auth`             | 4     | Authentication flows                     |
-| `payment-accounts` | 1     | Payment account listing                  |
-| **TOTAL**          | **127+** | **Comprehensive coverage**            |
+| Category            | Count    | Description                       |
+| ------------------- | -------- | --------------------------------- |
+| `transactions`      | 32       | Transaction list, filters, charts |
+| `bendahara`         | 28       | Treasurer-specific operations     |
+| `fund-applications` | 14       | Fund request management           |
+| `cash-bills`        | 12       | Monthly bill management           |
+| `labels`            | 7        | Helper endpoints for dropdowns    |
+| `exports`           | 4        | Excel/CSV file generation         |
+| `dashboard`         | 3        | Summary statistics                |
+| `auth`              | 4        | Authentication flows              |
+| `payment-accounts`  | 1        | Payment account listing           |
+| **TOTAL**           | **127+** | **Comprehensive coverage**        |
 
 ## Filter Combinations Tested
 
 ### Transactions
+
 - **Types**: income, expense (2)
 - **Categories**: First 2 from API (2)
 - **Date Ranges**: 7, 30, 90 days (3)
@@ -127,6 +128,7 @@
 - **Total Combinations**: 32+ tests
 
 ### Fund Applications
+
 - **Statuses**: pending, approved, rejected (3)
 - **Categories**: education, health, emergency, equipment (4)
 - **Sort Fields**: date, amount, status (3)
@@ -134,12 +136,14 @@
 - **Total Combinations**: 14+ tests
 
 ### Cash Bills
+
 - **Statuses**: unpaid, pending confirmation, paid (3)
 - **Time Filters**: month, year (3)
 - **Sort Fields**: dueDate, month, status (3)
 - **Total Combinations**: 12+ tests
 
 ### Rekap Kas
+
 - **Date Ranges**: 7, 30, 90, 365 days (4)
 - **Groupings**: day, week, month, year (4)
 - **Total Combinations**: 8+ tests
@@ -182,6 +186,7 @@
 ## Performance Metrics
 
 Typical execution on local development:
+
 - **Total Requests**: 127
 - **Total Time**: ~12-15 seconds
 - **Average Response**: 95-100ms
@@ -190,7 +195,7 @@ Typical execution on local development:
 
 ## Exit Codes
 
-| Code | Meaning                                    |
-|------|--------------------------------------------|
-| 0    | ✅ All tests passed (100% success)        |
-| 1    | ❌ One or more tests failed or error      |
+| Code | Meaning                              |
+| ---- | ------------------------------------ |
+| 0    | ✅ All tests passed (100% success)   |
+| 1    | ❌ One or more tests failed or error |

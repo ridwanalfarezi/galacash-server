@@ -5,6 +5,7 @@ Comprehensive endpoint testing suite for the GalaCash API backend.
 ## Overview
 
 The `endpoint_smoke.py` script provides thorough smoke testing coverage for all API endpoints, including:
+
 - Authentication flows
 - User dashboard and profile
 - Transactions with various filters
@@ -18,24 +19,28 @@ The `endpoint_smoke.py` script provides thorough smoke testing coverage for all 
 ## Features
 
 ✅ **Comprehensive Coverage**
+
 - 100+ test requests covering all GET endpoints
 - Tests pagination, sorting, and filtering
 - Validates date ranges and multiple filter combinations
 - Tests individual resource fetches by ID
 
 ✅ **Smart Testing**
+
 - Extracts IDs from list responses for further testing
 - Tests multiple transaction types and categories
 - Validates exports for both income and expense
 - Tests various date ranges (7, 30, 90, 180, 365 days)
 
 ✅ **Detailed Statistics**
+
 - Tracks total requests, success/failure rates
 - Measures response times (total and average)
 - Groups statistics by category
 - Provides comprehensive summary report
 
 ✅ **Zero Dependencies**
+
 - Uses only Python standard library (`urllib`, `json`, `time`)
 - No pip install required
 - Works with Python 3.6+
@@ -55,6 +60,7 @@ python scripts/endpoint_smoke.py
 ```
 
 Or use the package script:
+
 ```bash
 # Make sure server is running in another terminal
 pnpm test:smoke
@@ -92,24 +98,25 @@ python scripts/endpoint_smoke.py
 
 Environment variables:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `BASE_URL` | `http://localhost:3000/api` | API base URL |
-| `USER_NIM` | `1313600001` | Student NIM for testing |
-| `USER_PASSWORD` | `password123` | Student password |
-| `BENDAHARA_NIM` | `1313699999` | Bendahara NIM for testing |
-| `BENDAHARA_PASSWORD` | `password123` | Bendahara password |
-| `SAVE_DIR` | (empty) | Directory to save export files |
-| `VERBOSE` | `0` | Set to `1` for detailed output |
+| Variable             | Default                     | Description                    |
+| -------------------- | --------------------------- | ------------------------------ |
+| `BASE_URL`           | `http://localhost:3000/api` | API base URL                   |
+| `USER_NIM`           | `1313600001`                | Student NIM for testing        |
+| `USER_PASSWORD`      | `password123`               | Student password               |
+| `BENDAHARA_NIM`      | `1313699999`                | Bendahara NIM for testing      |
+| `BENDAHARA_PASSWORD` | `password123`               | Bendahara password             |
+| `SAVE_DIR`           | (empty)                     | Directory to save export files |
+| `VERBOSE`            | `0`                         | Set to `1` for detailed output |
 
 ## Test Coverage
 
 ### User Flow Tests
+
 - **Auth & Profile**: Login, refresh, /auth/me
 - **Dashboard**: Summary, pending bills, pending applications
 - **Labels**: All label endpoints (bill statuses, fund categories, transaction types/categories, payment methods)
 - **Payment Accounts**: Active accounts listing
-- **Transactions**: 
+- **Transactions**:
   - List with pagination (page 1, 2, different limits)
   - Filter by type (income/expense)
   - Filter by category (first 2 categories)
@@ -138,6 +145,7 @@ Environment variables:
   - Individual bill fetches
 
 ### Bendahara Flow Tests
+
 - **Dashboard**: With multiple date ranges (7, 30, 90, 180 days)
 - **Fund Applications**:
   - List with pagination
@@ -247,6 +255,7 @@ To add more test cases:
 4. Use `get_date_range()` for ISO date ranges
 
 Example:
+
 ```python
 # Test new endpoint with filters
 resp = request("GET", "/new-endpoint", token=access_token,

@@ -9,6 +9,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
 ## 📦 Files Created
 
 ### Core Test Suite
+
 - ✅ **`scripts/endpoint_smoke.py`** (400+ lines)
   - Comprehensive test coverage (127+ tests)
   - Zero external dependencies
@@ -16,6 +17,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
   - Category-based reporting
 
 ### Documentation
+
 - ✅ **`scripts/README.md`**
   - Complete usage guide
   - Configuration reference
@@ -41,6 +43,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
   - Sample output
 
 ### Test Runners
+
 - ✅ **`scripts/run-smoke-test.sh`** (Linux/Mac)
   - Pre-flight server check
   - Environment setup
@@ -51,6 +54,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
   - Same features as bash version
 
 ### Project Integration
+
 - ✅ **Updated `galacash-server/README.md`**
   - Testing section added
   - Script references
@@ -71,6 +75,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
 ### Total: 127+ Endpoint Tests
 
 #### User Flow (80+ tests)
+
 - ✅ Auth & Profile (3)
 - ✅ Dashboard (3)
 - ✅ Labels (7)
@@ -81,6 +86,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
 - ✅ Cash Bills (12)
 
 #### Bendahara Flow (47+ tests)
+
 - ✅ Dashboard (4)
 - ✅ Fund Applications (14)
 - ✅ Cash Bills (11)
@@ -92,6 +98,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
 ## ✨ Features Implemented
 
 ### Smart Testing
+
 - ✅ Automatic ID extraction from responses
 - ✅ Dynamic category fetching and filtering
 - ✅ Date range generation helper
@@ -99,6 +106,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
 - ✅ Error handling and graceful failures
 
 ### Statistics & Reporting
+
 - ✅ Total request tracking
 - ✅ Success/failure rates
 - ✅ Timing metrics (total & average)
@@ -106,6 +114,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
 - ✅ Comprehensive summary reports
 
 ### Configuration
+
 - ✅ Environment variable support
 - ✅ Configurable credentials
 - ✅ Custom API endpoints
@@ -113,6 +122,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
 - ✅ Optional export saving
 
 ### Output Modes
+
 - ✅ Summary mode (default)
 - ✅ Verbose mode (detailed)
 - ✅ Progress indicators
@@ -124,6 +134,7 @@ A full-featured smoke test suite has been successfully created for the GalaCash 
 ## 🚀 How to Use
 
 ### Quick Start
+
 ```bash
 # Run all tests
 pnpm test:smoke
@@ -136,6 +147,7 @@ SAVE_DIR=./tmp/exports pnpm test:smoke
 ```
 
 ### Shell Scripts
+
 ```bash
 # Linux/Mac
 ./scripts/run-smoke-test.sh
@@ -145,6 +157,7 @@ scripts\run-smoke-test.bat
 ```
 
 ### Direct Python
+
 ```bash
 python scripts/endpoint_smoke.py
 ```
@@ -217,19 +230,20 @@ TEST SUMMARY
 
 ## 📚 Documentation Files
 
-| File | Purpose |
-|------|---------|
-| `scripts/README.md` | Complete guide with all details |
-| `scripts/EXAMPLES.md` | Usage examples for all scenarios |
-| `scripts/TEST_FLOW.md` | Visual diagrams and flow charts |
-| `scripts/QUICK_REFERENCE.md` | One-page cheat sheet |
-| `SMOKE_TESTS_SUMMARY.md` | Implementation summary |
+| File                         | Purpose                          |
+| ---------------------------- | -------------------------------- |
+| `scripts/README.md`          | Complete guide with all details  |
+| `scripts/EXAMPLES.md`        | Usage examples for all scenarios |
+| `scripts/TEST_FLOW.md`       | Visual diagrams and flow charts  |
+| `scripts/QUICK_REFERENCE.md` | One-page cheat sheet             |
+| `SMOKE_TESTS_SUMMARY.md`     | Implementation summary           |
 
 ---
 
 ## ✅ Verification Checklist
 
 ### Code Quality
+
 - ✅ Python syntax validated
 - ✅ No external dependencies
 - ✅ Proper error handling
@@ -237,6 +251,7 @@ TEST SUMMARY
 - ✅ Type hints included
 
 ### Documentation
+
 - ✅ Complete README
 - ✅ Usage examples
 - ✅ Quick reference
@@ -244,12 +259,14 @@ TEST SUMMARY
 - ✅ Integration guide
 
 ### Integration
+
 - ✅ Package.json script added
 - ✅ Main README updated
 - ✅ Shell scripts created
 - ✅ Cross-platform support
 
 ### Testing
+
 - ✅ 127+ endpoint tests
 - ✅ All filters covered
 - ✅ Pagination tested
@@ -259,6 +276,7 @@ TEST SUMMARY
 - ✅ Exports tested
 
 ### Features
+
 - ✅ Statistics tracking
 - ✅ Category breakdown
 - ✅ Progress indicators
@@ -271,17 +289,20 @@ TEST SUMMARY
 ## 🎯 Ready to Use!
 
 The comprehensive smoke test suite is now:
+
 - ✅ **Fully implemented** - All features complete
 - ✅ **Well documented** - 5 documentation files
 - ✅ **Thoroughly tested** - Syntax validated
 - ✅ **Production ready** - CI/CD compatible
 
 ### Try it now:
+
 ```bash
 pnpm test:smoke
 ```
 
 ### For detailed output:
+
 ```bash
 VERBOSE=1 pnpm test:smoke
 ```
@@ -306,6 +327,7 @@ VERBOSE=1 pnpm test:smoke
 ## 📞 Need Help?
 
 See the documentation:
+
 - Quick Start: `scripts/QUICK_REFERENCE.md`
 - Full Guide: `scripts/README.md`
 - Examples: `scripts/EXAMPLES.md`

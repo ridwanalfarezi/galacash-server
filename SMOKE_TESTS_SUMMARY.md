@@ -45,28 +45,33 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 ### User Flow Tests (80+ requests)
 
 #### Authentication & Profile
+
 - ✅ Login with credentials
 - ✅ Token refresh
 - ✅ Get current user profile
 
 #### Dashboard
+
 - ✅ Summary statistics
 - ✅ Pending bills list
 - ✅ Pending applications list
 
 #### Labels (Bootstrap Data)
+
 - ✅ All labels (combined endpoint)
 - ✅ Bill statuses
-- ✅ Fund statuses  
+- ✅ Fund statuses
 - ✅ Fund categories
 - ✅ Transaction types
 - ✅ Transaction categories
 - ✅ Payment methods
 
 #### Payment Accounts
+
 - ✅ Active accounts (public endpoint)
 
 #### Transactions (32 tests)
+
 - ✅ List with pagination (pages 1 & 2)
 - ✅ Different page sizes (5, 10)
 - ✅ Filter by type (income, expense)
@@ -78,6 +83,7 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 - ✅ Individual transaction fetches
 
 #### Exports (4 tests)
+
 - ✅ Excel format (income & expense)
 - ✅ CSV format (income & expense)
 - ✅ With category filters
@@ -85,6 +91,7 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 - ✅ Optional file saving
 
 #### Fund Applications (14 tests)
+
 - ✅ List all with pagination
 - ✅ List user's own applications
 - ✅ Filter by status (pending/approved/rejected)
@@ -93,6 +100,7 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 - ✅ Individual application fetches
 
 #### Cash Bills (12 tests)
+
 - ✅ List with pagination
 - ✅ Filter by status (unpaid/pending/paid)
 - ✅ Filter by month
@@ -103,10 +111,12 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 ### Bendahara Flow Tests (47+ requests)
 
 #### Dashboard
+
 - ✅ Base dashboard with date range
 - ✅ Multiple date ranges (7, 30, 90, 180 days)
 
 #### Fund Applications Management
+
 - ✅ List all with pagination
 - ✅ Filter by all statuses (3)
 - ✅ Filter by all categories (4)
@@ -115,6 +125,7 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 - ✅ Sorting (by date, amount, status)
 
 #### Cash Bills Management
+
 - ✅ List all with pagination
 - ✅ Filter by all statuses (3)
 - ✅ Filter by month (2 months)
@@ -123,11 +134,13 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 - ✅ Sorting (by dueDate, month, status)
 
 #### Students Management
+
 - ✅ List all students
 - ✅ Different page sizes
 - ✅ Pagination
 
 #### Rekap Kas (Financial Reports)
+
 - ✅ Base report with date range
 - ✅ All groupings (day/week/month/year)
 - ✅ Multiple date ranges (7, 30, 90, 365 days)
@@ -135,12 +148,14 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 ## Features
 
 ### Smart Testing
+
 - **ID Extraction**: Automatically extracts resource IDs from list responses
 - **Dynamic Categories**: Fetches transaction categories and uses them for filtering
 - **Date Range Helper**: Generates ISO-formatted date ranges for various periods
 - **Category-based Stats**: Groups test results by endpoint category
 
 ### Statistics & Reporting
+
 - **Total Requests**: Count of all HTTP requests made
 - **Success/Failure Rates**: Percentage breakdown with counts
 - **Timing Metrics**: Total time, average time per request
@@ -148,6 +163,7 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 - **Progress Indicators**: Shows progress every 10 requests in summary mode
 
 ### Output Modes
+
 - **Summary Mode** (default): Progress indicators + final statistics
 - **Verbose Mode**: Detailed output for every request/response
 - **Export Saving**: Optional file saving for Excel/CSV exports
@@ -155,6 +171,7 @@ A complete smoke testing solution has been implemented for the GalaCash API back
 ## Configuration
 
 ### Environment Variables
+
 ```bash
 BASE_URL          # API base URL (default: http://localhost:3000/api)
 USER_NIM          # Student test account (default: 1313600001)
@@ -168,6 +185,7 @@ VERBOSE           # Detailed output (set to '1')
 ## Usage Examples
 
 ### Quick Run
+
 ```bash
 pnpm test:smoke
 # or
@@ -175,6 +193,7 @@ python scripts/endpoint_smoke.py
 ```
 
 ### With Configuration
+
 ```bash
 # Linux/Mac
 export VERBOSE=1
@@ -188,6 +207,7 @@ python scripts/endpoint_smoke.py
 ```
 
 ### Using Shell Scripts
+
 ```bash
 # Linux/Mac
 chmod +x scripts/run-smoke-test.sh
@@ -200,6 +220,7 @@ scripts\run-smoke-test.bat
 ## Expected Output
 
 ### Summary Mode
+
 ```
 ============================================================
 GALACASH API - COMPREHENSIVE SMOKE TEST
@@ -270,7 +291,9 @@ TEST SUMMARY
 ## Integration Points
 
 ### Package.json
+
 Added `test:smoke` script:
+
 ```json
 {
   "scripts": {
@@ -280,7 +303,9 @@ Added `test:smoke` script:
 ```
 
 ### README.md
+
 Updated project structure and testing section with:
+
 - Smoke test file references
 - Usage examples
 - Coverage summary
@@ -330,6 +355,7 @@ Updated project structure and testing section with:
 ## Verification
 
 All files have been:
+
 - ✅ Syntax validated (Python compilation check passed)
 - ✅ Documented with comprehensive README
 - ✅ Integrated into package.json scripts
@@ -339,6 +365,7 @@ All files have been:
 ## Ready to Use
 
 The smoke test suite is now ready for:
+
 - ✅ Local development testing
 - ✅ CI/CD pipeline integration
 - ✅ Performance baseline establishment
@@ -346,6 +373,7 @@ The smoke test suite is now ready for:
 - ✅ Documentation of API capabilities
 
 Run it now:
+
 ```bash
 pnpm test:smoke
 ```

@@ -19,9 +19,11 @@ pnpm test:smoke
 ## 📚 Documentation Structure
 
 ### 1. **Quick Reference** - [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md)
+
 > ⭐ **Start here for fast answers**
 
 One-page cheat sheet with:
+
 - Quick commands
 - Environment variables
 - Common issues & solutions
@@ -33,9 +35,11 @@ One-page cheat sheet with:
 ---
 
 ### 2. **Complete Guide** - [`README.md`](README.md)
+
 > 📖 **Full documentation**
 
 Comprehensive guide covering:
+
 - Overview and features
 - Installation and usage
 - Configuration options
@@ -48,9 +52,11 @@ Comprehensive guide covering:
 ---
 
 ### 3. **Usage Examples** - [`EXAMPLES.md`](EXAMPLES.md)
+
 > 💡 **Real-world scenarios**
 
 Practical examples for:
+
 - Different environments
 - CI/CD integration
 - Docker usage
@@ -62,9 +68,11 @@ Practical examples for:
 ---
 
 ### 4. **Test Flow Diagram** - [`TEST_FLOW.md`](TEST_FLOW.md)
+
 > 📊 **Visual overview**
 
 Visual documentation with:
+
 - Flow diagrams
 - Category breakdown
 - Filter combinations
@@ -76,9 +84,11 @@ Visual documentation with:
 ---
 
 ### 5. **Completion Checklist** - [`COMPLETION_CHECKLIST.md`](COMPLETION_CHECKLIST.md)
+
 > ✅ **Implementation status**
 
 Implementation summary showing:
+
 - All files created
 - Features implemented
 - Verification checklist
@@ -93,30 +103,38 @@ Implementation summary showing:
 ### I want to...
 
 #### **Run tests quickly**
+
 → [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) → Quick Commands section
 
 #### **Understand what gets tested**
+
 → [`README.md`](README.md) → Test Coverage section  
 → [`TEST_FLOW.md`](TEST_FLOW.md) → Test Categories
 
 #### **Configure for my environment**
+
 → [`README.md`](README.md) → Configuration section  
 → [`EXAMPLES.md`](EXAMPLES.md) → Different Environment
 
 #### **Integrate with CI/CD**
+
 → [`EXAMPLES.md`](EXAMPLES.md) → CI/CD Integration section
 
 #### **Debug test failures**
+
 → [`README.md`](README.md) → Troubleshooting section  
 → [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) → Common Issues
 
 #### **Save export files**
+
 → [`EXAMPLES.md`](EXAMPLES.md) → Save Exports section
 
 #### **See visual flow**
+
 → [`TEST_FLOW.md`](TEST_FLOW.md) → Flow Diagram
 
 #### **Check implementation status**
+
 → [`COMPLETION_CHECKLIST.md`](COMPLETION_CHECKLIST.md)
 
 ---
@@ -125,38 +143,41 @@ Implementation summary showing:
 
 ### Test Suite Files
 
-| File | Description | Lines | Purpose |
-|------|-------------|-------|---------|
-| `endpoint_smoke.py` | Main test suite | 400+ | Runs all endpoint tests |
-| `run-smoke-test.sh` | Linux/Mac runner | 40 | Shell script wrapper |
-| `run-smoke-test.bat` | Windows runner | 40 | Batch script wrapper |
+| File                 | Description      | Lines | Purpose                 |
+| -------------------- | ---------------- | ----- | ----------------------- |
+| `endpoint_smoke.py`  | Main test suite  | 400+  | Runs all endpoint tests |
+| `run-smoke-test.sh`  | Linux/Mac runner | 40    | Shell script wrapper    |
+| `run-smoke-test.bat` | Windows runner   | 40    | Batch script wrapper    |
 
 ### Documentation Files
 
-| File | Type | Best For |
-|------|------|----------|
-| `QUICK_REFERENCE.md` | Cheat Sheet | Fast lookups |
-| `README.md` | Complete Guide | Full reference |
-| `EXAMPLES.md` | Usage Examples | Copy-paste solutions |
-| `TEST_FLOW.md` | Visual Diagrams | Understanding structure |
-| `COMPLETION_CHECKLIST.md` | Status Report | What's included |
-| `INDEX.md` (this file) | Navigation | Finding docs |
+| File                      | Type            | Best For                |
+| ------------------------- | --------------- | ----------------------- |
+| `QUICK_REFERENCE.md`      | Cheat Sheet     | Fast lookups            |
+| `README.md`               | Complete Guide  | Full reference          |
+| `EXAMPLES.md`             | Usage Examples  | Copy-paste solutions    |
+| `TEST_FLOW.md`            | Visual Diagrams | Understanding structure |
+| `COMPLETION_CHECKLIST.md` | Status Report   | What's included         |
+| `INDEX.md` (this file)    | Navigation      | Finding docs            |
 
 ---
 
 ## 🎓 Learning Path
 
 ### Beginner
+
 1. Read [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md)
 2. Run `pnpm test:smoke`
 3. Check output and understand results
 
 ### Intermediate
+
 1. Read [`README.md`](README.md) - Test Coverage section
 2. Review [`TEST_FLOW.md`](TEST_FLOW.md) diagrams
 3. Try verbose mode: `VERBOSE=1 pnpm test:smoke`
 
 ### Advanced
+
 1. Study [`EXAMPLES.md`](EXAMPLES.md) for CI/CD
 2. Configure for your environment
 3. Integrate into deployment pipeline
@@ -169,24 +190,29 @@ Implementation summary showing:
 ### By Topic
 
 **Authentication**
+
 - Quick: [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) → Environment Variables
 - Full: [`README.md`](README.md) → Configuration
 
 **Coverage Details**
+
 - Quick: [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) → What Gets Tested
 - Full: [`README.md`](README.md) → Test Coverage
 - Visual: [`TEST_FLOW.md`](TEST_FLOW.md) → Test Categories
 
 **Configuration**
+
 - Quick: [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) → Environment Variables
 - Examples: [`EXAMPLES.md`](EXAMPLES.md) → Custom configurations
 - Full: [`README.md`](README.md) → Configuration section
 
 **Performance**
+
 - Quick: [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) → Performance
 - Full: [`TEST_FLOW.md`](TEST_FLOW.md) → Performance Metrics
 
 **Troubleshooting**
+
 - Quick: [`QUICK_REFERENCE.md`](QUICK_REFERENCE.md) → Common Issues
 - Full: [`README.md`](README.md) → Troubleshooting
 
@@ -197,6 +223,7 @@ Implementation summary showing:
 **Total Endpoint Tests:** 127+
 
 **Categories Covered:**
+
 - Transactions: 32 tests
 - Bendahara Operations: 28 tests
 - Fund Applications: 14 tests

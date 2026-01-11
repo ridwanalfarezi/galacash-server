@@ -330,6 +330,7 @@ $env:VERBOSE="1"; python scripts/endpoint_smoke.py
 ```
 
 **What the smoke tests cover:**
+
 - ✅ 127+ endpoint tests across all features
 - ✅ Authentication flows (login, refresh, logout)
 - ✅ User dashboard and transactions
