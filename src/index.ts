@@ -21,6 +21,9 @@ const NODE_ENV = process.env.NODE_ENV || "development";
  */
 const app: Application = express();
 
+// Ensure correct client IPs behind proxies/load balancers (e.g., Cloud Run)
+app.set("trust proxy", true);
+
 /**
  * Security middleware
  */
