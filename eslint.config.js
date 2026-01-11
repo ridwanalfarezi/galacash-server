@@ -1,9 +1,17 @@
-import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 
 export default [
   {
-    ignores: ["node_modules/", "dist/", ".pnpm-store/", "**/*.d.ts", "logs/", "prisma/", "src/generated/"],
+    ignores: [
+      "node_modules/",
+      "dist/",
+      ".pnpm-store/",
+      "**/*.d.ts",
+      "logs/",
+      "prisma/",
+      "src/generated/",
+    ],
   },
   {
     files: ["src/**/*.ts"],
