@@ -1,8 +1,10 @@
 // Prisma Schema for GalaCash
 // Database: PostgreSQL
+// Note: datasource URL is configured in prisma.config.ts (Prisma v7 best practice)
 
 generator client {
-    provider = "prisma-client-js"
+    provider = "prisma-client"
+    output   = "./generated/prisma"
 }
 
 datasource db {

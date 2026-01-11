@@ -1,6 +1,6 @@
 import { uploadAvatar } from "@/config/multer.config";
 import { userController } from "@/controllers";
-import { authenticate, validateBody } from "@/middlewares";
+import { authenticate, requireUser, validateBody } from "@/middlewares";
 import { handleFileUpload } from "@/middlewares/upload.middleware";
 import { changePasswordSchema, updateProfileSchema } from "@/validators/schemas";
 import { Router } from "express";
@@ -9,6 +9,8 @@ const router: Router = Router();
 
 // All routes require authentication
 router.use(authenticate);
+// And must be a regular user
+router.use(requireUser);
 
 /**
  * GET /profile
