@@ -12,6 +12,7 @@ import { transactionRepository } from "@/repositories/transaction.repository";
 import { userRepository } from "@/repositories/user.repository";
 import { BusinessLogicError, NotFoundError } from "@/utils/errors";
 import { logger } from "@/utils/logger";
+import { CashBill, FundApplication, TransactionCategory, User } from "@prisma/client";
 import { CacheService } from "./cache.service";
 
 export interface DashboardData {
@@ -94,7 +95,7 @@ export class BendaharaService {
   async getAllFundApplications(
     classId: string,
     filters?: Partial<FundApplicationFilters>
-  ): Promise<FundPaginatedResponse<any>> {
+  ): Promise<FundPaginatedResponse<FundApplication>> {
     const mergedFilters: FundApplicationFilters = {
       classId,
       page: filters?.page || 1,
@@ -110,7 +111,8 @@ export class BendaharaService {
     const cacheKey = `bendahara-applications:${classId}:${filterString}`;
 
     // Try to get from cache
-    const cached = await this.cacheService.getCached<FundPaginatedResponse<any>>(cacheKey);
+    const cached =
+      await this.cacheService.getCached<FundPaginatedResponse<FundApplication>>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -131,7 +133,10 @@ export class BendaharaService {
   /**
    * Approve fund application and auto-create expense transaction
    */
-  async approveFundApplication(applicationId: string, bendaharaId: string): Promise<any> {
+  async approveFundApplication(
+    applicationId: string,
+    bendaharaId: string
+  ): Promise<FundApplication> {
     try {
       // Get the application
       const application = await this.fundApplicationRepository.findById(applicationId);
@@ -162,6 +167,7 @@ export class BendaharaService {
           connect: { id: application.classId },
         },
         type: "expense",
+        category: this.mapFundCategoryToTransactionCategory(application.category),
         description: `Fund approval: ${application.purpose}`,
         amount: application.amount,
         date: new Date(),
@@ -189,7 +195,7 @@ export class BendaharaService {
     applicationId: string,
     bendaharaId: string,
     reason: string
-  ): Promise<any> {
+  ): Promise<FundApplication> {
     try {
       // Get the application
       const application = await this.fundApplicationRepository.findById(applicationId);
@@ -238,7 +244,7 @@ export class BendaharaService {
   async getAllCashBills(
     classId: string,
     filters?: Partial<CashBillFilters>
-  ): Promise<BillPaginatedResponse<any>> {
+  ): Promise<BillPaginatedResponse<CashBill>> {
     const mergedFilters: CashBillFilters = {
       classId,
       page: filters?.page || 1,
@@ -253,7 +259,7 @@ export class BendaharaService {
     const cacheKey = `bendahara-bills:${classId}:${filterString}`;
 
     // Try to get from cache
-    const cached = await this.cacheService.getCached<BillPaginatedResponse<any>>(cacheKey);
+    const cached = await this.cacheService.getCached<BillPaginatedResponse<CashBill>>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -274,7 +280,7 @@ export class BendaharaService {
   /**
    * Confirm payment and auto-create income transaction
    */
-  async confirmPayment(billId: string, bendaharaId: string): Promise<any> {
+  async confirmPayment(billId: string, bendaharaId: string): Promise<CashBill> {
     try {
       // Get the bill
       const bill = await this.cashBillRepository.findById(billId);
@@ -305,6 +311,7 @@ export class BendaharaService {
           connect: { id: bill.classId },
         },
         type: "income",
+        category: "kas_kelas" as TransactionCategory,
         description: `Bill payment confirmed: ${bill.billId}`,
         amount: bill.totalAmount,
         date: new Date(),
@@ -328,7 +335,7 @@ export class BendaharaService {
   /**
    * Reject payment and revert bill to belum_dibayar
    */
-  async rejectPayment(billId: string, reason?: string): Promise<any> {
+  async rejectPayment(billId: string, reason?: string): Promise<CashBill> {
     try {
       // Get the bill
       const bill = await this.cashBillRepository.findById(billId);
@@ -425,10 +432,10 @@ export class BendaharaService {
   /**
    * Get all students in a class
    */
-  async getStudents(classId: string): Promise<any[]> {
+  async getStudents(classId: string): Promise<User[]> {
     // Try to get from cache
     const cacheKey = `class-students:${classId}`;
-    const cached = await this.cacheService.getCached<any[]>(cacheKey);
+    const cached = await this.cacheService.getCached<User[]>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -458,6 +465,20 @@ export class BendaharaService {
     await this.cacheService.invalidateCache(`bendahara-applications:${classId}*`);
     await this.cacheService.invalidateCache(`bendahara-bills:${classId}*`);
     await this.cacheService.invalidateCache(`rekap-kas:${classId}*`);
+  }
+
+  /**
+   * Map fund category to transaction category
+   */
+  private mapFundCategoryToTransactionCategory(fundCategory: string): TransactionCategory {
+    const categoryMap: Record<string, TransactionCategory> = {
+      education: "office_supplies",
+      health: "other",
+      emergency: "other",
+      equipment: "office_supplies",
+    };
+
+    return categoryMap[fundCategory] || "other";
   }
 }
 

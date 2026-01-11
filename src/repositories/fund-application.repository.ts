@@ -1,6 +1,6 @@
 import { AppError, DatabaseError, NotFoundError } from "@/utils/errors";
 import { prisma } from "@/utils/prisma-client";
-import { FundApplication, Prisma } from "@prisma/client";
+import { FundApplication, FundCategory, FundStatus, Prisma } from "@prisma/client";
 
 export interface FundApplicationFilters {
   classId?: string;
@@ -71,11 +71,11 @@ export class FundApplicationRepository {
       }
 
       if (status) {
-        where.status = status as any;
+        where.status = status as FundStatus;
       }
 
       if (category) {
-        where.category = category as any;
+        where.category = category as FundCategory;
       }
 
       const skip = (page - 1) * limit;
@@ -131,11 +131,11 @@ export class FundApplicationRepository {
       };
 
       if (status) {
-        where.status = status as any;
+        where.status = status as FundStatus;
       }
 
       if (category) {
-        where.category = category as any;
+        where.category = category as FundCategory;
       }
 
       const skip = (page - 1) * limit;
@@ -240,7 +240,7 @@ export class FundApplicationRepository {
       }
 
       const updateData: Prisma.FundApplicationUpdateInput = {
-        status: status as any,
+        status: status as FundStatus,
         reviewer: {
           connect: { id: reviewedBy },
         },

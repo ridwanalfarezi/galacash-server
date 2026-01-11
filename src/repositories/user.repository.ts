@@ -1,6 +1,6 @@
 import { AppError, ConflictError, DatabaseError, NotFoundError } from "@/utils/errors";
 import { prisma } from "@/utils/prisma-client";
-import { Prisma, User } from "@prisma/client";
+import { Prisma, User, UserRole } from "@prisma/client";
 
 export interface UserFilters {
   role?: string;
@@ -152,7 +152,7 @@ export class UserRepository {
       const where: Prisma.UserWhereInput = {};
 
       if (role) {
-        where.role = role as any;
+        where.role = role as UserRole;
       }
 
       if (classId) {

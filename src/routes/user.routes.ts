@@ -1,6 +1,12 @@
 import { uploadAvatar } from "@/config/multer.config";
 import { userController } from "@/controllers";
-import { authenticate, requireUser, validateBody } from "@/middlewares";
+import {
+  authenticate,
+  requireUser,
+  strictRateLimit,
+  uploadRateLimit,
+  validateBody,
+} from "@/middlewares";
 import { handleFileUpload } from "@/middlewares/upload.middleware";
 import { changePasswordSchema, updateProfileSchema } from "@/validators/schemas";
 import { Router } from "express";
@@ -28,7 +34,12 @@ router.put("/profile", validateBody(updateProfileSchema), userController.updateP
  * PUT /password
  * Change user password
  */
-router.put("/password", validateBody(changePasswordSchema), userController.changePassword);
+router.put(
+  "/password",
+  strictRateLimit,
+  validateBody(changePasswordSchema),
+  userController.changePassword
+);
 
 /**
  * POST /avatar
@@ -36,9 +47,16 @@ router.put("/password", validateBody(changePasswordSchema), userController.chang
  */
 router.post(
   "/avatar",
+  uploadRateLimit,
   uploadAvatar.single("avatar"),
   handleFileUpload("avatars"),
   userController.uploadAvatar
 );
+
+/**
+ * GET /classmates
+ * Get classmates in user's class (for filter options)
+ */
+router.get("/classmates", userController.getClassmates);
 
 export default router;

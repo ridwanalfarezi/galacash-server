@@ -66,11 +66,11 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response): P
 
 /**
  * Change password
- * PUT /api/users/change-password
+ * PUT /api/users/password
  */
 export const changePassword = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.sub;
-  const { currentPassword, newPassword } = req.body;
+  const { oldPassword, newPassword } = req.body;
 
   if (!userId) {
     res.status(401).json({
@@ -83,7 +83,7 @@ export const changePassword = asyncHandler(async (req: Request, res: Response): 
     return;
   }
 
-  await userService.changePassword(userId, currentPassword, newPassword);
+  await userService.changePassword(userId, oldPassword, newPassword);
 
   res.status(200).json({
     success: true,
@@ -127,5 +127,32 @@ export const uploadAvatar = asyncHandler(async (req: Request, res: Response): Pr
     success: true,
     data: updatedUser,
     message: "Avatar uploaded",
+  });
+});
+
+/**
+ * Get classmates (students in same class)
+ * GET /api/users/classmates
+ */
+export const getClassmates = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const classId = req.user?.classId;
+
+  if (!classId) {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "User not authenticated",
+      },
+    });
+    return;
+  }
+
+  const classmates = await userService.getClassmates(classId);
+
+  res.status(200).json({
+    success: true,
+    data: classmates,
+    message: "Classmates fetched",
   });
 });

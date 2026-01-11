@@ -1,6 +1,12 @@
 import { uploadAttachment } from "@/config/multer.config";
 import { fundApplicationController } from "@/controllers";
-import { authenticate, requireUser, validateBody, validateQuery } from "@/middlewares";
+import {
+  authenticate,
+  requireUser,
+  uploadRateLimit,
+  validateBody,
+  validateQuery,
+} from "@/middlewares";
 import { handleOptionalFileUpload } from "@/middlewares/upload.middleware";
 import { createFundApplicationSchema, fundApplicationFilterSchema } from "@/validators/schemas";
 import { Router } from "express";
@@ -35,6 +41,7 @@ router.get("/:id", fundApplicationController.getById);
  */
 router.post(
   "/",
+  uploadRateLimit,
   uploadAttachment.single("attachment"),
   handleOptionalFileUpload("attachments"),
   validateBody(createFundApplicationSchema),

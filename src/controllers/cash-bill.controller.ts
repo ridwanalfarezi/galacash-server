@@ -63,7 +63,8 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
 export const pay = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.sub;
   const { id } = req.params;
-  const { paymentMethod, paymentProofUrl } = req.body;
+  const { paymentMethod, paymentAccountId } = req.body;
+  const paymentProofUrl = req.fileUrl;
 
   const billId = Array.isArray(id) ? id[0] : id;
 
@@ -78,7 +79,24 @@ export const pay = asyncHandler(async (req: Request, res: Response): Promise<voi
     return;
   }
 
-  const result = await cashBillService.payBill(billId, userId, paymentMethod, paymentProofUrl);
+  if (!paymentProofUrl) {
+    res.status(400).json({
+      success: false,
+      error: {
+        code: "BAD_REQUEST",
+        message: "Payment proof is required",
+      },
+    });
+    return;
+  }
+
+  const result = await cashBillService.payBill(
+    billId,
+    userId,
+    paymentMethod,
+    paymentProofUrl,
+    paymentAccountId
+  );
 
   res.status(200).json({
     success: true,

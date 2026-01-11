@@ -1,6 +1,12 @@
 import { uploadPaymentProof } from "@/config/multer.config";
 import { cashBillController } from "@/controllers";
-import { authenticate, requireUser, validateBody, validateQuery } from "@/middlewares";
+import {
+  authenticate,
+  requireUser,
+  uploadRateLimit,
+  validateBody,
+  validateQuery,
+} from "@/middlewares";
 import { handleFileUpload } from "@/middlewares/upload.middleware";
 import { cashBillFilterSchema } from "@/validators/schemas";
 import { Router } from "express";
@@ -30,6 +36,7 @@ router.get("/:id", cashBillController.getById);
  */
 router.post(
   "/:id/pay",
+  uploadRateLimit,
   uploadPaymentProof.single("paymentProof"),
   handleFileUpload("payments"),
   validateBody(
@@ -37,6 +44,9 @@ router.post(
       paymentMethod: Joi.string().valid("bank", "ewallet", "cash").required().messages({
         "any.required": "Payment method is required",
         "any.only": "Payment method must be 'bank', 'ewallet', or 'cash'",
+      }),
+      paymentAccountId: Joi.string().uuid().optional().messages({
+        "string.guid": "Payment account ID must be a valid UUID",
       }),
     })
   ),

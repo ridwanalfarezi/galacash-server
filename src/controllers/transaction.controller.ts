@@ -88,3 +88,91 @@ export const getChartData = asyncHandler(async (req: Request, res: Response): Pr
     message: "Chart data fetched",
   });
 });
+
+/**
+ * Get transaction breakdown by category
+ * GET /api/transactions/breakdown
+ */
+export const getBreakdown = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const classId = req.user?.classId;
+  const { type, startDate, endDate } = req.query;
+
+  if (!classId) {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "User not authenticated",
+      },
+    });
+    return;
+  }
+
+  const chartType =
+    typeof type === "string"
+      ? (type as "income" | "expense")
+      : Array.isArray(type)
+        ? (type[0] as "income" | "expense")
+        : "income";
+
+  const start = startDate ? new Date(startDate as string) : undefined;
+  const end = endDate ? new Date(endDate as string) : undefined;
+
+  const breakdown = await transactionService.getBreakdown(classId, chartType, start, end);
+
+  res.status(200).json({
+    success: true,
+    data: breakdown,
+    message: "Transaction breakdown fetched",
+  });
+});
+
+/**
+ * Export transactions
+ * GET /api/transactions/export
+ */
+export const exportTransactions = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const classId = req.user?.classId;
+    const { format, type, category, startDate, endDate, search } = req.query;
+
+    if (!classId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        },
+      });
+      return;
+    }
+
+    const { exportService } = await import("@/services/export.service");
+
+    const filters = {
+      classId,
+      type: type ? (type as "income" | "expense") : undefined,
+      category: category as string | undefined,
+      startDate: startDate as string | undefined,
+      endDate: endDate as string | undefined,
+      search: search as string | undefined,
+    };
+
+    const exportFormat = (format as string) || "excel";
+
+    if (exportFormat === "csv") {
+      const csvData = await exportService.exportTransactionsToCSV(filters);
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", 'attachment; filename="transactions.csv"');
+      res.send(csvData);
+    } else {
+      const excelBuffer = await exportService.exportTransactionsToExcel(filters);
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader("Content-Disposition", 'attachment; filename="transactions.xlsx"');
+      res.send(excelBuffer);
+    }
+  }
+);

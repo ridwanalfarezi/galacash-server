@@ -23,6 +23,17 @@ enum TransactionType {
     expense
 }
 
+enum TransactionCategory {
+    kas_kelas
+    donation
+    fundraising
+    office_supplies
+    consumption
+    event
+    maintenance
+    other
+}
+
 enum FundCategory {
     education
     health
@@ -46,6 +57,16 @@ enum PaymentMethod {
     bank
     ewallet
     cash
+}
+
+enum AccountType {
+    bank
+    ewallet
+}
+
+enum AccountStatus {
+    active
+    inactive
 }
 
 // ============ MODELS ============
@@ -106,13 +127,14 @@ model RefreshToken {
 }
 
 model Transaction {
-    id          String          @id @default(uuid())
+    id          String              @id @default(uuid())
     classId     String
     type        TransactionType
+    category    TransactionCategory @default(other)
     description String
     amount      Float
-    date        DateTime        @default(now())
-    createdAt   DateTime        @default(now())
+    date        DateTime            @default(now())
+    createdAt   DateTime            @default(now())
 
     // Relations
     class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
@@ -120,6 +142,7 @@ model Transaction {
     @@index([classId])
     @@index([date])
     @@index([type])
+    @@index([category])
     @@map("transactions")
 }
 
@@ -152,29 +175,31 @@ model FundApplication {
 }
 
 model CashBill {
-    id              String         @id @default(uuid())
-    userId          String
-    classId         String
-    billId          String         @unique
-    month           String
-    year            Int
-    dueDate         DateTime
-    kasKelas        Float
-    biayaAdmin      Float
-    totalAmount     Float
-    status          BillStatus     @default(belum_dibayar)
-    paymentMethod   PaymentMethod?
-    paymentProofUrl String?
-    paidAt          DateTime?
-    confirmedBy     String?
-    confirmedAt     DateTime?
-    createdAt       DateTime       @default(now())
-    updatedAt       DateTime       @updatedAt
+    id               String         @id @default(uuid())
+    userId           String
+    classId          String
+    billId           String         @unique
+    month            String
+    year             Int
+    dueDate          DateTime
+    kasKelas         Float
+    biayaAdmin       Float
+    totalAmount      Float
+    status           BillStatus     @default(belum_dibayar)
+    paymentMethod    PaymentMethod?
+    paymentProofUrl  String?
+    paymentAccountId String?
+    paidAt           DateTime?
+    confirmedBy      String?
+    confirmedAt      DateTime?
+    createdAt        DateTime       @default(now())
+    updatedAt        DateTime       @updatedAt
 
     // Relations
-    user      User  @relation("Student", fields: [userId], references: [id], onDelete: Cascade)
-    class     Class @relation(fields: [classId], references: [id], onDelete: Cascade)
-    confirmer User? @relation("Confirmer", fields: [confirmedBy], references: [id], onDelete: SetNull)
+    user           User            @relation("Student", fields: [userId], references: [id], onDelete: Cascade)
+    class          Class           @relation(fields: [classId], references: [id], onDelete: Cascade)
+    confirmer      User?           @relation("Confirmer", fields: [confirmedBy], references: [id], onDelete: SetNull)
+    paymentAccount PaymentAccount? @relation(fields: [paymentAccountId], references: [id], onDelete: SetNull)
 
     @@unique([userId, month, year])
     @@index([userId])
@@ -182,4 +207,21 @@ model CashBill {
     @@index([status])
     @@index([dueDate])
     @@map("cash_bills")
+}
+
+model PaymentAccount {
+    id            String        @id @default(uuid())
+    name          String // e.g., "BCA - Class Treasury"
+    accountType   AccountType
+    accountNumber String?
+    accountHolder String?
+    description   String?
+    status        AccountStatus @default(active)
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
+
+    // Relations
+    cashBills CashBill[]
+
+    @@map("payment_accounts")
 }

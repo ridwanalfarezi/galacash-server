@@ -1,10 +1,11 @@
 import { DatabaseError } from "@/utils/errors";
 import { prisma } from "@/utils/prisma-client";
-import { Prisma, Transaction } from "@prisma/client";
+import { Prisma, Transaction, TransactionCategory, TransactionType } from "@prisma/client";
 
 export interface TransactionFilters {
   classId: string;
   type?: string;
+  category?: string;
   startDate?: Date;
   endDate?: Date;
   page?: number;
@@ -56,6 +57,7 @@ export class TransactionRepository {
     const {
       classId,
       type,
+      category,
       startDate,
       endDate,
       page = 1,
@@ -70,16 +72,20 @@ export class TransactionRepository {
       };
 
       if (type) {
-        where.type = type as any;
+        where.type = type as TransactionType;
+      }
+
+      if (category) {
+        where.category = category as TransactionCategory;
       }
 
       if (startDate || endDate) {
         where.date = {};
         if (startDate) {
-          (where.date as any).gte = startDate;
+          where.date.gte = startDate;
         }
         if (endDate) {
-          (where.date as any).lte = endDate;
+          where.date.lte = endDate;
         }
       }
 
@@ -186,10 +192,10 @@ export class TransactionRepository {
       if (startDate || endDate) {
         where.date = {};
         if (startDate) {
-          (where.date as any).gte = startDate;
+          where.date.gte = startDate;
         }
         if (endDate) {
-          (where.date as any).lte = endDate;
+          where.date.lte = endDate;
         }
       }
 
@@ -221,6 +227,107 @@ export class TransactionRepository {
       }
       throw error;
     }
+  }
+
+  /**
+   * Get transaction breakdown by category
+   * Returns data formatted for pie charts: { name, value, fill }
+   */
+  async getBreakdown(
+    classId: string,
+    type: "income" | "expense",
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<Array<{ name: string; value: number; fill: string }>> {
+    try {
+      const where: Prisma.TransactionWhereInput = {
+        classId,
+        type,
+      };
+
+      if (startDate || endDate) {
+        where.date = {};
+        if (startDate) {
+          where.date.gte = startDate;
+        }
+        if (endDate) {
+          where.date.lte = endDate;
+        }
+      }
+
+      const transactions = await prisma.transaction.findMany({
+        where,
+        select: {
+          category: true,
+          amount: true,
+        },
+      });
+
+      // Group by category and sum amounts
+      const categoryMap: Map<string, number> = new Map();
+
+      transactions.forEach((tx) => {
+        const category = tx.category || "other";
+        const current = categoryMap.get(category) || 0;
+        categoryMap.set(category, current + tx.amount);
+      });
+
+      // Color palettes
+      const incomeColors = [
+        "#50b89a",
+        "#8cd9a7",
+        "#34a0a4",
+        "#52b788",
+        "#74c69d",
+        "#95d5b2",
+        "#b7e4c7",
+        "#d8f3dc",
+      ];
+      const expenseColors = [
+        "#920c22",
+        "#af2038",
+        "#800016",
+        "#c9184a",
+        "#ff4d6d",
+        "#c9184a",
+        "#a4133c",
+        "#800f2f",
+      ];
+
+      const colors = type === "income" ? incomeColors : expenseColors;
+
+      // Convert to array and add colors
+      const breakdown = Array.from(categoryMap.entries()).map(([category, value], index) => ({
+        name: this.formatCategoryName(category),
+        value,
+        fill: colors[index % colors.length],
+      }));
+
+      return breakdown;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Failed to fetch transaction breakdown");
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Format category name for display
+   */
+  private formatCategoryName(category: string): string {
+    const nameMap: Record<string, string> = {
+      kas_kelas: "Kas Kelas",
+      donation: "Donasi",
+      fundraising: "Penggalangan Dana",
+      office_supplies: "Alat Tulis Kantor",
+      consumption: "Konsumsi",
+      event: "Acara",
+      maintenance: "Pemeliharaan",
+      other: "Lainnya",
+    };
+
+    return nameMap[category] || category;
   }
 }
 

@@ -102,7 +102,7 @@ export const rejectFundApplication = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const bendaharaId = req.user?.sub;
     const { id } = req.params;
-    const { reason } = req.body;
+    const { rejectionReason } = req.body;
     const applicationId = Array.isArray(id) ? id[0] : id;
 
     if (!bendaharaId) {
@@ -119,7 +119,7 @@ export const rejectFundApplication = asyncHandler(
     const application = await bendaharaService.rejectFundApplication(
       applicationId,
       bendaharaId,
-      reason
+      rejectionReason
     );
 
     res.status(200).json({

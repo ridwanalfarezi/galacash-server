@@ -1,5 +1,6 @@
 import { connectRedis, disconnectRedis } from "@/config/redis.config";
 import { initializeBillGenerator } from "@/jobs/bill-generator.job";
+import { authRateLimit, generalRateLimit } from "@/middlewares";
 import routes from "@/routes";
 import { globalErrorHandler } from "@/utils/errors";
 import { logger } from "@/utils/logger";
@@ -7,7 +8,6 @@ import { disconnectPrisma } from "@/utils/prisma-client";
 import cors from "cors";
 import "dotenv/config";
 import express, { Application, Request, Response } from "express";
-import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
@@ -49,24 +49,9 @@ app.use(
 );
 
 /**
- * Rate limiting
+ * Rate limiting - Apply to all API routes
  */
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 requests per windowMs
-  message: "Too many authentication attempts, please try again later",
-  skipSuccessfulRequests: true,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+app.use("/api", generalRateLimit);
 
 /**
  * Body parsers
@@ -107,8 +92,8 @@ try {
 /**
  * Apply rate limiting
  */
-app.use("/api/auth", authLimiter);
-app.use("/api", apiLimiter);
+app.use("/api/auth", authRateLimit);
+app.use("/api", generalRateLimit);
 
 /**
  * Mount routes

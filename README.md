@@ -193,7 +193,12 @@ galacash-server/
 │   │   └── migration_lock.toml
 │   └── config.ts            # Prisma v7 configuration
 ├── scripts/
-│   └── endpoint_smoke.py     # Automated endpoint testing
+│   ├── endpoint_smoke.py     # Comprehensive smoke test suite
+│   ├── run-smoke-test.sh     # Linux/Mac test runner
+│   ├── run-smoke-test.bat    # Windows test runner
+│   ├── README.md             # Smoke test documentation
+│   ├── EXAMPLES.md           # Usage examples and scenarios
+│   └── requirements.txt      # Python dependencies (empty - no deps needed)
 ├── docker-compose.yml       # Local development services
 ├── Dockerfile               # Production container
 ├── prisma.config.ts         # Prisma v7 configuration (datasource, migrations, seed)
@@ -301,7 +306,41 @@ curl -X GET http://localhost:3000/api/dashboard/summary \
 | `pnpm prisma:generate` | Generate Prisma Client to src/generated/ |
 | `pnpm prisma:migrate`  | Run database migrations                  |
 | `pnpm prisma:studio`   | Open Prisma Studio (interactive DB GUI)  |
-| `pnpm test:smoke`      | Run smoke test (Python endpoint tests)   |
+| `pnpm test:smoke`      | Run comprehensive smoke tests            |
+
+### Testing
+
+**Run comprehensive smoke tests:**
+
+```bash
+# Quick run with summary
+pnpm test:smoke
+
+# Or run directly with Python
+python scripts/endpoint_smoke.py
+
+# With verbose output
+VERBOSE=1 python scripts/endpoint_smoke.py
+
+# Save export files
+SAVE_DIR=./tmp/exports python scripts/endpoint_smoke.py
+
+# Windows PowerShell
+$env:VERBOSE="1"; python scripts/endpoint_smoke.py
+```
+
+**What the smoke tests cover:**
+- ✅ 127+ endpoint tests across all features
+- ✅ Authentication flows (login, refresh, logout)
+- ✅ User dashboard and transactions
+- ✅ Fund applications with all filters
+- ✅ Cash bills management
+- ✅ Bendahara operations
+- ✅ Export functionality (Excel/CSV)
+- ✅ Pagination, sorting, and date ranges
+- ✅ Labels and payment accounts
+
+See [`scripts/README.md`](scripts/README.md) for detailed documentation and [`scripts/EXAMPLES.md`](scripts/EXAMPLES.md) for usage examples.
 
 ### Database Management
 

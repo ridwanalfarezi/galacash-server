@@ -83,7 +83,7 @@ export class AuthService {
     // Verify refresh token signature
     try {
       verifyRefreshToken(refreshToken);
-    } catch (error) {
+    } catch {
       throw new AuthenticationError("Invalid or expired refresh token");
     }
 

@@ -56,7 +56,8 @@ export const ModelName = {
   RefreshToken: 'RefreshToken',
   Transaction: 'Transaction',
   FundApplication: 'FundApplication',
-  CashBill: 'CashBill'
+  CashBill: 'CashBill',
+  PaymentAccount: 'PaymentAccount'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -116,6 +117,7 @@ export const TransactionScalarFieldEnum = {
   id: 'id',
   classId: 'classId',
   type: 'type',
+  category: 'category',
   description: 'description',
   amount: 'amount',
   date: 'date',
@@ -159,6 +161,7 @@ export const CashBillScalarFieldEnum = {
   status: 'status',
   paymentMethod: 'paymentMethod',
   paymentProofUrl: 'paymentProofUrl',
+  paymentAccountId: 'paymentAccountId',
   paidAt: 'paidAt',
   confirmedBy: 'confirmedBy',
   confirmedAt: 'confirmedAt',
@@ -167,6 +170,21 @@ export const CashBillScalarFieldEnum = {
 } as const
 
 export type CashBillScalarFieldEnum = (typeof CashBillScalarFieldEnum)[keyof typeof CashBillScalarFieldEnum]
+
+
+export const PaymentAccountScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  accountType: 'accountType',
+  accountNumber: 'accountNumber',
+  accountHolder: 'accountHolder',
+  description: 'description',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PaymentAccountScalarFieldEnum = (typeof PaymentAccountScalarFieldEnum)[keyof typeof PaymentAccountScalarFieldEnum]
 
 
 export const SortOrder = {

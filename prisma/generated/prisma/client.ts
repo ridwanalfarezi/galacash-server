@@ -67,3 +67,8 @@ export type FundApplication = Prisma.FundApplicationModel
  * 
  */
 export type CashBill = Prisma.CashBillModel
+/**
+ * Model PaymentAccount
+ * 
+ */
+export type PaymentAccount = Prisma.PaymentAccountModel

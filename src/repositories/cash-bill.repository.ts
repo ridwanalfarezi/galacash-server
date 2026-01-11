@@ -1,6 +1,6 @@
 import { AppError, DatabaseError, NotFoundError } from "@/utils/errors";
 import { prisma } from "@/utils/prisma-client";
-import { CashBill, Prisma } from "@prisma/client";
+import { BillStatus, CashBill, PaymentMethod, Prisma } from "@prisma/client";
 
 export interface CashBillFilters {
   classId?: string;
@@ -10,6 +10,8 @@ export interface CashBillFilters {
   year?: number;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export interface PaginatedResponse<T> {
@@ -46,7 +48,17 @@ export class CashBillRepository {
    * Find all cash bills with filters and pagination
    */
   async findAll(filters: CashBillFilters = {}): Promise<PaginatedResponse<CashBill>> {
-    const { classId, userId, status, month, year, page = 1, limit = 20 } = filters;
+    const {
+      classId,
+      userId,
+      status,
+      month,
+      year,
+      page = 1,
+      limit = 20,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = filters;
 
     try {
       const where: Prisma.CashBillWhereInput = {};
@@ -60,7 +72,7 @@ export class CashBillRepository {
       }
 
       if (status) {
-        where.status = status as any;
+        where.status = status as BillStatus;
       }
 
       if (month) {
@@ -73,12 +85,16 @@ export class CashBillRepository {
 
       const skip = (page - 1) * limit;
 
+      // Map sortBy to valid field names
+      const orderByField =
+        sortBy === "dueDate" ? "dueDate" : sortBy === "month" ? "month" : "createdAt";
+
       const [data, total] = await Promise.all([
         prisma.cashBill.findMany({
           where,
           skip,
           take: limit,
-          orderBy: { createdAt: "desc" },
+          orderBy: { [orderByField]: sortOrder },
           include: {
             user: true,
             class: true,
@@ -110,7 +126,15 @@ export class CashBillRepository {
     userId: string,
     filters?: Partial<CashBillFilters>
   ): Promise<PaginatedResponse<CashBill>> {
-    const { status, month, year, page = 1, limit = 20 } = filters || {};
+    const {
+      status,
+      month,
+      year,
+      page = 1,
+      limit = 20,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = filters || {};
 
     try {
       const where: Prisma.CashBillWhereInput = {
@@ -118,7 +142,7 @@ export class CashBillRepository {
       };
 
       if (status) {
-        where.status = status as any;
+        where.status = status as BillStatus;
       }
 
       if (month) {
@@ -131,12 +155,16 @@ export class CashBillRepository {
 
       const skip = (page - 1) * limit;
 
+      // Map sortBy to valid field names
+      const orderByField =
+        sortBy === "dueDate" ? "dueDate" : sortBy === "month" ? "month" : "createdAt";
+
       const [data, total] = await Promise.all([
         prisma.cashBill.findMany({
           where,
           skip,
           take: limit,
-          orderBy: { createdAt: "desc" },
+          orderBy: { [orderByField]: sortOrder },
           include: {
             user: true,
             class: true,
@@ -237,11 +265,11 @@ export class CashBillRepository {
       }
 
       const updateData: Prisma.CashBillUpdateInput = {
-        status: status as any,
+        status: status as BillStatus,
       };
 
       if (data?.paymentMethod) {
-        updateData.paymentMethod = data.paymentMethod as any;
+        updateData.paymentMethod = data.paymentMethod as PaymentMethod;
       }
 
       if (data?.paymentProofUrl) {

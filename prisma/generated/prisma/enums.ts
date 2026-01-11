@@ -25,6 +25,20 @@ export const TransactionType = {
 export type TransactionType = (typeof TransactionType)[keyof typeof TransactionType]
 
 
+export const TransactionCategory = {
+  kas_kelas: 'kas_kelas',
+  donation: 'donation',
+  fundraising: 'fundraising',
+  office_supplies: 'office_supplies',
+  consumption: 'consumption',
+  event: 'event',
+  maintenance: 'maintenance',
+  other: 'other'
+} as const
+
+export type TransactionCategory = (typeof TransactionCategory)[keyof typeof TransactionCategory]
+
+
 export const FundCategory = {
   education: 'education',
   health: 'health',
@@ -60,3 +74,19 @@ export const PaymentMethod = {
 } as const
 
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
+
+
+export const AccountType = {
+  bank: 'bank',
+  ewallet: 'ewallet'
+} as const
+
+export type AccountType = (typeof AccountType)[keyof typeof AccountType]
+
+
+export const AccountStatus = {
+  active: 'active',
+  inactive: 'inactive'
+} as const
+
+export type AccountStatus = (typeof AccountStatus)[keyof typeof AccountStatus]

@@ -134,6 +134,13 @@ export type EnumTransactionTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumTransactionTypeFilter<$PrismaModel> | $Enums.TransactionType
 }
 
+export type EnumTransactionCategoryFilter<$PrismaModel = never> = {
+  equals?: $Enums.TransactionCategory | Prisma.EnumTransactionCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.TransactionCategory[] | Prisma.ListEnumTransactionCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TransactionCategory[] | Prisma.ListEnumTransactionCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTransactionCategoryFilter<$PrismaModel> | $Enums.TransactionCategory
+}
+
 export type FloatFilter<$PrismaModel = never> = {
   equals?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   in?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
@@ -153,6 +160,16 @@ export type EnumTransactionTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumTransactionTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumTransactionTypeFilter<$PrismaModel>
+}
+
+export type EnumTransactionCategoryWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TransactionCategory | Prisma.EnumTransactionCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.TransactionCategory[] | Prisma.ListEnumTransactionCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TransactionCategory[] | Prisma.ListEnumTransactionCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTransactionCategoryWithAggregatesFilter<$PrismaModel> | $Enums.TransactionCategory
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTransactionCategoryFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTransactionCategoryFilter<$PrismaModel>
 }
 
 export type FloatWithAggregatesFilter<$PrismaModel = never> = {
@@ -291,6 +308,40 @@ export type EnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel = never> 
   _max?: Prisma.NestedEnumPaymentMethodNullableFilter<$PrismaModel>
 }
 
+export type EnumAccountTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountType | Prisma.EnumAccountTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountType[] | Prisma.ListEnumAccountTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountType[] | Prisma.ListEnumAccountTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountTypeFilter<$PrismaModel> | $Enums.AccountType
+}
+
+export type EnumAccountStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountStatus | Prisma.EnumAccountStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountStatus[] | Prisma.ListEnumAccountStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountStatus[] | Prisma.ListEnumAccountStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountStatusFilter<$PrismaModel> | $Enums.AccountStatus
+}
+
+export type EnumAccountTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountType | Prisma.EnumAccountTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountType[] | Prisma.ListEnumAccountTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountType[] | Prisma.ListEnumAccountTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountTypeWithAggregatesFilter<$PrismaModel> | $Enums.AccountType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAccountTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAccountTypeFilter<$PrismaModel>
+}
+
+export type EnumAccountStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountStatus | Prisma.EnumAccountStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountStatus[] | Prisma.ListEnumAccountStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountStatus[] | Prisma.ListEnumAccountStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountStatusWithAggregatesFilter<$PrismaModel> | $Enums.AccountStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAccountStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAccountStatusFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -424,6 +475,13 @@ export type NestedEnumTransactionTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumTransactionTypeFilter<$PrismaModel> | $Enums.TransactionType
 }
 
+export type NestedEnumTransactionCategoryFilter<$PrismaModel = never> = {
+  equals?: $Enums.TransactionCategory | Prisma.EnumTransactionCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.TransactionCategory[] | Prisma.ListEnumTransactionCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TransactionCategory[] | Prisma.ListEnumTransactionCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTransactionCategoryFilter<$PrismaModel> | $Enums.TransactionCategory
+}
+
 export type NestedFloatFilter<$PrismaModel = never> = {
   equals?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   in?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
@@ -443,6 +501,16 @@ export type NestedEnumTransactionTypeWithAggregatesFilter<$PrismaModel = never> 
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumTransactionTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumTransactionTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumTransactionCategoryWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TransactionCategory | Prisma.EnumTransactionCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.TransactionCategory[] | Prisma.ListEnumTransactionCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TransactionCategory[] | Prisma.ListEnumTransactionCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTransactionCategoryWithAggregatesFilter<$PrismaModel> | $Enums.TransactionCategory
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTransactionCategoryFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTransactionCategoryFilter<$PrismaModel>
 }
 
 export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
@@ -568,6 +636,40 @@ export type NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel = n
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumPaymentMethodNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumPaymentMethodNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumAccountTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountType | Prisma.EnumAccountTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountType[] | Prisma.ListEnumAccountTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountType[] | Prisma.ListEnumAccountTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountTypeFilter<$PrismaModel> | $Enums.AccountType
+}
+
+export type NestedEnumAccountStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountStatus | Prisma.EnumAccountStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountStatus[] | Prisma.ListEnumAccountStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountStatus[] | Prisma.ListEnumAccountStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountStatusFilter<$PrismaModel> | $Enums.AccountStatus
+}
+
+export type NestedEnumAccountTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountType | Prisma.EnumAccountTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountType[] | Prisma.ListEnumAccountTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountType[] | Prisma.ListEnumAccountTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountTypeWithAggregatesFilter<$PrismaModel> | $Enums.AccountType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAccountTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAccountTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumAccountStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountStatus | Prisma.EnumAccountStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountStatus[] | Prisma.ListEnumAccountStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountStatus[] | Prisma.ListEnumAccountStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountStatusWithAggregatesFilter<$PrismaModel> | $Enums.AccountStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAccountStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAccountStatusFilter<$PrismaModel>
 }
 
 

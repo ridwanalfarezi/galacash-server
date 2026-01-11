@@ -5,6 +5,7 @@ import {
 } from "@/repositories/cash-bill.repository";
 import { AuthorizationError, BusinessLogicError, NotFoundError } from "@/utils/errors";
 import { logger } from "@/utils/logger";
+import { CashBill, PaymentMethod } from "@prisma/client";
 import { CacheService } from "./cache.service";
 
 export interface PayBillData {
@@ -29,7 +30,7 @@ export class CashBillService {
   async getMyBills(
     userId: string,
     filters?: Partial<CashBillFilters>
-  ): Promise<PaginatedResponse<any>> {
+  ): Promise<PaginatedResponse<CashBill>> {
     const mergedFilters: CashBillFilters = {
       userId,
       page: filters?.page || 1,
@@ -44,7 +45,7 @@ export class CashBillService {
     const cacheKey = `my-bills:${userId}:${filterString}`;
 
     // Try to get from cache
-    const cached = await this.cacheService.getCached<PaginatedResponse<any>>(cacheKey);
+    const cached = await this.cacheService.getCached<PaginatedResponse<CashBill>>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -83,10 +84,10 @@ export class CashBillService {
   /**
    * Get bill by ID with authorization check
    */
-  async getBillById(id: string, userId: string): Promise<any> {
+  async getBillById(id: string, userId: string): Promise<CashBill> {
     // Try to get from cache
     const cacheKey = this.cacheService.cashBillKey(id);
-    const cached = await this.cacheService.getCached<any>(cacheKey);
+    const cached = await this.cacheService.getCached<CashBill>(cacheKey);
     if (cached) {
       // Authorization check for cached result
       this.checkOwnership(cached, userId);
@@ -123,8 +124,9 @@ export class CashBillService {
     billId: string,
     userId: string,
     paymentMethod: "bank" | "ewallet" | "cash",
-    paymentProofUrl: string
-  ): Promise<any> {
+    paymentProofUrl: string,
+    paymentAccountId?: string
+  ): Promise<CashBill> {
     try {
       // Get bill and verify ownership
       const bill = await this.cashBillRepository.findById(billId);
@@ -145,13 +147,35 @@ export class CashBillService {
         );
       }
 
+      // Validate payment account if provided
+      if (paymentAccountId) {
+        const { paymentAccountService } = await import("./payment-account.service");
+        const account = await paymentAccountService.getById(paymentAccountId);
+
+        if (account.status !== "active") {
+          throw new BusinessLogicError("Selected payment account is not active");
+        }
+      }
+
       // Update bill status to menunggu_konfirmasi and store payment proof
-      const updatedBill = await this.cashBillRepository.update(billId, {
+      const updateInput: {
+        status: "menunggu_konfirmasi";
+        paymentMethod: PaymentMethod;
+        paymentProofUrl: string;
+        paymentAccountId?: string | null;
+        paidAt: Date;
+      } = {
         status: "menunggu_konfirmasi",
-        paymentMethod: paymentMethod as any,
+        paymentMethod: paymentMethod as PaymentMethod,
         paymentProofUrl,
         paidAt: new Date(),
-      });
+      };
+
+      if (paymentAccountId) {
+        updateInput.paymentAccountId = paymentAccountId;
+      }
+
+      const updatedBill = await this.cashBillRepository.update(billId, updateInput);
 
       // Invalidate caches
       await this.invalidateBillCache(userId, bill.classId);
@@ -186,7 +210,7 @@ export class CashBillService {
   /**
    * Cancel payment for a bill
    */
-  async cancelPayment(billId: string, userId: string): Promise<any> {
+  async cancelPayment(billId: string, userId: string): Promise<CashBill> {
     try {
       // Get bill and verify ownership
       const bill = await this.cashBillRepository.findById(billId);
@@ -235,18 +259,33 @@ export class CashBillService {
   }
 
   async getPendingByUser(userId: string) {
-    return this.cashBillRepository.findByUserId(userId, {
-      userId,
-      status: "menunggu_konfirmasi",
-      page: 1,
-      limit: 50,
-    });
+    // Get both unpaid bills and bills awaiting confirmation
+    const [unpaidBills, pendingConfirmationBills] = await Promise.all([
+      this.cashBillRepository.findByUserId(userId, {
+        userId,
+        status: "belum_dibayar",
+        page: 1,
+        limit: 50,
+      }),
+      this.cashBillRepository.findByUserId(userId, {
+        userId,
+        status: "menunggu_konfirmasi",
+        page: 1,
+        limit: 50,
+      }),
+    ]);
+
+    // Combine and return
+    return {
+      data: [...unpaidBills.data, ...pendingConfirmationBills.data],
+      total: unpaidBills.total + pendingConfirmationBills.total,
+    };
   }
 
   /**
    * Check if bill belongs to user
    */
-  private checkOwnership(bill: any, userId: string): void {
+  private checkOwnership(bill: CashBill, userId: string): void {
     if (bill.userId !== userId) {
       throw new AuthorizationError("This bill does not belong to you");
     }

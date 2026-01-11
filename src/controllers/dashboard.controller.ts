@@ -9,6 +9,7 @@ import { Request, Response } from "express";
 export const getSummary = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const classId = req.user?.classId;
   const userRole = req.user?.role;
+  const { startDate, endDate } = req.query;
 
   if (!classId) {
     res.status(401).json({
@@ -21,7 +22,10 @@ export const getSummary = asyncHandler(async (req: Request, res: Response): Prom
     return;
   }
 
-  const summary = await transactionService.getDashboardSummary(classId, userRole);
+  const start = startDate ? new Date(startDate as string) : undefined;
+  const end = endDate ? new Date(endDate as string) : undefined;
+
+  const summary = await transactionService.getDashboardSummary(classId, userRole, start, end);
 
   res.status(200).json({
     success: true,
@@ -31,7 +35,7 @@ export const getSummary = asyncHandler(async (req: Request, res: Response): Prom
 });
 
 /**
- * Get pending cash bills
+ * Get pending cash bills (unpaid and awaiting confirmation)
  * GET /api/dashboard/pending-bills
  */
 export const getPendingBills = asyncHandler(async (req: Request, res: Response): Promise<void> => {

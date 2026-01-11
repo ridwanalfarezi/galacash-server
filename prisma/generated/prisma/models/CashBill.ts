@@ -54,6 +54,7 @@ export type CashBillMinAggregateOutputType = {
   status: $Enums.BillStatus | null
   paymentMethod: $Enums.PaymentMethod | null
   paymentProofUrl: string | null
+  paymentAccountId: string | null
   paidAt: Date | null
   confirmedBy: string | null
   confirmedAt: Date | null
@@ -75,6 +76,7 @@ export type CashBillMaxAggregateOutputType = {
   status: $Enums.BillStatus | null
   paymentMethod: $Enums.PaymentMethod | null
   paymentProofUrl: string | null
+  paymentAccountId: string | null
   paidAt: Date | null
   confirmedBy: string | null
   confirmedAt: Date | null
@@ -96,6 +98,7 @@ export type CashBillCountAggregateOutputType = {
   status: number
   paymentMethod: number
   paymentProofUrl: number
+  paymentAccountId: number
   paidAt: number
   confirmedBy: number
   confirmedAt: number
@@ -133,6 +136,7 @@ export type CashBillMinAggregateInputType = {
   status?: true
   paymentMethod?: true
   paymentProofUrl?: true
+  paymentAccountId?: true
   paidAt?: true
   confirmedBy?: true
   confirmedAt?: true
@@ -154,6 +158,7 @@ export type CashBillMaxAggregateInputType = {
   status?: true
   paymentMethod?: true
   paymentProofUrl?: true
+  paymentAccountId?: true
   paidAt?: true
   confirmedBy?: true
   confirmedAt?: true
@@ -175,6 +180,7 @@ export type CashBillCountAggregateInputType = {
   status?: true
   paymentMethod?: true
   paymentProofUrl?: true
+  paymentAccountId?: true
   paidAt?: true
   confirmedBy?: true
   confirmedAt?: true
@@ -283,6 +289,7 @@ export type CashBillGroupByOutputType = {
   status: $Enums.BillStatus
   paymentMethod: $Enums.PaymentMethod | null
   paymentProofUrl: string | null
+  paymentAccountId: string | null
   paidAt: Date | null
   confirmedBy: string | null
   confirmedAt: Date | null
@@ -327,6 +334,7 @@ export type CashBillWhereInput = {
   status?: Prisma.EnumBillStatusFilter<"CashBill"> | $Enums.BillStatus
   paymentMethod?: Prisma.EnumPaymentMethodNullableFilter<"CashBill"> | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.StringNullableFilter<"CashBill"> | string | null
+  paymentAccountId?: Prisma.StringNullableFilter<"CashBill"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"CashBill"> | Date | string | null
   confirmedBy?: Prisma.StringNullableFilter<"CashBill"> | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"CashBill"> | Date | string | null
@@ -335,6 +343,7 @@ export type CashBillWhereInput = {
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   class?: Prisma.XOR<Prisma.ClassScalarRelationFilter, Prisma.ClassWhereInput>
   confirmer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  paymentAccount?: Prisma.XOR<Prisma.PaymentAccountNullableScalarRelationFilter, Prisma.PaymentAccountWhereInput> | null
 }
 
 export type CashBillOrderByWithRelationInput = {
@@ -351,6 +360,7 @@ export type CashBillOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  paymentAccountId?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -359,6 +369,7 @@ export type CashBillOrderByWithRelationInput = {
   user?: Prisma.UserOrderByWithRelationInput
   class?: Prisma.ClassOrderByWithRelationInput
   confirmer?: Prisma.UserOrderByWithRelationInput
+  paymentAccount?: Prisma.PaymentAccountOrderByWithRelationInput
 }
 
 export type CashBillWhereUniqueInput = Prisma.AtLeast<{
@@ -379,6 +390,7 @@ export type CashBillWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumBillStatusFilter<"CashBill"> | $Enums.BillStatus
   paymentMethod?: Prisma.EnumPaymentMethodNullableFilter<"CashBill"> | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.StringNullableFilter<"CashBill"> | string | null
+  paymentAccountId?: Prisma.StringNullableFilter<"CashBill"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"CashBill"> | Date | string | null
   confirmedBy?: Prisma.StringNullableFilter<"CashBill"> | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"CashBill"> | Date | string | null
@@ -387,6 +399,7 @@ export type CashBillWhereUniqueInput = Prisma.AtLeast<{
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   class?: Prisma.XOR<Prisma.ClassScalarRelationFilter, Prisma.ClassWhereInput>
   confirmer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  paymentAccount?: Prisma.XOR<Prisma.PaymentAccountNullableScalarRelationFilter, Prisma.PaymentAccountWhereInput> | null
 }, "id" | "billId" | "userId_month_year">
 
 export type CashBillOrderByWithAggregationInput = {
@@ -403,6 +416,7 @@ export type CashBillOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  paymentAccountId?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -432,6 +446,7 @@ export type CashBillScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumBillStatusWithAggregatesFilter<"CashBill"> | $Enums.BillStatus
   paymentMethod?: Prisma.EnumPaymentMethodNullableWithAggregatesFilter<"CashBill"> | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.StringNullableWithAggregatesFilter<"CashBill"> | string | null
+  paymentAccountId?: Prisma.StringNullableWithAggregatesFilter<"CashBill"> | string | null
   paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CashBill"> | Date | string | null
   confirmedBy?: Prisma.StringNullableWithAggregatesFilter<"CashBill"> | string | null
   confirmedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CashBill"> | Date | string | null
@@ -458,6 +473,7 @@ export type CashBillCreateInput = {
   user: Prisma.UserCreateNestedOneWithoutCashBillsInput
   class: Prisma.ClassCreateNestedOneWithoutCashBillsInput
   confirmer?: Prisma.UserCreateNestedOneWithoutConfirmedCashBillsInput
+  paymentAccount?: Prisma.PaymentAccountCreateNestedOneWithoutCashBillsInput
 }
 
 export type CashBillUncheckedCreateInput = {
@@ -474,6 +490,7 @@ export type CashBillUncheckedCreateInput = {
   status?: $Enums.BillStatus
   paymentMethod?: $Enums.PaymentMethod | null
   paymentProofUrl?: string | null
+  paymentAccountId?: string | null
   paidAt?: Date | string | null
   confirmedBy?: string | null
   confirmedAt?: Date | string | null
@@ -500,6 +517,7 @@ export type CashBillUpdateInput = {
   user?: Prisma.UserUpdateOneRequiredWithoutCashBillsNestedInput
   class?: Prisma.ClassUpdateOneRequiredWithoutCashBillsNestedInput
   confirmer?: Prisma.UserUpdateOneWithoutConfirmedCashBillsNestedInput
+  paymentAccount?: Prisma.PaymentAccountUpdateOneWithoutCashBillsNestedInput
 }
 
 export type CashBillUncheckedUpdateInput = {
@@ -516,6 +534,7 @@ export type CashBillUncheckedUpdateInput = {
   status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
   paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -537,6 +556,7 @@ export type CashBillCreateManyInput = {
   status?: $Enums.BillStatus
   paymentMethod?: $Enums.PaymentMethod | null
   paymentProofUrl?: string | null
+  paymentAccountId?: string | null
   paidAt?: Date | string | null
   confirmedBy?: string | null
   confirmedAt?: Date | string | null
@@ -576,6 +596,7 @@ export type CashBillUncheckedUpdateManyInput = {
   status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
   paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -613,6 +634,7 @@ export type CashBillCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   paymentMethod?: Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrder
+  paymentAccountId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   confirmedBy?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
@@ -641,6 +663,7 @@ export type CashBillMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   paymentMethod?: Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrder
+  paymentAccountId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   confirmedBy?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
@@ -662,6 +685,7 @@ export type CashBillMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   paymentMethod?: Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrder
+  paymentAccountId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   confirmedBy?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
@@ -818,6 +842,48 @@ export type NullableEnumPaymentMethodFieldUpdateOperationsInput = {
   set?: $Enums.PaymentMethod | null
 }
 
+export type CashBillCreateNestedManyWithoutPaymentAccountInput = {
+  create?: Prisma.XOR<Prisma.CashBillCreateWithoutPaymentAccountInput, Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput> | Prisma.CashBillCreateWithoutPaymentAccountInput[] | Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput[]
+  connectOrCreate?: Prisma.CashBillCreateOrConnectWithoutPaymentAccountInput | Prisma.CashBillCreateOrConnectWithoutPaymentAccountInput[]
+  createMany?: Prisma.CashBillCreateManyPaymentAccountInputEnvelope
+  connect?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+}
+
+export type CashBillUncheckedCreateNestedManyWithoutPaymentAccountInput = {
+  create?: Prisma.XOR<Prisma.CashBillCreateWithoutPaymentAccountInput, Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput> | Prisma.CashBillCreateWithoutPaymentAccountInput[] | Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput[]
+  connectOrCreate?: Prisma.CashBillCreateOrConnectWithoutPaymentAccountInput | Prisma.CashBillCreateOrConnectWithoutPaymentAccountInput[]
+  createMany?: Prisma.CashBillCreateManyPaymentAccountInputEnvelope
+  connect?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+}
+
+export type CashBillUpdateManyWithoutPaymentAccountNestedInput = {
+  create?: Prisma.XOR<Prisma.CashBillCreateWithoutPaymentAccountInput, Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput> | Prisma.CashBillCreateWithoutPaymentAccountInput[] | Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput[]
+  connectOrCreate?: Prisma.CashBillCreateOrConnectWithoutPaymentAccountInput | Prisma.CashBillCreateOrConnectWithoutPaymentAccountInput[]
+  upsert?: Prisma.CashBillUpsertWithWhereUniqueWithoutPaymentAccountInput | Prisma.CashBillUpsertWithWhereUniqueWithoutPaymentAccountInput[]
+  createMany?: Prisma.CashBillCreateManyPaymentAccountInputEnvelope
+  set?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+  disconnect?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+  delete?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+  connect?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+  update?: Prisma.CashBillUpdateWithWhereUniqueWithoutPaymentAccountInput | Prisma.CashBillUpdateWithWhereUniqueWithoutPaymentAccountInput[]
+  updateMany?: Prisma.CashBillUpdateManyWithWhereWithoutPaymentAccountInput | Prisma.CashBillUpdateManyWithWhereWithoutPaymentAccountInput[]
+  deleteMany?: Prisma.CashBillScalarWhereInput | Prisma.CashBillScalarWhereInput[]
+}
+
+export type CashBillUncheckedUpdateManyWithoutPaymentAccountNestedInput = {
+  create?: Prisma.XOR<Prisma.CashBillCreateWithoutPaymentAccountInput, Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput> | Prisma.CashBillCreateWithoutPaymentAccountInput[] | Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput[]
+  connectOrCreate?: Prisma.CashBillCreateOrConnectWithoutPaymentAccountInput | Prisma.CashBillCreateOrConnectWithoutPaymentAccountInput[]
+  upsert?: Prisma.CashBillUpsertWithWhereUniqueWithoutPaymentAccountInput | Prisma.CashBillUpsertWithWhereUniqueWithoutPaymentAccountInput[]
+  createMany?: Prisma.CashBillCreateManyPaymentAccountInputEnvelope
+  set?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+  disconnect?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+  delete?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+  connect?: Prisma.CashBillWhereUniqueInput | Prisma.CashBillWhereUniqueInput[]
+  update?: Prisma.CashBillUpdateWithWhereUniqueWithoutPaymentAccountInput | Prisma.CashBillUpdateWithWhereUniqueWithoutPaymentAccountInput[]
+  updateMany?: Prisma.CashBillUpdateManyWithWhereWithoutPaymentAccountInput | Prisma.CashBillUpdateManyWithWhereWithoutPaymentAccountInput[]
+  deleteMany?: Prisma.CashBillScalarWhereInput | Prisma.CashBillScalarWhereInput[]
+}
+
 export type CashBillCreateWithoutClassInput = {
   id?: string
   billId: string
@@ -836,6 +902,7 @@ export type CashBillCreateWithoutClassInput = {
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutCashBillsInput
   confirmer?: Prisma.UserCreateNestedOneWithoutConfirmedCashBillsInput
+  paymentAccount?: Prisma.PaymentAccountCreateNestedOneWithoutCashBillsInput
 }
 
 export type CashBillUncheckedCreateWithoutClassInput = {
@@ -851,6 +918,7 @@ export type CashBillUncheckedCreateWithoutClassInput = {
   status?: $Enums.BillStatus
   paymentMethod?: $Enums.PaymentMethod | null
   paymentProofUrl?: string | null
+  paymentAccountId?: string | null
   paidAt?: Date | string | null
   confirmedBy?: string | null
   confirmedAt?: Date | string | null
@@ -901,6 +969,7 @@ export type CashBillScalarWhereInput = {
   status?: Prisma.EnumBillStatusFilter<"CashBill"> | $Enums.BillStatus
   paymentMethod?: Prisma.EnumPaymentMethodNullableFilter<"CashBill"> | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.StringNullableFilter<"CashBill"> | string | null
+  paymentAccountId?: Prisma.StringNullableFilter<"CashBill"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"CashBill"> | Date | string | null
   confirmedBy?: Prisma.StringNullableFilter<"CashBill"> | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"CashBill"> | Date | string | null
@@ -926,6 +995,7 @@ export type CashBillCreateWithoutUserInput = {
   updatedAt?: Date | string
   class: Prisma.ClassCreateNestedOneWithoutCashBillsInput
   confirmer?: Prisma.UserCreateNestedOneWithoutConfirmedCashBillsInput
+  paymentAccount?: Prisma.PaymentAccountCreateNestedOneWithoutCashBillsInput
 }
 
 export type CashBillUncheckedCreateWithoutUserInput = {
@@ -941,6 +1011,7 @@ export type CashBillUncheckedCreateWithoutUserInput = {
   status?: $Enums.BillStatus
   paymentMethod?: $Enums.PaymentMethod | null
   paymentProofUrl?: string | null
+  paymentAccountId?: string | null
   paidAt?: Date | string | null
   confirmedBy?: string | null
   confirmedAt?: Date | string | null
@@ -976,6 +1047,7 @@ export type CashBillCreateWithoutConfirmerInput = {
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutCashBillsInput
   class: Prisma.ClassCreateNestedOneWithoutCashBillsInput
+  paymentAccount?: Prisma.PaymentAccountCreateNestedOneWithoutCashBillsInput
 }
 
 export type CashBillUncheckedCreateWithoutConfirmerInput = {
@@ -992,6 +1064,7 @@ export type CashBillUncheckedCreateWithoutConfirmerInput = {
   status?: $Enums.BillStatus
   paymentMethod?: $Enums.PaymentMethod | null
   paymentProofUrl?: string | null
+  paymentAccountId?: string | null
   paidAt?: Date | string | null
   confirmedAt?: Date | string | null
   createdAt?: Date | string
@@ -1040,6 +1113,74 @@ export type CashBillUpdateManyWithWhereWithoutConfirmerInput = {
   data: Prisma.XOR<Prisma.CashBillUpdateManyMutationInput, Prisma.CashBillUncheckedUpdateManyWithoutConfirmerInput>
 }
 
+export type CashBillCreateWithoutPaymentAccountInput = {
+  id?: string
+  billId: string
+  month: string
+  year: number
+  dueDate: Date | string
+  kasKelas: number
+  biayaAdmin: number
+  totalAmount: number
+  status?: $Enums.BillStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  paymentProofUrl?: string | null
+  paidAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutCashBillsInput
+  class: Prisma.ClassCreateNestedOneWithoutCashBillsInput
+  confirmer?: Prisma.UserCreateNestedOneWithoutConfirmedCashBillsInput
+}
+
+export type CashBillUncheckedCreateWithoutPaymentAccountInput = {
+  id?: string
+  userId: string
+  classId: string
+  billId: string
+  month: string
+  year: number
+  dueDate: Date | string
+  kasKelas: number
+  biayaAdmin: number
+  totalAmount: number
+  status?: $Enums.BillStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  paymentProofUrl?: string | null
+  paidAt?: Date | string | null
+  confirmedBy?: string | null
+  confirmedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type CashBillCreateOrConnectWithoutPaymentAccountInput = {
+  where: Prisma.CashBillWhereUniqueInput
+  create: Prisma.XOR<Prisma.CashBillCreateWithoutPaymentAccountInput, Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput>
+}
+
+export type CashBillCreateManyPaymentAccountInputEnvelope = {
+  data: Prisma.CashBillCreateManyPaymentAccountInput | Prisma.CashBillCreateManyPaymentAccountInput[]
+  skipDuplicates?: boolean
+}
+
+export type CashBillUpsertWithWhereUniqueWithoutPaymentAccountInput = {
+  where: Prisma.CashBillWhereUniqueInput
+  update: Prisma.XOR<Prisma.CashBillUpdateWithoutPaymentAccountInput, Prisma.CashBillUncheckedUpdateWithoutPaymentAccountInput>
+  create: Prisma.XOR<Prisma.CashBillCreateWithoutPaymentAccountInput, Prisma.CashBillUncheckedCreateWithoutPaymentAccountInput>
+}
+
+export type CashBillUpdateWithWhereUniqueWithoutPaymentAccountInput = {
+  where: Prisma.CashBillWhereUniqueInput
+  data: Prisma.XOR<Prisma.CashBillUpdateWithoutPaymentAccountInput, Prisma.CashBillUncheckedUpdateWithoutPaymentAccountInput>
+}
+
+export type CashBillUpdateManyWithWhereWithoutPaymentAccountInput = {
+  where: Prisma.CashBillScalarWhereInput
+  data: Prisma.XOR<Prisma.CashBillUpdateManyMutationInput, Prisma.CashBillUncheckedUpdateManyWithoutPaymentAccountInput>
+}
+
 export type CashBillCreateManyClassInput = {
   id?: string
   userId: string
@@ -1053,6 +1194,7 @@ export type CashBillCreateManyClassInput = {
   status?: $Enums.BillStatus
   paymentMethod?: $Enums.PaymentMethod | null
   paymentProofUrl?: string | null
+  paymentAccountId?: string | null
   paidAt?: Date | string | null
   confirmedBy?: string | null
   confirmedAt?: Date | string | null
@@ -1078,6 +1220,7 @@ export type CashBillUpdateWithoutClassInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutCashBillsNestedInput
   confirmer?: Prisma.UserUpdateOneWithoutConfirmedCashBillsNestedInput
+  paymentAccount?: Prisma.PaymentAccountUpdateOneWithoutCashBillsNestedInput
 }
 
 export type CashBillUncheckedUpdateWithoutClassInput = {
@@ -1093,6 +1236,7 @@ export type CashBillUncheckedUpdateWithoutClassInput = {
   status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
   paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1113,6 +1257,7 @@ export type CashBillUncheckedUpdateManyWithoutClassInput = {
   status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
   paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1133,6 +1278,7 @@ export type CashBillCreateManyUserInput = {
   status?: $Enums.BillStatus
   paymentMethod?: $Enums.PaymentMethod | null
   paymentProofUrl?: string | null
+  paymentAccountId?: string | null
   paidAt?: Date | string | null
   confirmedBy?: string | null
   confirmedAt?: Date | string | null
@@ -1154,6 +1300,7 @@ export type CashBillCreateManyConfirmerInput = {
   status?: $Enums.BillStatus
   paymentMethod?: $Enums.PaymentMethod | null
   paymentProofUrl?: string | null
+  paymentAccountId?: string | null
   paidAt?: Date | string | null
   confirmedAt?: Date | string | null
   createdAt?: Date | string
@@ -1178,6 +1325,7 @@ export type CashBillUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class?: Prisma.ClassUpdateOneRequiredWithoutCashBillsNestedInput
   confirmer?: Prisma.UserUpdateOneWithoutConfirmedCashBillsNestedInput
+  paymentAccount?: Prisma.PaymentAccountUpdateOneWithoutCashBillsNestedInput
 }
 
 export type CashBillUncheckedUpdateWithoutUserInput = {
@@ -1193,6 +1341,7 @@ export type CashBillUncheckedUpdateWithoutUserInput = {
   status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
   paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1213,6 +1362,7 @@ export type CashBillUncheckedUpdateManyWithoutUserInput = {
   status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
   paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1238,6 +1388,7 @@ export type CashBillUpdateWithoutConfirmerInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutCashBillsNestedInput
   class?: Prisma.ClassUpdateOneRequiredWithoutCashBillsNestedInput
+  paymentAccount?: Prisma.PaymentAccountUpdateOneWithoutCashBillsNestedInput
 }
 
 export type CashBillUncheckedUpdateWithoutConfirmerInput = {
@@ -1254,6 +1405,7 @@ export type CashBillUncheckedUpdateWithoutConfirmerInput = {
   status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
   paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1274,7 +1426,92 @@ export type CashBillUncheckedUpdateManyWithoutConfirmerInput = {
   status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
   paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type CashBillCreateManyPaymentAccountInput = {
+  id?: string
+  userId: string
+  classId: string
+  billId: string
+  month: string
+  year: number
+  dueDate: Date | string
+  kasKelas: number
+  biayaAdmin: number
+  totalAmount: number
+  status?: $Enums.BillStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  paymentProofUrl?: string | null
+  paidAt?: Date | string | null
+  confirmedBy?: string | null
+  confirmedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type CashBillUpdateWithoutPaymentAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  billId?: Prisma.StringFieldUpdateOperationsInput | string
+  month?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kasKelas?: Prisma.FloatFieldUpdateOperationsInput | number
+  biayaAdmin?: Prisma.FloatFieldUpdateOperationsInput | number
+  totalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutCashBillsNestedInput
+  class?: Prisma.ClassUpdateOneRequiredWithoutCashBillsNestedInput
+  confirmer?: Prisma.UserUpdateOneWithoutConfirmedCashBillsNestedInput
+}
+
+export type CashBillUncheckedUpdateWithoutPaymentAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  classId?: Prisma.StringFieldUpdateOperationsInput | string
+  billId?: Prisma.StringFieldUpdateOperationsInput | string
+  month?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kasKelas?: Prisma.FloatFieldUpdateOperationsInput | number
+  biayaAdmin?: Prisma.FloatFieldUpdateOperationsInput | number
+  totalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type CashBillUncheckedUpdateManyWithoutPaymentAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  classId?: Prisma.StringFieldUpdateOperationsInput | string
+  billId?: Prisma.StringFieldUpdateOperationsInput | string
+  month?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kasKelas?: Prisma.FloatFieldUpdateOperationsInput | number
+  biayaAdmin?: Prisma.FloatFieldUpdateOperationsInput | number
+  totalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumBillStatusFieldUpdateOperationsInput | $Enums.BillStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1296,6 +1533,7 @@ export type CashBillSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   status?: boolean
   paymentMethod?: boolean
   paymentProofUrl?: boolean
+  paymentAccountId?: boolean
   paidAt?: boolean
   confirmedBy?: boolean
   confirmedAt?: boolean
@@ -1304,6 +1542,7 @@ export type CashBillSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   confirmer?: boolean | Prisma.CashBill$confirmerArgs<ExtArgs>
+  paymentAccount?: boolean | Prisma.CashBill$paymentAccountArgs<ExtArgs>
 }, ExtArgs["result"]["cashBill"]>
 
 export type CashBillSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1320,6 +1559,7 @@ export type CashBillSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   status?: boolean
   paymentMethod?: boolean
   paymentProofUrl?: boolean
+  paymentAccountId?: boolean
   paidAt?: boolean
   confirmedBy?: boolean
   confirmedAt?: boolean
@@ -1328,6 +1568,7 @@ export type CashBillSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   confirmer?: boolean | Prisma.CashBill$confirmerArgs<ExtArgs>
+  paymentAccount?: boolean | Prisma.CashBill$paymentAccountArgs<ExtArgs>
 }, ExtArgs["result"]["cashBill"]>
 
 export type CashBillSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1344,6 +1585,7 @@ export type CashBillSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   status?: boolean
   paymentMethod?: boolean
   paymentProofUrl?: boolean
+  paymentAccountId?: boolean
   paidAt?: boolean
   confirmedBy?: boolean
   confirmedAt?: boolean
@@ -1352,6 +1594,7 @@ export type CashBillSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   confirmer?: boolean | Prisma.CashBill$confirmerArgs<ExtArgs>
+  paymentAccount?: boolean | Prisma.CashBill$paymentAccountArgs<ExtArgs>
 }, ExtArgs["result"]["cashBill"]>
 
 export type CashBillSelectScalar = {
@@ -1368,6 +1611,7 @@ export type CashBillSelectScalar = {
   status?: boolean
   paymentMethod?: boolean
   paymentProofUrl?: boolean
+  paymentAccountId?: boolean
   paidAt?: boolean
   confirmedBy?: boolean
   confirmedAt?: boolean
@@ -1375,21 +1619,24 @@ export type CashBillSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CashBillOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "classId" | "billId" | "month" | "year" | "dueDate" | "kasKelas" | "biayaAdmin" | "totalAmount" | "status" | "paymentMethod" | "paymentProofUrl" | "paidAt" | "confirmedBy" | "confirmedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["cashBill"]>
+export type CashBillOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "classId" | "billId" | "month" | "year" | "dueDate" | "kasKelas" | "biayaAdmin" | "totalAmount" | "status" | "paymentMethod" | "paymentProofUrl" | "paymentAccountId" | "paidAt" | "confirmedBy" | "confirmedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["cashBill"]>
 export type CashBillInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   confirmer?: boolean | Prisma.CashBill$confirmerArgs<ExtArgs>
+  paymentAccount?: boolean | Prisma.CashBill$paymentAccountArgs<ExtArgs>
 }
 export type CashBillIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   confirmer?: boolean | Prisma.CashBill$confirmerArgs<ExtArgs>
+  paymentAccount?: boolean | Prisma.CashBill$paymentAccountArgs<ExtArgs>
 }
 export type CashBillIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   confirmer?: boolean | Prisma.CashBill$confirmerArgs<ExtArgs>
+  paymentAccount?: boolean | Prisma.CashBill$paymentAccountArgs<ExtArgs>
 }
 
 export type $CashBillPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1398,6 +1645,7 @@ export type $CashBillPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     user: Prisma.$UserPayload<ExtArgs>
     class: Prisma.$ClassPayload<ExtArgs>
     confirmer: Prisma.$UserPayload<ExtArgs> | null
+    paymentAccount: Prisma.$PaymentAccountPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1413,6 +1661,7 @@ export type $CashBillPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     status: $Enums.BillStatus
     paymentMethod: $Enums.PaymentMethod | null
     paymentProofUrl: string | null
+    paymentAccountId: string | null
     paidAt: Date | null
     confirmedBy: string | null
     confirmedAt: Date | null
@@ -1815,6 +2064,7 @@ export interface Prisma__CashBillClient<T, Null = never, ExtArgs extends runtime
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   class<T extends Prisma.ClassDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClassDefaultArgs<ExtArgs>>): Prisma.Prisma__ClassClient<runtime.Types.Result.GetResult<Prisma.$ClassPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   confirmer<T extends Prisma.CashBill$confirmerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CashBill$confirmerArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  paymentAccount<T extends Prisma.CashBill$paymentAccountArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CashBill$paymentAccountArgs<ExtArgs>>): Prisma.Prisma__PaymentAccountClient<runtime.Types.Result.GetResult<Prisma.$PaymentAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1857,6 +2107,7 @@ export interface CashBillFieldRefs {
   readonly status: Prisma.FieldRef<"CashBill", 'BillStatus'>
   readonly paymentMethod: Prisma.FieldRef<"CashBill", 'PaymentMethod'>
   readonly paymentProofUrl: Prisma.FieldRef<"CashBill", 'String'>
+  readonly paymentAccountId: Prisma.FieldRef<"CashBill", 'String'>
   readonly paidAt: Prisma.FieldRef<"CashBill", 'DateTime'>
   readonly confirmedBy: Prisma.FieldRef<"CashBill", 'String'>
   readonly confirmedAt: Prisma.FieldRef<"CashBill", 'DateTime'>
@@ -2274,6 +2525,25 @@ export type CashBill$confirmerArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   include?: Prisma.UserInclude<ExtArgs> | null
   where?: Prisma.UserWhereInput
+}
+
+/**
+ * CashBill.paymentAccount
+ */
+export type CashBill$paymentAccountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PaymentAccount
+   */
+  select?: Prisma.PaymentAccountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PaymentAccount
+   */
+  omit?: Prisma.PaymentAccountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PaymentAccountInclude<ExtArgs> | null
+  where?: Prisma.PaymentAccountWhereInput
 }
 
 /**

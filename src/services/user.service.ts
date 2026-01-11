@@ -65,7 +65,7 @@ export class UserService {
     }
 
     // Update user profile
-    const updateData: any = {};
+    const updateData: { name?: string; email?: string } = {};
     if (data.name) {
       updateData.name = data.name;
     }
@@ -137,6 +137,26 @@ export class UserService {
       limit: filters.limit,
       search: filters.search,
     });
+  }
+
+  /**
+   * Get classmates (students in same class) for filter options
+   * Returns basic user info (id, name, nim)
+   */
+  async getClassmates(classId: string): Promise<Array<{ id: string; name: string; nim: string }>> {
+    const students = await userRepository.findAll({
+      role: "user",
+      classId,
+      page: 1,
+      limit: 1000, // Get all students
+    });
+
+    // Return simplified data for filters
+    return students.data.map((user) => ({
+      id: user.id,
+      name: user.name,
+      nim: user.nim,
+    }));
   }
 }
 

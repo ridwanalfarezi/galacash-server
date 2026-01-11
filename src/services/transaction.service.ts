@@ -141,6 +141,54 @@ export class TransactionService {
   }
 
   /**
+   * Get transaction breakdown by category for pie charts
+   * Returns { name, value, fill } format for frontend
+   */
+  async getBreakdown(
+    classId: string,
+    type: "income" | "expense",
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<Array<{ name: string; value: number; fill: string }>> {
+    const cacheKeyParts = [
+      "breakdown",
+      classId,
+      type,
+      startDate?.toISOString(),
+      endDate?.toISOString(),
+    ]
+      .filter((p) => p)
+      .join(":");
+    const cacheKey = `${cacheKeyParts}`;
+
+    // Try to get from cache
+    const cached =
+      await this.cacheService.getCached<Array<{ name: string; value: number; fill: string }>>(
+        cacheKey
+      );
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const breakdown = await this.transactionRepository.getBreakdown(
+        classId,
+        type,
+        startDate,
+        endDate
+      );
+
+      // Cache the result
+      await this.cacheService.setCached(cacheKey, breakdown, 600); // 10 minutes cache
+
+      return breakdown;
+    } catch (error) {
+      logger.error("Failed to fetch transaction breakdown:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Get current balance for a class with caching
    */
   async getBalance(classId: string): Promise<BalanceData> {
@@ -164,9 +212,42 @@ export class TransactionService {
     }
   }
 
-  async getDashboardSummary(classId: string, _userRole?: string) {
+  async getDashboardSummary(classId: string, _userRole?: string, startDate?: Date, endDate?: Date) {
+    // If date range is provided, filter transactions
+    if (startDate || endDate) {
+      const transactions = await this.transactionRepository.findAll({
+        classId,
+        startDate,
+        endDate,
+        page: 1,
+        limit: 10000, // Get all for aggregation
+      });
+
+      let totalIncome = 0;
+      let totalExpense = 0;
+
+      transactions.data.forEach((transaction) => {
+        if (transaction.type === "income") {
+          totalIncome += transaction.amount;
+        } else {
+          totalExpense += transaction.amount;
+        }
+      });
+
+      return {
+        totalIncome,
+        totalExpense,
+        totalBalance: totalIncome - totalExpense,
+      };
+    }
+
+    // No date filter, get full balance
     const balance = await this.getBalance(classId);
-    return { balance: balance.balance };
+    return {
+      totalIncome: balance.income,
+      totalExpense: balance.expense,
+      totalBalance: balance.balance,
+    };
   }
 
   /**

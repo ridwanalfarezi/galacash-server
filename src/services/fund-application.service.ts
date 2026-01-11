@@ -5,7 +5,7 @@ import {
 } from "@/repositories/fund-application.repository";
 import { AuthorizationError, NotFoundError } from "@/utils/errors";
 import { logger } from "@/utils/logger";
-import { FundApplication, Prisma } from "@prisma/client";
+import { FundApplication, FundCategory, Prisma } from "@prisma/client";
 import { CacheService } from "./cache.service";
 
 export interface CreateFundApplicationData {
@@ -170,7 +170,7 @@ export class FundApplicationService {
       const createData: Prisma.FundApplicationCreateInput = {
         purpose: data.purpose,
         description: data.description,
-        category: data.category as any,
+        category: data.category as FundCategory,
         amount: data.amount,
         attachmentUrl: data.attachmentUrl,
         status: "pending",
