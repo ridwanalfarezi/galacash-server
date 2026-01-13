@@ -39,14 +39,16 @@ RUN npm install -g pnpm@latest
 
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
+COPY --from=builder /app/prisma ./prisma
 
 # Install production dependencies only
 RUN pnpm install --prod --no-frozen-lockfile --ignore-scripts
 
+# Generate Prisma Client for production
+RUN pnpm prisma:generate
+
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma/client ./node_modules/.prisma/client
-COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/openapi.yaml ./openapi.yaml
 
 # Create logs directory
