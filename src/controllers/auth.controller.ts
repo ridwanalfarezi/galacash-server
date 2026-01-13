@@ -12,9 +12,29 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
 
   const result = await authService.login(nim, password);
 
+  // Set httpOnly cookies for tokens
+  res.cookie("accessToken", result.accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none", // Required for cross-domain cookies
+    maxAge: 60 * 60 * 1000, // 1 hour
+    path: "/",
+  });
+
+  res.cookie("refreshToken", result.refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none", // Required for cross-domain cookies
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: "/",
+  });
+
+  // Return only user data (not tokens)
   res.status(200).json({
     success: true,
-    data: result,
+    data: {
+      user: result.user,
+    },
     message: "Login successful",
   });
 });
@@ -24,13 +44,33 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
  * POST /api/auth/refresh
  */
 export const refresh = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { refreshToken } = req.body;
+  // Read refresh token from cookie instead of body
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "No refresh token provided",
+      },
+    });
+    return;
+  }
 
   const result = await authService.refresh(refreshToken);
 
+  // Set new access token cookie
+  res.cookie("accessToken", result.accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    maxAge: 60 * 60 * 1000, // 1 hour
+    path: "/",
+  });
+
   res.status(200).json({
     success: true,
-    data: result,
     message: "Token refreshed",
   });
 });
@@ -54,6 +94,21 @@ export const logout = asyncHandler(async (req: Request, res: Response): Promise<
   }
 
   await refreshTokenService.deleteAllByUserId(userId);
+
+  // Clear cookies
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    path: "/",
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    path: "/",
+  });
 
   res.status(200).json({
     success: true,

@@ -5,6 +5,7 @@ import routes from "@/routes";
 import { globalErrorHandler } from "@/utils/errors";
 import { logger } from "@/utils/logger";
 import { disconnectPrisma } from "@/utils/prisma-client";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import "dotenv/config";
 import express, { Application, Request, Response } from "express";
@@ -50,6 +51,11 @@ app.use(
     credentials: true,
   })
 );
+
+/**
+ * Cookie parser middleware
+ */
+app.use(cookieParser());
 
 /**
  * Rate limiting - Apply to all API routes

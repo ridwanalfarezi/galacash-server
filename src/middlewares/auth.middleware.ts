@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET!;
 
 /**
- * Authenticate middleware - verifies JWT access token
+ * Authenticate middleware - verifies JWT access token from cookie or Authorization header
  */
 export const authenticate = async (
   req: Request,
@@ -14,16 +14,20 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new AuthenticationError("No token provided");
-    }
-
-    const token = authHeader.split(" ")[1];
+    // Try to get token from cookie first, fallback to Authorization header
+    let token = req.cookies?.accessToken;
 
     if (!token) {
-      throw new AuthenticationError("Invalid token format");
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+      }
+    }
+
+    if (!token) {
+      const error = new AuthenticationError("No token provided");
+      (error as any).code = "UNAUTHORIZED";
+      throw error;
     }
 
     // Verify token
@@ -35,9 +39,13 @@ export const authenticate = async (
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
-      next(new AuthenticationError("Invalid token"));
+      const authError = new AuthenticationError("Invalid token");
+      (authError as any).code = "INVALID_TOKEN";
+      next(authError);
     } else if (error instanceof jwt.TokenExpiredError) {
-      next(new AuthenticationError("Token has expired"));
+      const authError = new AuthenticationError("Token has expired");
+      (authError as any).code = "TOKEN_EXPIRED";
+      next(authError);
     } else {
       next(error);
     }

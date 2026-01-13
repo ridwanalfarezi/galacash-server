@@ -15,7 +15,9 @@ const createPrismaClient = () => {
   if (!datasourceUrl) {
     const errorMsg = "Neither PRISMA_DATABASE_URL nor DATABASE_URL is set. Prisma cannot connect.";
     logger.error(errorMsg);
-    logger.error("Server will start but database operations will fail until DATABASE_URL is configured.");
+    logger.error(
+      "Server will start but database operations will fail until DATABASE_URL is configured."
+    );
     throw new Error("Database URL not configured");
   }
 
@@ -27,7 +29,7 @@ const createPrismaClient = () => {
     const client = new PrismaClient({
       log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
     }).$extends(withAccelerate());
-    
+
     logger.info("[PRISMA] Prisma Client created successfully");
     return client;
   } catch (error) {
