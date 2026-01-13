@@ -127,22 +127,34 @@ app.use(globalErrorHandler);
  */
 async function startServer() {
   try {
-    // Connect to Redis (non-blocking, only if configured)
-    if (process.env.REDIS_URL) {
-      connectRedis().catch((err) => {
-        logger.warn("Redis connection failed, continuing without cache:", err);
-      });
-    }
+    logger.info("⏳ Starting server initialization...");
 
-    // Initialize bill generator cron job
-    initializeBillGenerator();
-
-    // Start Express server
-    const server = app.listen(PORT, () => {
+    // Start Express server FIRST (critical for Cloud Run health checks)
+    const server = app.listen(PORT, "0.0.0.0", () => {
       logger.info(`🚀 Server running on port ${PORT}`);
       logger.info(`📍 Environment: ${NODE_ENV}`);
       logger.info(`🔗 API Base URL: http://localhost:${PORT}/api`);
       logger.info(`📖 API Docs: http://localhost:${PORT}/api/docs`);
+    });
+
+    // Initialize background services AFTER server is listening
+    // Connect to Redis (non-blocking, only if configured)
+    if (process.env.REDIS_URL) {
+      logger.info("Connecting to Redis...");
+      connectRedis().catch((err) => {
+        logger.warn("Redis connection failed, continuing without cache:", err);
+      });
+    } else {
+      logger.info("Redis not configured, skipping connection");
+    }
+
+    // Initialize bill generator cron job (non-blocking)
+    setImmediate(() => {
+      try {
+        initializeBillGenerator();
+      } catch (error) {
+        logger.error("Failed to initialize bill generator:", error);
+      }
     });
 
     // Graceful shutdown

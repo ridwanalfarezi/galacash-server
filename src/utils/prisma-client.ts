@@ -7,10 +7,13 @@ import { logger } from "./logger";
  * Prisma client singleton instance using Prisma Accelerate / Data Proxy
  */
 const prismaClientSingleton = () => {
-  const datasourceUrl = process.env.PRISMA_DATABASE_URL;
+  const datasourceUrl = process.env.PRISMA_DATABASE_URL || process.env.DATABASE_URL;
   if (!datasourceUrl) {
-    logger.error("PRISMA_DATABASE_URL is not set. Prisma cannot connect.");
+    logger.error("Neither PRISMA_DATABASE_URL nor DATABASE_URL is set. Prisma cannot connect.");
+    throw new Error("Database URL not configured");
   }
+
+  logger.info(`Using datasource: ${datasourceUrl.includes('accelerate') ? 'Prisma Accelerate' : 'Direct Connection'}`);
 
   return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
