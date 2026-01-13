@@ -13,7 +13,7 @@ import path from "path";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 /**
@@ -127,8 +127,10 @@ app.use(globalErrorHandler);
  */
 async function startServer() {
   try {
-    // Connect to Redis
-    await connectRedis();
+    // Connect to Redis (non-blocking)
+    connectRedis().catch((err) => {
+      logger.warn("Redis connection failed, continuing without cache:", err);
+    });
 
     // Initialize bill generator cron job
     initializeBillGenerator();
