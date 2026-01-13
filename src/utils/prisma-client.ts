@@ -39,7 +39,7 @@ export const getPrisma = () => {
 
 // Export a proxy that lazy-loads Prisma for backwards compatibility
 export const prisma = new Proxy({} as ReturnType<typeof createPrismaClient>, {
-  get: (target, prop) => {
+  get: (_target, prop) => {
     const client = getPrisma();
     return client[prop as keyof typeof client];
   },
