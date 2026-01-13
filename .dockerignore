@@ -41,5 +41,4 @@ tmp
 README.md
 .prettierrc
 .eslintrc.json
-tsconfig.json
 .husky
