@@ -468,6 +468,67 @@ export class BendaharaService {
   }
 
   /**
+   * Create manual transaction
+   */
+  async createManualTransaction(data: {
+    date: Date;
+    description: string;
+    type: "income" | "expense";
+    amount: number;
+    category?: string;
+    attachment?: string;
+    createdBy: string;
+    classId: string;
+  }) {
+    try {
+      // Map category to TransactionCategory enum
+      const transactionCategory: TransactionCategory = data.category
+        ? this.mapCategoryStringToEnum(data.category)
+        : "other";
+
+      // Create transaction (note: attachment not stored in Transaction model)
+      const transaction = await this.transactionRepository.create({
+        date: data.date,
+        description: data.description,
+        type: data.type,
+        amount: data.amount,
+        category: transactionCategory,
+        class: {
+          connect: { id: data.classId },
+        },
+      });
+
+      // Invalidate caches
+      await this.invalidateBendaharaCaches(data.classId);
+
+      logger.info(`Manual transaction created: ${transaction.id} by bendahara ${data.createdBy}`);
+
+      return transaction;
+    } catch (error) {
+      logger.error("Failed to create manual transaction:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Map category string to TransactionCategory enum
+   */
+  private mapCategoryStringToEnum(category: string): TransactionCategory {
+    const categoryMap: Record<string, TransactionCategory> = {
+      kas_kelas: "kas_kelas",
+      donation: "donation",
+      fundraising: "fundraising",
+      office_supplies: "office_supplies",
+      consumption: "consumption",
+      event: "event",
+      maintenance: "maintenance",
+      other: "other",
+    };
+
+    return categoryMap[category.toLowerCase()] || "other";
+  }
+
+  /**
    * Map fund category to transaction category
    */
   private mapFundCategoryToTransactionCategory(fundCategory: string): TransactionCategory {

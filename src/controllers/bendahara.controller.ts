@@ -281,3 +281,44 @@ export const getStudents = asyncHandler(async (req: Request, res: Response): Pro
     message: "Students fetched",
   });
 });
+
+/**
+ * Create manual transaction
+ * POST /api/bendahara/transactions
+ */
+export const createTransaction = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const bendaharaId = req.user?.sub;
+    const classId = req.user?.classId;
+    const { date, description, type, amount, category } = req.body;
+    const attachment = req.fileUrl; // Set by upload middleware
+
+    if (!bendaharaId || !classId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        },
+      });
+      return;
+    }
+
+    const transaction = await bendaharaService.createManualTransaction({
+      date: new Date(date),
+      description,
+      type,
+      amount: Number(amount),
+      category,
+      attachment,
+      createdBy: bendaharaId,
+      classId,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: transaction,
+      message: "Transaction created successfully",
+    });
+  }
+);

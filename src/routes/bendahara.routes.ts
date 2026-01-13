@@ -1,7 +1,14 @@
 import { bendaharaController } from "@/controllers";
-import { authenticate, requireBendahara, validateBody, validateQuery } from "@/middlewares";
+import {
+  authenticate,
+  handleFileUpload,
+  requireBendahara,
+  validateBody,
+  validateQuery,
+} from "@/middlewares";
 import {
   cashBillFilterSchema,
+  createTransactionSchema,
   fundApplicationFilterSchema,
   rekapKasFilterSchema,
   reviewFundApplicationSchema,
@@ -75,5 +82,16 @@ router.get("/rekap-kas", validateQuery(rekapKasFilterSchema), bendaharaControlle
  * Get all students list
  */
 router.get("/students", bendaharaController.getStudents);
+
+/**
+ * POST /transactions
+ * Create manual transaction (income/expense)
+ */
+router.post(
+  "/transactions",
+  handleFileUpload("transactions"),
+  validateBody(createTransactionSchema),
+  bendaharaController.createTransaction
+);
 
 export default router;

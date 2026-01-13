@@ -144,6 +144,41 @@ export const cashBillFilterSchema = paginationSchema.keys({
 
 // ============ BENDAHARA SCHEMAS ============
 
+export const createTransactionSchema = Joi.object({
+  date: Joi.date().iso().required().messages({
+    "any.required": "Tanggal wajib diisi",
+    "date.format": "Format tanggal tidak valid",
+  }),
+  description: Joi.string().min(3).max(255).required().messages({
+    "string.min": "Deskripsi minimal 3 karakter",
+    "string.max": "Deskripsi maksimal 255 karakter",
+    "any.required": "Deskripsi wajib diisi",
+  }),
+  type: Joi.string().valid("income", "expense").required().messages({
+    "any.only": "Tipe harus income atau expense",
+    "any.required": "Tipe transaksi wajib diisi",
+  }),
+  amount: Joi.number().positive().required().messages({
+    "number.positive": "Jumlah harus lebih dari 0",
+    "any.required": "Jumlah wajib diisi",
+  }),
+  category: Joi.string()
+    .valid(
+      "kas_kelas",
+      "donation",
+      "fundraising",
+      "office_supplies",
+      "consumption",
+      "event",
+      "maintenance",
+      "other"
+    )
+    .optional()
+    .messages({
+      "any.only": "Kategori tidak valid",
+    }),
+});
+
 export const rekapKasFilterSchema = Joi.object({
   startDate: Joi.date().iso().optional(),
   endDate: Joi.date().iso().min(Joi.ref("startDate")).optional(),
