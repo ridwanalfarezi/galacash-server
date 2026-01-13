@@ -12,10 +12,14 @@ RUN npm install -g pnpm@latest
 COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
 
 # Copy source code
 COPY . .
+
+# Set dummy database URL for build
+ARG DATABASE_URL="postgresql://placeholder:5432/db"
+ENV DATABASE_URL=$DATABASE_URL
 
 # Generate Prisma Client
 RUN pnpm prisma:generate
@@ -37,7 +41,7 @@ RUN npm install -g pnpm@latest
 COPY package.json pnpm-lock.yaml* ./
 
 # Install production dependencies only
-RUN pnpm install --prod --no-frozen-lockfile
+RUN pnpm install --prod --no-frozen-lockfile --ignore-scripts
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
