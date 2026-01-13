@@ -127,10 +127,12 @@ app.use(globalErrorHandler);
  */
 async function startServer() {
   try {
-    // Connect to Redis (non-blocking)
-    connectRedis().catch((err) => {
-      logger.warn("Redis connection failed, continuing without cache:", err);
-    });
+    // Connect to Redis (non-blocking, only if configured)
+    if (process.env.REDIS_URL) {
+      connectRedis().catch((err) => {
+        logger.warn("Redis connection failed, continuing without cache:", err);
+      });
+    }
 
     // Initialize bill generator cron job
     initializeBillGenerator();
