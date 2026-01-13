@@ -211,7 +211,7 @@ export class TransactionRepository {
       // Group by date and sum amounts
       const groupedData: Map<string, number> = new Map();
 
-      transactions.forEach((tx) => {
+      transactions.forEach((tx: Transaction) => {
         const dateStr = tx.date.toISOString().split("T")[0];
         const current = groupedData.get(dateStr) || 0;
         groupedData.set(dateStr, current + tx.amount);
@@ -266,7 +266,7 @@ export class TransactionRepository {
       // Group by category and sum amounts
       const categoryMap: Map<string, number> = new Map();
 
-      transactions.forEach((tx) => {
+      transactions.forEach((tx: Transaction) => {
         const category = tx.category || "other";
         const current = categoryMap.get(category) || 0;
         categoryMap.set(category, current + tx.amount);

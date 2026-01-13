@@ -13,7 +13,7 @@ const prismaClientSingleton = () => {
   }
 
   return new PrismaClient({
-    datasourceUrl,
+    datasourceUrl: datasourceUrl || undefined,
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   }).$extends(withAccelerate());
 };
