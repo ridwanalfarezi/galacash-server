@@ -13,7 +13,7 @@ import path from "path";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || "3000", 10);
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 /**
