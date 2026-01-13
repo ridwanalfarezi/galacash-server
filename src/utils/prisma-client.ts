@@ -1,25 +1,21 @@
-import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { withAccelerate } from "@prisma/extension-accelerate";
 import "dotenv/config";
-import { Pool } from "pg";
 import { logger } from "./logger";
 
 /**
- * Prisma client singleton instance
+ * Prisma client singleton instance using Prisma Accelerate / Data Proxy
  */
 const prismaClientSingleton = () => {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    logger.error("DATABASE_URL is not set. Prisma cannot connect.");
+  const datasourceUrl = process.env.PRISMA_DATABASE_URL;
+  if (!datasourceUrl) {
+    logger.error("PRISMA_DATABASE_URL is not set. Prisma cannot connect.");
   }
 
-  const pool = new Pool({ connectionString });
-  const adapter = new PrismaPg(pool);
-
   return new PrismaClient({
-    adapter,
+    datasourceUrl,
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-  });
+  }).$extends(withAccelerate());
 };
 
 declare global {
