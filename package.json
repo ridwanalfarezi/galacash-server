@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "GalaCash - Financial management API for class treasurers",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "npm run prisma:generate && node scripts/copy-prisma-generated.js && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
@@ -26,7 +27,7 @@
     "express",
     "typescript"
   ],
-  "author": "",
+  "author": "Ridwan Alfarezi",
   "license": "ISC",
   "packageManager": "pnpm@10.28.0",
   "pnpm": {
