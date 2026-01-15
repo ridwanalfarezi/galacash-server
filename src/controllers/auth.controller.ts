@@ -1,4 +1,4 @@
-import { authService, refreshTokenService, userService } from "@/services";
+import { authService, refreshTokenService } from "@/services";
 import { asyncHandler } from "@/utils/errors";
 import { Request, Response } from "express";
 

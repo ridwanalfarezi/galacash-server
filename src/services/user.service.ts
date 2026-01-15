@@ -17,7 +17,7 @@ export interface GetStudentsFilters {
 }
 
 // Type for sanitized user response (without password)
-export type SafeUser = Omit<User, 'password'>
+export type SafeUser = Omit<User, "password">;
 
 /**
  * User service for handling user profile operations
@@ -33,6 +33,7 @@ export class UserService {
    * Remove sensitive fields from user object
    */
   private sanitizeUser(user: User): SafeUser {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...safeUser } = user;
     return safeUser;
   }
