@@ -109,6 +109,11 @@ const CLASS_B_STUDENTS = [
 async function main() {
   console.log("🚀 Starting data population...");
 
+  // Clear existing data
+  console.log("🧹 Clearing existing data...");
+  await prisma.user.deleteMany({});
+  console.log("✅ Cleared existing users");
+
   // Create or get classes
   console.log("📚 Creating/getting classes...");
   const classA = await prisma.class.upsert({
@@ -126,7 +131,7 @@ async function main() {
   console.log(`✅ Classes ready: A and B`);
 
   // Default password for all students (hashed)
-  const defaultPassword = await bcrypt.hash("123456", 10);
+  const defaultPassword = await bcrypt.hash("12345678", 10);
 
   // Create Class A students
   console.log("👥 Creating Class A students...");
@@ -178,7 +183,7 @@ async function main() {
   const totalUsers = await prisma.user.count();
   console.log(`\n✨ Data population complete!`);
   console.log(`📊 Total users in database: ${totalUsers}`);
-  console.log(`🔑 Default password for all accounts: 123456`);
+  console.log(`🔑 Default password for all accounts: 12345678`);
   console.log(`👤 Student account: 1313624056`);
   console.log(`👑 Admin account: 1313624056-admin`);
 }
