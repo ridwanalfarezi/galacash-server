@@ -36,9 +36,10 @@ export class UserService {
     }
 
     // Map class name to className field
+    const userWithClass = user as User & { class?: { name: string } };
     return {
       ...user,
-      className: (user as any).class?.name,
+      className: userWithClass.class?.name,
     } as User;
   }
 
