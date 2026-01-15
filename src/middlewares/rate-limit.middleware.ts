@@ -91,42 +91,43 @@ export const rateLimit = (options: {
 };
 
 /**
- * Strict rate limit for auth endpoints
- * 5 requests per 15 minutes
+ * Rate limit for auth endpoints
+ * 30 requests per 15 minutes (only failed attempts count due to skipSuccessfulRequests)
+ * This allows for retries and multiple login attempts while still preventing brute force
  */
 export const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: 30,
   message: "Too many login attempts, please try again later.",
   skipSuccessfulRequests: true,
 });
 
 /**
  * Moderate rate limit for file uploads
- * 10 requests per 10 minutes
+ * 30 requests per 10 minutes
  */
 export const uploadRateLimit = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 10,
+  max: 30,
   message: "Too many upload attempts, please try again later.",
 });
 
 /**
  * General API rate limit
- * 100 requests per minute
+ * 500 requests per minute
  */
 export const generalRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 100,
+  max: 500,
   message: "Too many requests, please slow down.",
 });
 
 /**
  * Strict rate limit for sensitive operations
- * 3 requests per 10 minutes
+ * 10 requests per 10 minutes
  */
 export const strictRateLimit = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 3,
+  max: 10,
   message: "Too many attempts for this sensitive operation, please try again later.",
 });
