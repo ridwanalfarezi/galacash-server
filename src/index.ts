@@ -40,16 +40,36 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: false,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    xContentTypeOptions: true,
+    xFrameOptions: { action: "deny" },
+    xXssProtection: true,
   })
 );
 
 /**
  * CORS configuration
  */
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim());
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin) || process.env.NODE_ENV === "development") {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    maxAge: 86400, // 24 hours
   })
 );
 
@@ -87,7 +107,7 @@ app.get("/health", (_req: Request, res: Response) => {
 try {
   const swaggerDocument = yaml.load(
     fs.readFileSync(path.join(__dirname, "../openapi.yaml"), "utf8")
-  ) as Record<string, any>;
+  ) as Record<string, unknown>;
   app.use(
     "/api/docs",
     swaggerUi.serve,
