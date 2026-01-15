@@ -223,11 +223,30 @@ async function startServer() {
     process.on("SIGINT", gracefulShutdown);
   } catch (error) {
     logger.error("❌ Failed to start server:", error);
+    // Log more details for debugging
+    if (error instanceof Error) {
+      logger.error("Error name:", error.name);
+      logger.error("Error message:", error.message);
+      logger.error("Error stack:", error.stack);
+    }
     process.exit(1);
   }
 }
 
 // Start the server
 startServer();
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+  logger.error("🔥 UNCAUGHT EXCEPTION - Server will exit:", error);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  logger.error("🔥 UNHANDLED REJECTION:", reason);
+  logger.error("Promise:", promise);
+  process.exit(1);
+});
 
 export default app;
