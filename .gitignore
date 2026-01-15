@@ -29,6 +29,7 @@ yarn-error.log*
 *.db
 *.sqlite
 prisma/migrations/
+prisma/generated/
 
 # IDE
 .vscode/

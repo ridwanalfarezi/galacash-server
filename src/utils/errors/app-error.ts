@@ -5,7 +5,7 @@
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
-  public readonly code?: string;
+  public code?: string;
 
   constructor(message: string, statusCode: number = 500, code?: string) {
     super(message);
@@ -39,8 +39,8 @@ export class ValidationError extends AppError {
  * Used when authentication fails or is required
  */
 export class AuthenticationError extends AppError {
-  constructor(message: string = "Authentication failed") {
-    super(message, 401, "AUTHENTICATION_ERROR");
+  constructor(message: string = "Authentication failed", code: string = "AUTHENTICATION_ERROR") {
+    super(message, 401, code);
     Object.setPrototypeOf(this, AuthenticationError.prototype);
   }
 }

@@ -25,8 +25,7 @@ export const authenticate = async (
     }
 
     if (!token) {
-      const error = new AuthenticationError("No token provided");
-      (error as any).code = "UNAUTHORIZED";
+      const error = new AuthenticationError("No token provided", "UNAUTHORIZED");
       throw error;
     }
 
@@ -39,12 +38,10 @@ export const authenticate = async (
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
-      const authError = new AuthenticationError("Invalid token");
-      (authError as any).code = "INVALID_TOKEN";
+      const authError = new AuthenticationError("Invalid token", "INVALID_TOKEN");
       next(authError);
     } else if (error instanceof jwt.TokenExpiredError) {
-      const authError = new AuthenticationError("Token has expired");
-      (authError as any).code = "TOKEN_EXPIRED";
+      const authError = new AuthenticationError("Token has expired", "TOKEN_EXPIRED");
       next(authError);
     } else {
       next(error);
