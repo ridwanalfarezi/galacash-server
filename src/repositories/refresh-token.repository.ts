@@ -1,6 +1,6 @@
+import { Prisma, RefreshToken, User } from "@/prisma/generated/client";
 import { DatabaseError, NotFoundError } from "@/utils/errors";
 import { prisma } from "@/utils/prisma-client";
-import { Prisma, RefreshToken, User } from "@prisma/client";
 
 export class RefreshTokenRepository {
   /**

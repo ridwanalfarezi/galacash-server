@@ -1,9 +1,9 @@
+import { AccountStatus, AccountType, PaymentAccount } from "@/prisma/generated/client";
 import {
   PaymentAccountFilters,
   paymentAccountRepository,
 } from "@/repositories/payment-account.repository";
 import { NotFoundError, ValidationError } from "@/utils/errors";
-import { AccountStatus, AccountType, PaymentAccount } from "@prisma/client";
 
 export interface CreatePaymentAccountDto {
   name: string;

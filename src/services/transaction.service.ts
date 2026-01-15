@@ -1,3 +1,4 @@
+import { Transaction } from "@/prisma/generated/client";
 import {
   BalanceData,
   ChartDataPoint,
@@ -7,7 +8,6 @@ import {
 } from "@/repositories/transaction.repository";
 import { AuthorizationError, NotFoundError } from "@/utils/errors";
 import { logger } from "@/utils/logger";
-import { Transaction } from "@prisma/client";
 import { CacheService } from "./cache.service";
 
 /**

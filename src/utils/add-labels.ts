@@ -1,4 +1,4 @@
-import { CashBill, FundApplication, Transaction } from "@prisma/client";
+import { CashBill, FundApplication, Transaction } from "@/prisma/generated/client";
 import {
   getBillStatusLabel,
   getFundCategoryLabel,

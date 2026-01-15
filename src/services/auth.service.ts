@@ -1,3 +1,4 @@
+import { User } from "@/prisma/generated/client";
 import { RefreshTokenRepository } from "@/repositories/refresh-token.repository";
 import { userRepository } from "@/repositories/user.repository";
 import { AuthenticationError, NotFoundError } from "@/utils/errors";
@@ -8,7 +9,6 @@ import {
   storeRefreshToken,
   verifyRefreshToken,
 } from "@/utils/generate-tokens";
-import { User } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { CacheService } from "./cache.service";
 

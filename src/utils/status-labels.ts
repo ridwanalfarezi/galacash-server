@@ -1,4 +1,4 @@
-import { BillStatus, FundStatus } from "@prisma/client";
+import { BillStatus, FundStatus } from "@/prisma/generated/client";
 
 /**
  * Status label configuration

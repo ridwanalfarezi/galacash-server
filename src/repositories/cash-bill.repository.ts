@@ -1,6 +1,6 @@
+import { BillStatus, CashBill, PaymentMethod, Prisma } from "@/prisma/generated/client";
 import { AppError, DatabaseError, NotFoundError } from "@/utils/errors";
 import { prisma } from "@/utils/prisma-client";
-import { BillStatus, CashBill, PaymentMethod, Prisma } from "@prisma/client";
 
 export interface CashBillFilters {
   classId?: string;

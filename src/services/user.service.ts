@@ -1,6 +1,6 @@
+import { User } from "@/prisma/generated/client";
 import { userRepository } from "@/repositories/user.repository";
 import { AuthenticationError, AuthorizationError, NotFoundError } from "@/utils/errors";
-import { User } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { CacheService } from "./cache.service";
 

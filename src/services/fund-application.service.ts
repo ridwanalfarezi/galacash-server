@@ -1,3 +1,4 @@
+import { FundApplication, FundCategory, Prisma } from "@/prisma/generated/client";
 import {
   FundApplicationFilters,
   fundApplicationRepository,
@@ -5,7 +6,6 @@ import {
 } from "@/repositories/fund-application.repository";
 import { AuthorizationError, NotFoundError } from "@/utils/errors";
 import { logger } from "@/utils/logger";
-import { FundApplication, FundCategory, Prisma } from "@prisma/client";
 import { CacheService } from "./cache.service";
 
 export interface CreateFundApplicationData {

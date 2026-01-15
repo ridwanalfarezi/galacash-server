@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@/prisma/generated/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import "dotenv/config";
 import { logger } from "./logger";
@@ -27,6 +27,7 @@ const createPrismaClient = () => {
 
   try {
     const client = new PrismaClient({
+      accelerateUrl: datasourceUrl,
       log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
     }).$extends(withAccelerate());
 

@@ -1,3 +1,4 @@
+import { CashBill, PaymentMethod } from "@/prisma/generated/client";
 import {
   CashBillFilters,
   cashBillRepository,
@@ -5,7 +6,6 @@ import {
 } from "@/repositories/cash-bill.repository";
 import { AuthorizationError, BusinessLogicError, NotFoundError } from "@/utils/errors";
 import { logger } from "@/utils/logger";
-import { CashBill, PaymentMethod } from "@prisma/client";
 import { CacheService } from "./cache.service";
 
 export interface PayBillData {

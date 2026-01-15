@@ -1,6 +1,11 @@
+import {
+  Prisma,
+  Transaction,
+  TransactionCategory,
+  TransactionType,
+} from "@/prisma/generated/client";
 import { DatabaseError } from "@/utils/errors";
 import { prisma } from "@/utils/prisma-client";
-import { Prisma, Transaction, TransactionCategory, TransactionType } from "@prisma/client";
 
 export interface TransactionFilters {
   classId: string;

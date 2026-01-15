@@ -1,6 +1,6 @@
+import { Prisma, User, UserRole } from "@/prisma/generated/client";
 import { AppError, ConflictError, DatabaseError, NotFoundError } from "@/utils/errors";
 import { prisma } from "@/utils/prisma-client";
-import { Prisma, User, UserRole } from "@prisma/client";
 
 export interface UserFilters {
   role?: string;

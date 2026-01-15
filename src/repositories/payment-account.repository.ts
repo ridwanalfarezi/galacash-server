@@ -1,5 +1,5 @@
+import { AccountStatus, AccountType, PaymentAccount, Prisma } from "@/prisma/generated/client";
 import { prisma } from "@/utils/prisma-client";
-import { AccountStatus, AccountType, PaymentAccount, Prisma } from "@prisma/client";
 
 export interface PaymentAccountFilters {
   status?: AccountStatus;

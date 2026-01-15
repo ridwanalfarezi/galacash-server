@@ -1,3 +1,4 @@
+import { CashBill, FundApplication, TransactionCategory, User } from "@/prisma/generated/client";
 import {
   PaginatedResponse as BillPaginatedResponse,
   CashBillFilters,
@@ -12,7 +13,6 @@ import { transactionRepository } from "@/repositories/transaction.repository";
 import { userRepository } from "@/repositories/user.repository";
 import { BusinessLogicError, NotFoundError } from "@/utils/errors";
 import { logger } from "@/utils/logger";
-import { CashBill, FundApplication, TransactionCategory, User } from "@prisma/client";
 import { CacheService } from "./cache.service";
 
 export interface DashboardData {

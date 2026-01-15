@@ -1,5 +1,5 @@
+import { TransactionType } from "@/prisma/generated/client";
 import { transactionRepository } from "@/repositories/transaction.repository";
-import { TransactionType } from "@prisma/client";
 import ExcelJS from "exceljs";
 
 export interface ExportFilters {
