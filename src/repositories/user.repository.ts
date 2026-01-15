@@ -26,6 +26,7 @@ export class UserRepository {
     try {
       return await prisma.user.findUnique({
         where: { id },
+        include: { class: true },
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {

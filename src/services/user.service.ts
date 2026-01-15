@@ -35,7 +35,11 @@ export class UserService {
       throw new NotFoundError("User not found", "User");
     }
 
-    return user;
+    // Map class name to className field
+    return {
+      ...user,
+      className: (user as any).class?.name,
+    } as User;
   }
 
   /**
