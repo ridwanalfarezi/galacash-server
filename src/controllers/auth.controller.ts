@@ -121,30 +121,3 @@ export const logout = asyncHandler(async (req: Request, res: Response): Promise<
     message: "Logout successful",
   });
 });
-
-/**
- * Get current user info
- * GET /api/auth/me
- */
-export const me = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const userId = req.user?.sub;
-
-  if (!userId) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User not authenticated",
-      },
-    });
-    return;
-  }
-
-  const user = await userService.getUserById(userId);
-
-  res.status(200).json({
-    success: true,
-    data: user,
-    message: "User fetched",
-  });
-});

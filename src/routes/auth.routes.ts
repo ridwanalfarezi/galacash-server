@@ -23,10 +23,4 @@ router.post("/refresh", authRateLimit, validateBody(refreshTokenSchema), authCon
  */
 router.post("/logout", authenticate, authController.logout);
 
-/**
- * GET /me
- * Get current authenticated user information
- */
-router.get("/me", authenticate, authController.me);
-
 export default router;

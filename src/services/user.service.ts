@@ -16,6 +16,9 @@ export interface GetStudentsFilters {
   search?: string;
 }
 
+// Type for sanitized user response (without password)
+export type SafeUser = Omit<User, 'password'>
+
 /**
  * User service for handling user profile operations
  */
@@ -27,9 +30,17 @@ export class UserService {
   }
 
   /**
+   * Remove sensitive fields from user object
+   */
+  private sanitizeUser(user: User): SafeUser {
+    const { password, ...safeUser } = user;
+    return safeUser;
+  }
+
+  /**
    * Get user profile by ID
    */
-  async getProfile(userId: string): Promise<User> {
+  async getProfile(userId: string): Promise<SafeUser> {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new NotFoundError("User not found", "User");
@@ -37,16 +48,18 @@ export class UserService {
 
     // Map class name to className field
     const userWithClass = user as User & { class?: { name: string } };
-    return {
+    const userWithClassName = {
       ...user,
       className: userWithClass.class?.name,
-    } as User;
+    };
+
+    return this.sanitizeUser(userWithClassName);
   }
 
   /**
    * Get user by ID (alias for getProfile)
    */
-  async getUserById(userId: string): Promise<User> {
+  async getUserById(userId: string): Promise<SafeUser> {
     return this.getProfile(userId);
   }
 
@@ -58,7 +71,7 @@ export class UserService {
     userId: string,
     data: UpdateProfileData,
     userRole: "user" | "bendahara" = "user"
-  ): Promise<User> {
+  ): Promise<SafeUser> {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new NotFoundError("User not found", "User");
@@ -83,7 +96,7 @@ export class UserService {
     // Invalidate cache
     await this.cacheService.invalidateUser(userId);
 
-    return updatedUser;
+    return this.sanitizeUser(updatedUser);
   }
 
   /**
@@ -118,7 +131,7 @@ export class UserService {
    * Upload/update user avatar
    * Updates the avatarUrl field for the user
    */
-  async uploadAvatar(userId: string, fileUrl: string): Promise<User> {
+  async uploadAvatar(userId: string, fileUrl: string): Promise<SafeUser> {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new NotFoundError("User not found", "User");
@@ -131,7 +144,7 @@ export class UserService {
     // Invalidate cache
     await this.cacheService.invalidateUser(userId);
 
-    return updatedUser;
+    return this.sanitizeUser(updatedUser);
   }
 
   async getStudents(filters: GetStudentsFilters) {
