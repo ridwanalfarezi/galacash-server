@@ -9,10 +9,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import "dotenv/config";
 import express, { Application, Request, Response } from "express";
+import fs from "fs";
 import helmet from "helmet";
+import yaml from "js-yaml";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
-import YAML from "yamljs";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -84,7 +85,9 @@ app.get("/health", (_req: Request, res: Response) => {
  * Swagger API Documentation
  */
 try {
-  const swaggerDocument = YAML.load(path.join(__dirname, "../openapi.yaml"));
+  const swaggerDocument = yaml.load(
+    fs.readFileSync(path.join(__dirname, "../openapi.yaml"), "utf8")
+  ) as Record<string, any>;
   app.use(
     "/api/docs",
     swaggerUi.serve,
