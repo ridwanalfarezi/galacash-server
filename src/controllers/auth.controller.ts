@@ -3,6 +3,21 @@ import { asyncHandler } from "@/utils/errors";
 import { Request, Response } from "express";
 
 /**
+ * Get secure cookie options based on environment
+ */
+function getCookieOptions() {
+  const isProduction = process.env.NODE_ENV === "production";
+  const isSecureContext = process.env.FRONTEND_URL?.startsWith("https") ?? isProduction;
+
+  return {
+    httpOnly: true,
+    secure: isSecureContext, // Only set secure if frontend uses HTTPS
+    sameSite: isSecureContext ? ("none" as const) : ("lax" as const), // Use 'lax' for development, 'none' for production
+    path: "/",
+  };
+}
+
+/**
  * Login user
  * POST /api/auth/login
  */
@@ -12,21 +27,17 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
 
   const result = await authService.login(nim, password);
 
-  // Set httpOnly cookies for tokens
+  // Set httpOnly cookies for tokens with environment-aware options
+  const cookieOptions = getCookieOptions();
+
   res.cookie("accessToken", result.accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none", // Required for cross-domain cookies
+    ...cookieOptions,
     maxAge: 60 * 60 * 1000, // 1 hour
-    path: "/",
   });
 
   res.cookie("refreshToken", result.refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none", // Required for cross-domain cookies
+    ...cookieOptions,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: "/",
   });
 
   // Return only user data (not tokens)
@@ -60,13 +71,12 @@ export const refresh = asyncHandler(async (req: Request, res: Response): Promise
 
   const result = await authService.refresh(refreshToken);
 
-  // Set new access token cookie
+  // Set new access token cookie with environment-aware options
+  const cookieOptions = getCookieOptions();
+
   res.cookie("accessToken", result.accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
+    ...cookieOptions,
     maxAge: 60 * 60 * 1000, // 1 hour
-    path: "/",
   });
 
   res.status(200).json({
@@ -95,20 +105,11 @@ export const logout = asyncHandler(async (req: Request, res: Response): Promise<
 
   await refreshTokenService.deleteAllByUserId(userId);
 
-  // Clear cookies
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    path: "/",
-  });
+  // Clear cookies with environment-aware options
+  const cookieOptions = getCookieOptions();
 
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    path: "/",
-  });
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
 
   res.status(200).json({
     success: true,

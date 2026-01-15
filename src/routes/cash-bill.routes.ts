@@ -19,8 +19,14 @@ router.use(authenticate);
 router.use(requireUser);
 
 /**
- * GET /
+ * GET /my
  * Get user's cash bills with filtering and pagination
+ */
+router.get("/my", validateQuery(cashBillFilterSchema), cashBillController.getMyBills);
+
+/**
+ * GET /
+ * Get all cash bills with filtering and pagination
  */
 router.get("/", validateQuery(cashBillFilterSchema), cashBillController.getMyBills);
 
