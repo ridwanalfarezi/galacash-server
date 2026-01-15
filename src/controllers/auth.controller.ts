@@ -4,15 +4,20 @@ import { Request, Response } from "express";
 
 /**
  * Get secure cookie options based on environment
+ * For cross-origin requests (e.g., frontend on localhost, backend on cloud),
+ * we need sameSite: "none" and secure: true
  */
 function getCookieOptions() {
   const isProduction = process.env.NODE_ENV === "production";
-  const isSecureContext = process.env.FRONTEND_URL?.startsWith("https") ?? isProduction;
+
+  // For production or when backend is on HTTPS, use secure cookies with sameSite: "none"
+  // This allows cross-origin cookie sharing between frontend and backend
+  const useSecureCookies = isProduction;
 
   return {
     httpOnly: true,
-    secure: isSecureContext, // Only set secure if frontend uses HTTPS
-    sameSite: isSecureContext ? ("none" as const) : ("lax" as const), // Use 'lax' for development, 'none' for production
+    secure: useSecureCookies,
+    sameSite: useSecureCookies ? ("none" as const) : ("lax" as const),
     path: "/",
   };
 }
