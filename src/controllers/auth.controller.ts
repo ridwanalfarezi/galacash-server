@@ -1,26 +1,7 @@
 import { authService, refreshTokenService } from "@/services";
+import { getCookieOptions } from "@/utils/cookie-options";
 import { asyncHandler } from "@/utils/errors";
 import { Request, Response } from "express";
-
-/**
- * Get secure cookie options based on environment
- * For cross-origin requests (e.g., frontend on localhost, backend on cloud),
- * we need sameSite: "none" and secure: true
- */
-function getCookieOptions() {
-  const isProduction = process.env.NODE_ENV === "production";
-
-  // For production or when backend is on HTTPS, use secure cookies with sameSite: "none"
-  // This allows cross-origin cookie sharing between frontend and backend
-  const useSecureCookies = isProduction;
-
-  return {
-    httpOnly: true,
-    secure: useSecureCookies,
-    sameSite: useSecureCookies ? ("none" as const) : ("lax" as const),
-    path: "/",
-  };
-}
 
 /**
  * Login user

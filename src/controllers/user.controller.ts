@@ -1,4 +1,5 @@
-import { userService } from "@/services";
+import { refreshTokenService, userService } from "@/services";
+import { getCookieOptions } from "@/utils/cookie-options";
 import { asyncHandler } from "@/utils/errors";
 import { Request, Response } from "express";
 
@@ -85,9 +86,16 @@ export const changePassword = asyncHandler(async (req: Request, res: Response): 
 
   await userService.changePassword(userId, oldPassword, newPassword);
 
+  // Remove all refresh tokens and clear auth cookies to force re-authentication
+  await refreshTokenService.deleteAllByUserId(userId);
+
+  const cookieOptions = getCookieOptions();
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
+
   res.status(200).json({
     success: true,
-    message: "Password changed",
+    message: "Password changed. Please log in again.",
   });
 });
 
