@@ -42,10 +42,6 @@ export const changePasswordSchema = Joi.object({
     "string.min": "Password baru minimal 8 karakter",
     "any.required": "Password baru wajib diisi",
   }),
-  confirmPassword: Joi.string().valid(Joi.ref("newPassword")).required().messages({
-    "any.only": "Konfirmasi password tidak cocok",
-    "any.required": "Konfirmasi password wajib diisi",
-  }),
 });
 
 // ============ FUND APPLICATION SCHEMAS ============
