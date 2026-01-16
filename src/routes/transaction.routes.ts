@@ -1,14 +1,14 @@
 import { transactionController } from "@/controllers";
-import { authenticate, requireUser, validateQuery } from "@/middlewares";
+import { authenticate, validateQuery } from "@/middlewares";
 import { transactionFilterSchema } from "@/validators/schemas";
 import { Router } from "express";
 import Joi from "joi";
 
 const router: Router = Router();
 
-// All routes require authentication and user role
+// All routes require authentication
 router.use(authenticate);
-router.use(requireUser);
+// Allow both user and bendahara roles to access transactions
 
 /**
  * GET /

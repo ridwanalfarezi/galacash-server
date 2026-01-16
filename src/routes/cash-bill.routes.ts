@@ -1,12 +1,6 @@
 import { uploadPaymentProof } from "@/config/multer.config";
 import { cashBillController } from "@/controllers";
-import {
-  authenticate,
-  requireUser,
-  uploadRateLimit,
-  validateBody,
-  validateQuery,
-} from "@/middlewares";
+import { authenticate, uploadRateLimit, validateBody, validateQuery } from "@/middlewares";
 import { handleFileUpload } from "@/middlewares/upload.middleware";
 import { cashBillFilterSchema } from "@/validators/schemas";
 import { Router } from "express";
@@ -14,9 +8,9 @@ import Joi from "joi";
 
 const router: Router = Router();
 
-// All routes require authentication and user role
+// All routes require authentication
 router.use(authenticate);
-router.use(requireUser);
+// Allow both user and bendahara roles to access cash bills
 
 /**
  * GET /my
