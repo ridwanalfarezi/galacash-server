@@ -68,8 +68,12 @@ export class AuthService {
     // Cache user
     await this.cacheService.setCached(this.cacheService.userKey(user.id), user);
 
+    // Remove password from response
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userWithoutPassword } = user;
+
     return {
-      user,
+      user: userWithoutPassword as User,
       accessToken,
       refreshToken,
     };
