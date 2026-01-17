@@ -83,7 +83,7 @@ Optional:
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/ridwanalfarezi/galacash-server.git
 cd galacash-server
 ```
 
@@ -521,8 +521,8 @@ To use different ports, edit `docker-compose.yml` and update `.env`.
 
 ## 📚 Additional Resources
 
-- [API Specification](./BACKEND_API_SPECIFICATION.md)
-- [Technical Requirements](./TECHNICAL_REQUIREMENTS.md)
+- [API Specification](./docs/API.md)
+- [Database Schema](./docs/DATABASE.md)
 - [OpenAPI Schema](./openapi.yaml)
 - [Prisma v7 Documentation](https://www.prisma.io/docs)
 - [Express.js Guide](https://expressjs.com/)
@@ -564,17 +564,15 @@ This test:
 
 ---
 
-## 👥 Team
+## 👥 Contributing
 
-- **Role**: Backend Developer
-- **Tech Stack**: Node.js + TypeScript + PostgreSQL + Prisma v7
-- **Repository**: https://github.com/ridwanalfarezi/galacash-server (private)
+We welcome contributions! Please see our [Contributing Guide](../CONTRIBUTING.md) for guidelines.
 
 ---
 
 ## 📝 License
 
-ISC
+MIT License - see [LICENSE](../LICENSE)
 
 ---
 
