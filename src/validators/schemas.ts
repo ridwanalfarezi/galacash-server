@@ -113,7 +113,10 @@ export const dateRangeSchema = Joi.object({
 });
 
 export const transactionFilterSchema = paginationSchema.keys({
-  ...dateRangeSchema.describe().keys,
+  startDate: Joi.date().iso().optional(),
+  endDate: Joi.date().iso().optional().messages({
+    "date.min": "Tanggal akhir harus setelah tanggal awal",
+  }),
   type: Joi.string().valid("income", "expense").optional(),
   sortBy: Joi.string().valid("date", "amount", "type").optional(),
   sortOrder: Joi.string().valid("asc", "desc").optional(),
