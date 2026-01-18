@@ -384,10 +384,7 @@ export class BendaharaService {
   /**
    * Get financial summary (rekap kas) for a class
    */
-  async getRekapKas(
-    startDate?: Date,
-    endDate?: Date
-  ): Promise<RekapKasData> {
+  async getRekapKas(startDate?: Date, endDate?: Date): Promise<RekapKasData> {
     // Generate cache key (without classId - all classes)
     const cacheKeyParts = ["all", startDate?.toISOString(), endDate?.toISOString()]
       .filter((p) => p)
