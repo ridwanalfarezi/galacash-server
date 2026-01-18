@@ -33,36 +33,6 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response): Pr
  * Get all fund applications
  * GET /api/bendahara/fund-applications
  */
-export const getAllFundApplications = asyncHandler(
-  async (req: Request, res: Response): Promise<void> => {
-    const classId = req.user?.classId;
-    const { page = 1, limit = 10, status } = req.query;
-
-    if (!classId) {
-      res.status(401).json({
-        success: false,
-        error: { code: "UNAUTHORIZED", message: "User not authenticated" },
-      });
-      return;
-    }
-
-    const statusFilter =
-      typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
-
-    const applications = await bendaharaService.getAllFundApplications(classId, {
-      page: Number(page),
-      limit: Number(limit),
-      status: statusFilter,
-    });
-
-    res.status(200).json({
-      success: true,
-      data: applications,
-      message: "All fund applications fetched",
-    });
-  }
-);
-
 /**
  * Approve fund application
  * POST /api/bendahara/fund-applications/:id/approve

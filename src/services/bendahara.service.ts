@@ -4,11 +4,7 @@ import {
   CashBillFilters,
   cashBillRepository,
 } from "@/repositories/cash-bill.repository";
-import {
-  FundApplicationFilters,
-  fundApplicationRepository,
-  PaginatedResponse as FundPaginatedResponse,
-} from "@/repositories/fund-application.repository";
+import { fundApplicationRepository } from "@/repositories/fund-application.repository";
 import { transactionRepository } from "@/repositories/transaction.repository";
 import { userRepository } from "@/repositories/user.repository";
 import { BusinessLogicError, NotFoundError } from "@/utils/errors";
@@ -85,47 +81,6 @@ export class BendaharaService {
       return dashboardData;
     } catch (error) {
       logger.error("Failed to fetch bendahara dashboard:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get all fund applications for review
-   */
-  async getAllFundApplications(
-    classId: string,
-    filters?: Partial<FundApplicationFilters>
-  ): Promise<FundPaginatedResponse<FundApplication>> {
-    const mergedFilters: FundApplicationFilters = {
-      classId,
-      page: filters?.page || 1,
-      limit: filters?.limit || 20,
-      status: filters?.status,
-      category: filters?.category,
-      sortBy: filters?.sortBy || "createdAt",
-      sortOrder: filters?.sortOrder || "desc",
-    };
-
-    // Generate cache key
-    const filterString = JSON.stringify(mergedFilters);
-    const cacheKey = `bendahara-applications:${classId}:${filterString}`;
-
-    // Try to get from cache
-    const cached =
-      await this.cacheService.getCached<FundPaginatedResponse<FundApplication>>(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    try {
-      const result = await this.fundApplicationRepository.findAll(mergedFilters);
-
-      // Cache the result
-      await this.cacheService.setCached(cacheKey, result, 300); // 5 minutes cache
-
-      return result;
-    } catch (error) {
-      logger.error("Failed to fetch fund applications for bendahara:", error);
       throw error;
     }
   }

@@ -9,7 +9,6 @@ import {
 import {
   cashBillFilterSchema,
   createTransactionSchema,
-  fundApplicationFilterSchema,
   rekapKasFilterSchema,
   reviewFundApplicationSchema,
 } from "@/validators/schemas";
@@ -26,16 +25,6 @@ router.use(requireBendahara);
  * Get bendahara dashboard with overview
  */
 router.get("/dashboard", bendaharaController.getDashboard);
-
-/**
- * GET /fund-applications
- * Get all fund applications with filtering
- */
-router.get(
-  "/fund-applications",
-  validateQuery(fundApplicationFilterSchema),
-  bendaharaController.getAllFundApplications
-);
 
 /**
  * POST /fund-applications/:id/approve

@@ -78,4 +78,4 @@ export const requireBendahara = requireRole(["bendahara"]);
 /**
  * Require user role (both user and bendahara can access)
  */
-export const requireUser = requireRole(["user"]);
+export const requireUser = requireRole(["user", "bendahara"]);
