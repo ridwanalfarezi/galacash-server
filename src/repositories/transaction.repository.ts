@@ -140,14 +140,13 @@ export class TransactionRepository {
   }
 
   /**
-   * Get balance summary for a class
+   * Get balance summary (all classes)
    */
-  async getBalance(classId: string): Promise<BalanceData> {
+  async getBalance(): Promise<BalanceData> {
     try {
       const [incomeResult, expenseResult] = await Promise.all([
         prisma.transaction.aggregate({
           where: {
-            classId,
             type: "income",
           },
           _sum: {
@@ -156,7 +155,6 @@ export class TransactionRepository {
         }),
         prisma.transaction.aggregate({
           where: {
-            classId,
             type: "expense",
           },
           _sum: {

@@ -175,18 +175,39 @@ export class TransactionService {
   }
 
   /**
-   * Get current balance for a class with caching
+   * Get total balance across all classes with caching (for transparency)
    */
-  async getBalance(classId: string): Promise<BalanceData> {
+  async getBalance(): Promise<BalanceData> {
     // Try to get from cache
-    const cacheKey = this.cacheService.balanceKey(classId);
+    const cacheKey = this.cacheService.balanceKey("all");
     const cached = await this.cacheService.getCached<BalanceData>(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
-      const balance = await this.transactionRepository.getBalance(classId);
+      // Fetch all transactions and aggregate
+      const transactions = await this.transactionRepository.findAll({
+        page: 1,
+        limit: 100000, // Get all transactions
+      });
+
+      let totalIncome = 0;
+      let totalExpense = 0;
+
+      transactions.data.forEach((transaction) => {
+        if (transaction.type === "income") {
+          totalIncome += transaction.amount;
+        } else {
+          totalExpense += transaction.amount;
+        }
+      });
+
+      const balance: BalanceData = {
+        income: totalIncome,
+        expense: totalExpense,
+        balance: totalIncome - totalExpense,
+      };
 
       // Cache the result
       await this.cacheService.setCached(cacheKey, balance, 300); // 5 minutes cache
@@ -198,11 +219,10 @@ export class TransactionService {
     }
   }
 
-  async getDashboardSummary(classId: string, _userRole?: string, startDate?: Date, endDate?: Date) {
+  async getDashboardSummary(startDate?: Date, endDate?: Date) {
     // If date range is provided, filter transactions
     if (startDate || endDate) {
       const transactions = await this.transactionRepository.findAll({
-        classId,
         startDate,
         endDate,
         page: 1,
@@ -227,8 +247,8 @@ export class TransactionService {
       };
     }
 
-    // No date filter, get full balance
-    const balance = await this.getBalance(classId);
+    // No date filter, get full balance (across all classes)
+    const balance = await this.getBalance();
     return {
       totalIncome: balance.income,
       totalExpense: balance.expense,
@@ -239,9 +259,9 @@ export class TransactionService {
   /**
    * Invalidate transaction cache when transaction is created/updated
    */
-  async invalidateTransactionCache(classId: string): Promise<void> {
-    await this.cacheService.invalidateTransactions(classId);
-    await this.cacheService.invalidateCache(this.cacheService.balanceKey(classId) + "*");
+  async invalidateTransactionCache(): Promise<void> {
+    await this.cacheService.invalidateTransactions("all");
+    await this.cacheService.invalidateCache(this.cacheService.balanceKey("all") + "*");
   }
 }
 

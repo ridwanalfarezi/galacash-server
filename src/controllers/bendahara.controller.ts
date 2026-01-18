@@ -7,9 +7,9 @@ import { Request, Response } from "express";
  * GET /api/bendahara/dashboard
  */
 export const getDashboard = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const classId = req.user?.classId;
+  const user = req.user;
 
-  if (!classId) {
+  if (!user) {
     res.status(401).json({
       success: false,
       error: {
@@ -20,7 +20,7 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response): Pr
     return;
   }
 
-  const dashboard = await bendaharaService.getDashboard(classId);
+  const dashboard = await bendaharaService.getDashboard();
 
   res.status(200).json({
     success: true,
@@ -105,10 +105,10 @@ export const rejectFundApplication = asyncHandler(
  * GET /api/bendahara/cash-bills
  */
 export const getAllCashBills = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const classId = req.user?.classId;
+  const user = req.user;
   const { page = 1, limit = 10, status } = req.query;
 
-  if (!classId) {
+  if (!user) {
     res.status(401).json({
       success: false,
       error: { code: "UNAUTHORIZED", message: "User not authenticated" },
@@ -119,7 +119,7 @@ export const getAllCashBills = asyncHandler(async (req: Request, res: Response):
   const statusFilter =
     typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
 
-  const bills = await bendaharaService.getAllCashBills(classId, {
+  const bills = await bendaharaService.getAllCashBills({
     page: Number(page),
     limit: Number(limit),
     status: statusFilter,
@@ -196,10 +196,10 @@ export const rejectPayment = asyncHandler(async (req: Request, res: Response): P
  * GET /api/bendahara/rekap-kas
  */
 export const getRekapKas = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const classId = req.user?.classId;
+  const user = req.user;
   const { startDate, endDate } = req.query;
 
-  if (!classId) {
+  if (!user) {
     res.status(401).json({
       success: false,
       error: {
@@ -213,7 +213,7 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;
 
-  const rekapKas = await bendaharaService.getRekapKas(classId, start, end);
+  const rekapKas = await bendaharaService.getRekapKas(start, end);
 
   res.status(200).json({
     success: true,
@@ -227,10 +227,10 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
  * GET /api/bendahara/students
  */
 export const getStudents = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const classId = req.user?.classId;
+  const user = req.user;
   const { page = 1, limit = 10, search } = req.query;
 
-  if (!classId) {
+  if (!user) {
     res.status(401).json({
       success: false,
       error: { code: "UNAUTHORIZED", message: "User not authenticated" },
@@ -239,7 +239,7 @@ export const getStudents = asyncHandler(async (req: Request, res: Response): Pro
   }
 
   const students = await userService.getStudents({
-    classId,
+    classId: user.classId,
     page: Number(page),
     limit: Number(limit),
     search: search as string | undefined,
@@ -258,12 +258,11 @@ export const getStudents = asyncHandler(async (req: Request, res: Response): Pro
  */
 export const createTransaction = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const bendaharaId = req.user?.sub;
-    const classId = req.user?.classId;
+    const user = req.user;
     const { date, description, type, amount, category } = req.body;
     const attachment = req.fileUrl; // Set by upload middleware
 
-    if (!bendaharaId || !classId) {
+    if (!user) {
       res.status(401).json({
         success: false,
         error: {
@@ -281,8 +280,8 @@ export const createTransaction = asyncHandler(
       amount: Number(amount),
       category,
       attachment,
-      createdBy: bendaharaId,
-      classId,
+      createdBy: user.sub,
+      classId: user.classId,
     });
 
     res.status(201).json({

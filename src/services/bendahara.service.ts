@@ -53,60 +53,54 @@ export class BendaharaService {
   /**
    * Get dashboard with pending applications, payments, and total balance
    */
-  async getDashboard(classId: string): Promise<DashboardData> {
-    // Check cache first
-    const cacheKey = `bendahara-dashboard:${classId}`;
+  async getDashboard(): Promise<DashboardData> {
+    // Check cache first - use global cache key since data includes all classes
+    const cacheKey = `bendahara-dashboard:all`;
     const cached = await this.cacheService.getCached<DashboardData>(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
-      // Get pending applications count
+      // Get pending applications count (all classes)
       const pendingApplications = await this.fundApplicationRepository.findAll({
-        classId,
         status: "pending",
         page: 1,
         limit: 1,
       });
 
-      // Get pending payments count
+      // Get pending payments count (all classes)
       const pendingPayments = await this.cashBillRepository.findAll({
-        classId,
         status: "menunggu_konfirmasi",
         page: 1,
         limit: 1,
       });
 
-      // Get total balance
-      const balance = await this.transactionRepository.getBalance(classId);
+      // Get total balance (all classes)
+      const balance = await this.transactionRepository.getBalance();
 
-      // Get recent transactions (last 10)
+      // Get recent transactions (last 10, all classes)
       const recentTransactionsResult = await this.transactionRepository.findAll({
-        classId,
         page: 1,
         limit: 10,
       });
 
-      // Get recent fund applications (last 5 pending)
+      // Get recent fund applications (last 5 pending, all classes)
       const recentFundApplicationsResult = await this.fundApplicationRepository.findAll({
-        classId,
         status: "pending",
         page: 1,
         limit: 5,
       });
 
-      // Get recent cash bills (last 5 pending)
+      // Get recent cash bills (last 5 pending, all classes)
       const recentCashBillsResult = await this.cashBillRepository.findAll({
-        classId,
         status: "menunggu_konfirmasi",
         page: 1,
         limit: 5,
       });
 
-      // Get students count
+      // Get students count (all classes)
       const studentsResult = await this.userRepository.findAll({
-        classId,
         page: 1,
         limit: 1,
       });
@@ -189,7 +183,7 @@ export class BendaharaService {
       });
 
       // Invalidate caches
-      await this.invalidateBendaharaCaches(application.classId);
+      await this.invalidateBendaharaCaches();
 
       logger.info(`Fund application approved: ${applicationId} by bendahara ${bendaharaId}`);
 
@@ -237,7 +231,7 @@ export class BendaharaService {
       });
 
       // Invalidate caches
-      await this.invalidateBendaharaCaches(application.classId);
+      await this.invalidateBendaharaCaches();
 
       logger.info(
         `Fund application rejected: ${applicationId} by bendahara ${bendaharaId} with reason: ${reason}`
@@ -254,14 +248,12 @@ export class BendaharaService {
   }
 
   /**
-   * Get all cash bills for a class
+   * Get all cash bills (across all classes)
    */
   async getAllCashBills(
-    classId: string,
     filters?: Partial<CashBillFilters>
   ): Promise<BillPaginatedResponse<CashBill>> {
     const mergedFilters: CashBillFilters = {
-      classId,
       page: filters?.page || 1,
       limit: filters?.limit || 20,
       status: filters?.status,
@@ -271,7 +263,7 @@ export class BendaharaService {
 
     // Generate cache key
     const filterString = JSON.stringify(mergedFilters);
-    const cacheKey = `bendahara-bills:${classId}:${filterString}`;
+    const cacheKey = `bendahara-bills:all:${filterString}`;
 
     // Try to get from cache
     const cached = await this.cacheService.getCached<BillPaginatedResponse<CashBill>>(cacheKey);
@@ -333,7 +325,7 @@ export class BendaharaService {
       });
 
       // Invalidate caches
-      await this.invalidateBendaharaCaches(bill.classId);
+      await this.invalidateBendaharaCaches();
 
       logger.info(`Bill payment confirmed: ${billId} by bendahara ${bendaharaId}`);
 
@@ -375,7 +367,7 @@ export class BendaharaService {
       });
 
       // Invalidate caches
-      await this.invalidateBendaharaCaches(bill.classId);
+      await this.invalidateBendaharaCaches();
 
       logger.info(`Bill payment rejected: ${billId}${reason ? ` with reason: ${reason}` : ""}`);
 
@@ -392,9 +384,12 @@ export class BendaharaService {
   /**
    * Get financial summary (rekap kas) for a class
    */
-  async getRekapKas(classId: string, startDate?: Date, endDate?: Date): Promise<RekapKasData> {
-    // Generate cache key
-    const cacheKeyParts = [classId, startDate?.toISOString(), endDate?.toISOString()]
+  async getRekapKas(
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<RekapKasData> {
+    // Generate cache key (without classId - all classes)
+    const cacheKeyParts = ["all", startDate?.toISOString(), endDate?.toISOString()]
       .filter((p) => p)
       .join(":");
     const cacheKey = `rekap-kas:${cacheKeyParts}`;
@@ -406,13 +401,12 @@ export class BendaharaService {
     }
 
     try {
-      // Get transactions with filters
+      // Get transactions with filters (all classes)
       const transactions = await this.transactionRepository.findAll({
-        classId,
         startDate,
         endDate,
         page: 1,
-        limit: 1000, // Get all transactions for summary
+        limit: 10000, // Get all transactions for summary from all classes
       });
 
       // Calculate totals
@@ -445,11 +439,11 @@ export class BendaharaService {
   }
 
   /**
-   * Get all students in a class
+   * Get all students in all classes
    */
-  async getStudents(classId: string): Promise<User[]> {
+  async getStudents(): Promise<User[]> {
     // Try to get from cache
-    const cacheKey = `class-students:${classId}`;
+    const cacheKey = `all-students`;
     const cached = await this.cacheService.getCached<User[]>(cacheKey);
     if (cached) {
       return cached;
@@ -457,9 +451,8 @@ export class BendaharaService {
 
     try {
       const students = await this.userRepository.findAll({
-        classId,
         page: 1,
-        limit: 1000, // Get all students in class
+        limit: 10000, // Get all students across all classes
       });
 
       // Cache the result
@@ -475,11 +468,11 @@ export class BendaharaService {
   /**
    * Invalidate bendahara-related caches
    */
-  private async invalidateBendaharaCaches(classId: string): Promise<void> {
-    await this.cacheService.invalidateCache(`bendahara-dashboard:${classId}*`);
-    await this.cacheService.invalidateCache(`bendahara-applications:${classId}*`);
-    await this.cacheService.invalidateCache(`bendahara-bills:${classId}*`);
-    await this.cacheService.invalidateCache(`rekap-kas:${classId}*`);
+  private async invalidateBendaharaCaches(): Promise<void> {
+    await this.cacheService.invalidateCache(`bendahara-dashboard:all*`);
+    await this.cacheService.invalidateCache(`bendahara-bills:all*`);
+    await this.cacheService.invalidateCache(`rekap-kas:all*`);
+    await this.cacheService.invalidateCache(`all-students*`);
   }
 
   /**
@@ -514,7 +507,7 @@ export class BendaharaService {
       });
 
       // Invalidate caches
-      await this.invalidateBendaharaCaches(data.classId);
+      await this.invalidateBendaharaCaches();
 
       logger.info(`Manual transaction created: ${transaction.id} by bendahara ${data.createdBy}`);
 
