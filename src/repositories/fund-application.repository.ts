@@ -45,7 +45,9 @@ export class FundApplicationRepository {
   /**
    * Find all fund applications with filters and pagination
    */
-  async findAll(filters: Partial<FundApplicationFilters>): Promise<PaginatedResponse<FundApplication>> {
+  async findAll(
+    filters: Partial<FundApplicationFilters>
+  ): Promise<PaginatedResponse<FundApplication>> {
     const {
       classId,
       userId,

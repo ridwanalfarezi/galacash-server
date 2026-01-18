@@ -39,7 +39,7 @@ export class TransactionService {
 
     // Generate cache key
     const filterString = JSON.stringify(mergedFilters);
-    const cacheKey = this.cacheService.transactionsKey('all', filterString);
+    const cacheKey = this.cacheService.transactionsKey("all", filterString);
 
     // Try to get from cache
     const cached = await this.cacheService.getCached<PaginatedResponse<Transaction>>(cacheKey);
@@ -108,7 +108,7 @@ export class TransactionService {
     endDate?: Date
   ): Promise<ChartDataPoint[]> {
     // Generate cache key
-    const cacheKeyParts = ['all', type, startDate?.toISOString(), endDate?.toISOString()]
+    const cacheKeyParts = ["all", type, startDate?.toISOString(), endDate?.toISOString()]
       .filter((p) => p)
       .join(":");
     const cacheKey = `chart-data:${cacheKeyParts}`;
@@ -120,11 +120,7 @@ export class TransactionService {
     }
 
     try {
-      const chartData = await this.transactionRepository.getChartData(
-        type,
-        startDate,
-        endDate
-      );
+      const chartData = await this.transactionRepository.getChartData(type, startDate, endDate);
 
       // Cache the result
       await this.cacheService.setCached(cacheKey, chartData, 600); // 10 minutes cache
@@ -147,7 +143,7 @@ export class TransactionService {
   ): Promise<Array<{ name: string; value: number; fill: string }>> {
     const cacheKeyParts = [
       "breakdown",
-      'all',
+      "all",
       type,
       startDate?.toISOString(),
       endDate?.toISOString(),
@@ -166,11 +162,7 @@ export class TransactionService {
     }
 
     try {
-      const breakdown = await this.transactionRepository.getBreakdown(
-        type,
-        startDate,
-        endDate
-      );
+      const breakdown = await this.transactionRepository.getBreakdown(type, startDate, endDate);
 
       // Cache the result
       await this.cacheService.setCached(cacheKey, breakdown, 600); // 10 minutes cache
