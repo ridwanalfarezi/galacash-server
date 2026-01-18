@@ -3,7 +3,7 @@ import { transactionRepository } from "@/repositories/transaction.repository";
 import ExcelJS from "exceljs";
 
 export interface ExportFilters {
-  classId: string;
+  classId?: string;
   startDate?: string;
   endDate?: string;
   type?: TransactionType;
