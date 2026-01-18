@@ -5,8 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 
 const BILL_GENERATION_SCHEDULE = process.env.BILL_GENERATION_SCHEDULE || "0 0 1 * *"; // Default: 1st of every month at midnight
 
-const KAS_KELAS_AMOUNT = 10000; // Rp 10,000 per month
-const BIAYA_ADMIN = 1000; // Rp 1,000 admin fee
+const KAS_KELAS_AMOUNT = parseInt(process.env.KAS_KELAS_AMOUNT || "15000", 10); // Default: Rp 15,000 per month
+const BIAYA_ADMIN = 0; // No admin fee
 
 /**
  * Generate monthly bills for all users

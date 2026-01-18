@@ -103,16 +103,6 @@ export const authRateLimit = rateLimit({
 });
 
 /**
- * Moderate rate limit for file uploads
- * 30 requests per 10 minutes
- */
-export const uploadRateLimit = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 30,
-  message: "Too many upload attempts, please try again later.",
-});
-
-/**
  * General API rate limit
  * 500 requests per minute
  */
@@ -120,14 +110,4 @@ export const generalRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 500,
   message: "Too many requests, please slow down.",
-});
-
-/**
- * Strict rate limit for sensitive operations
- * 10 requests per 10 minutes
- */
-export const strictRateLimit = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 10,
-  message: "Too many attempts for this sensitive operation, please try again later.",
 });

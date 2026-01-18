@@ -79,11 +79,6 @@ app.use(
 app.use(cookieParser());
 
 /**
- * Rate limiting - Apply to all API routes
- */
-app.use("/api", generalRateLimit);
-
-/**
  * Body parsers
  */
 app.use(express.json({ limit: "10mb" }));

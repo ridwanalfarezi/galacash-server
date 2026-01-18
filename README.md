@@ -214,8 +214,9 @@ galacash-server/
 ├── eslint.config.js         # ESLint flat config
 ├── pnpm-workspace.yaml
 ├── package.json
-├── BACKEND_API_SPECIFICATION.md
-├── TECHNICAL_REQUIREMENTS.md
+├── docs/                    # Documentation
+│   ├── API.md              # API documentation
+│   └── DATABASE.md         # Database schema documentation
 ├── openapi.yaml
 └── README.md
 ```
@@ -235,6 +236,7 @@ Key environment variables (see `.env.example` for complete list):
 | `GCP_PROJECT_ID`           | Google Cloud project ID      | _(Optional)_                                                   |
 | `GCP_BUCKET_NAME`          | GCS bucket name              | `galacash-bucket`                                              |
 | `BILL_GENERATION_SCHEDULE` | Cron for monthly bills       | `0 0 1 * *` (1st of each month at midnight)                    |
+| `KAS_KELAS_AMOUNT`         | Monthly class dues (IDR)     | `15000`                                                        |
 | `PORT`                     | Server port                  | `3000`                                                         |
 | `NODE_ENV`                 | Environment                  | `development`                                                  |
 

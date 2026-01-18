@@ -267,9 +267,9 @@ Monthly class fee bills for students.
 | month           | String        | NOT NULL                          | Month (e.g., "January", "February")         |
 | year            | Integer       | NOT NULL                          | Year                                        |
 | dueDate         | DateTime      | INDEXED                           | Payment deadline                            |
-| kasKelas        | Float         | NOT NULL                          | Class fund amount (Rupiah)                  |
-| biayaAdmin      | Float         | NOT NULL                          | Administrative fee (Rupiah)                 |
-| totalAmount     | Float         | NOT NULL                          | kasKelas + biayaAdmin                       |
+| kasKelas        | Float         | NOT NULL                          | Class fund amount (default: Rp 15,000)      |
+| biayaAdmin      | Float         | NOT NULL                          | Admin fee (deprecated, always 0)            |
+| totalAmount     | Float         | NOT NULL                          | Total = kasKelas (biayaAdmin is 0)          |
 | status          | BillStatus    | DEFAULT: 'belum_dibayar', INDEXED | Payment status                              |
 | paymentMethod   | PaymentMethod | NULLABLE                          | How it was paid (if paid)                   |
 | paymentProofUrl | String        | NULLABLE                          | Payment receipt/proof URL                   |
