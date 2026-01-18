@@ -1,4 +1,10 @@
-import { CashBill, FundApplication, TransactionCategory, User } from "@/prisma/generated/client";
+import {
+  CashBill,
+  FundApplication,
+  Transaction,
+  TransactionCategory,
+  User,
+} from "@/prisma/generated/client";
 import {
   PaginatedResponse as BillPaginatedResponse,
   CashBillFilters,
@@ -15,6 +21,12 @@ export interface DashboardData {
   pendingApplications: number;
   pendingPayments: number;
   totalBalance: number;
+  totalIncome: number;
+  totalExpense: number;
+  totalStudents: number;
+  recentTransactions: Transaction[];
+  recentFundApplications: FundApplication[];
+  recentCashBills: CashBill[];
 }
 
 export interface RekapKasData {
@@ -69,10 +81,58 @@ export class BendaharaService {
       // Get total balance
       const balance = await this.transactionRepository.getBalance(classId);
 
+      // Get recent transactions (last 10)
+      const recentTransactionsResult = await this.transactionRepository.findAll({
+        classId,
+        page: 1,
+        limit: 10,
+      });
+
+      // Get recent fund applications (last 5 pending)
+      const recentFundApplicationsResult = await this.fundApplicationRepository.findAll({
+        classId,
+        status: "pending",
+        page: 1,
+        limit: 5,
+      });
+
+      // Get recent cash bills (last 5 pending)
+      const recentCashBillsResult = await this.cashBillRepository.findAll({
+        classId,
+        status: "menunggu_konfirmasi",
+        page: 1,
+        limit: 5,
+      });
+
+      // Get students count
+      const studentsResult = await this.userRepository.findAll({
+        classId,
+        page: 1,
+        limit: 1,
+      });
+
+      // Calculate total income and expense from recent transactions
+      let totalIncome = 0;
+      let totalExpense = 0;
+
+      for (const transaction of recentTransactionsResult.data) {
+        if (transaction.type === "income") {
+          totalIncome += transaction.amount;
+        } else {
+          totalExpense += transaction.amount;
+        }
+      }
+
       const dashboardData: DashboardData = {
         pendingApplications: pendingApplications.total,
         pendingPayments: pendingPayments.total,
         totalBalance: balance.balance,
+        totalIncome,
+        totalExpense,
+        totalStudents: studentsResult.total,
+        recentTransactions: recentTransactionsResult.data,
+        recentFundApplications: recentFundApplicationsResult.data,
+        recentCashBills: recentCashBillsResult.data,
       };
 
       // Cache the result
