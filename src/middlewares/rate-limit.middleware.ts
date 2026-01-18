@@ -111,3 +111,23 @@ export const generalRateLimit = rateLimit({
   max: 500,
   message: "Too many requests, please slow down.",
 });
+
+/**
+ * Moderate rate limit for file uploads
+ * 30 requests per 10 minutes
+ */
+export const uploadRateLimit = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 30,
+  message: "Too many upload attempts, please try again later.",
+});
+
+/**
+ * Strict rate limit for sensitive operations (e.g., password change)
+ * 10 requests per 10 minutes
+ */
+export const strictRateLimit = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 10,
+  message: "Too many attempts for this sensitive operation, please try again later.",
+});
