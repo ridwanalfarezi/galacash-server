@@ -73,7 +73,8 @@ export async function uploadToGCS(file: Express.Multer.File, folder: string): Pr
 
     blobStream.on("finish", async () => {
       // Make file publicly accessible
-      await blob.makePublic();
+      //await blob.makePublic();
+      
 
       // Generate public URL
       const publicUrl = `https://storage.googleapis.com/${BUCKET_NAME}/${fileName}`;
