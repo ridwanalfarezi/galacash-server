@@ -7,24 +7,12 @@ import { Request, Response } from "express";
  * GET /api/fund-applications
  */
 export const getAll = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const classId = req.user?.classId;
   const { page = 1, limit = 10, status } = req.query;
-
-  if (!classId) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User not authenticated",
-      },
-    });
-    return;
-  }
 
   const statusFilter =
     typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
 
-  const applications = await fundApplicationService.getAll(classId, {
+  const applications = await fundApplicationService.getAll({
     page: Number(page),
     limit: Number(limit),
     status: statusFilter,

@@ -7,24 +7,12 @@ import { Request, Response } from "express";
  * GET /api/transactions
  */
 export const getTransactions = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const classId = req.user?.classId;
   const { page = 1, limit = 10, type } = req.query;
-
-  if (!classId) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User not authenticated",
-      },
-    });
-    return;
-  }
 
   const typeFilter =
     typeof type === "string" ? type : Array.isArray(type) ? String(type[0]) : undefined;
 
-  const transactions = await transactionService.getTransactions(classId, {
+  const transactions = await transactionService.getTransactions({
     page: Number(page),
     limit: Number(limit),
     type: typeFilter,
@@ -59,19 +47,7 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
  * GET /api/transactions/chart/data
  */
 export const getChartData = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const classId = req.user?.classId;
   const { type } = req.query;
-
-  if (!classId) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User not authenticated",
-      },
-    });
-    return;
-  }
 
   const chartType =
     typeof type === "string"
@@ -80,7 +56,7 @@ export const getChartData = asyncHandler(async (req: Request, res: Response): Pr
         ? (type[0] as "income" | "expense")
         : undefined;
 
-  const chartData = await transactionService.getChartData(classId, chartType ?? "income");
+  const chartData = await transactionService.getChartData(chartType ?? "income");
 
   res.status(200).json({
     success: true,
@@ -94,19 +70,7 @@ export const getChartData = asyncHandler(async (req: Request, res: Response): Pr
  * GET /api/transactions/breakdown
  */
 export const getBreakdown = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const classId = req.user?.classId;
   const { type, startDate, endDate } = req.query;
-
-  if (!classId) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User not authenticated",
-      },
-    });
-    return;
-  }
 
   const chartType =
     typeof type === "string"
@@ -118,7 +82,7 @@ export const getBreakdown = asyncHandler(async (req: Request, res: Response): Pr
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;
 
-  const breakdown = await transactionService.getBreakdown(classId, chartType, start, end);
+  const breakdown = await transactionService.getBreakdown(chartType, start, end);
 
   res.status(200).json({
     success: true,
@@ -133,24 +97,11 @@ export const getBreakdown = asyncHandler(async (req: Request, res: Response): Pr
  */
 export const exportTransactions = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const classId = req.user?.classId;
     const { format, type, category, startDate, endDate, search } = req.query;
-
-    if (!classId) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "User not authenticated",
-        },
-      });
-      return;
-    }
 
     const { exportService } = await import("@/services/export.service");
 
     const filters = {
-      classId,
       type: type ? (type as "income" | "expense") : undefined,
       category: category as string | undefined,
       startDate: startDate as string | undefined,

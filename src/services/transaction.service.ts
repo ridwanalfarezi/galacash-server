@@ -22,14 +22,12 @@ export class TransactionService {
   }
 
   /**
-   * Get paginated transactions with caching
+   * Get paginated transactions with caching (across all classes for transparency)
    */
   async getTransactions(
-    classId: string,
     filters?: Partial<TransactionFilters>
   ): Promise<PaginatedResponse<Transaction>> {
-    const mergedFilters: TransactionFilters = {
-      classId,
+    const mergedFilters: Partial<TransactionFilters> = {
       page: filters?.page || 1,
       limit: filters?.limit || 20,
       type: filters?.type,
@@ -41,7 +39,7 @@ export class TransactionService {
 
     // Generate cache key
     const filterString = JSON.stringify(mergedFilters);
-    const cacheKey = this.cacheService.transactionsKey(classId, filterString);
+    const cacheKey = this.cacheService.transactionsKey('all', filterString);
 
     // Try to get from cache
     const cached = await this.cacheService.getCached<PaginatedResponse<Transaction>>(cacheKey);
@@ -102,16 +100,15 @@ export class TransactionService {
   }
 
   /**
-   * Get chart data for pie charts by type
+   * Get chart data for pie charts by type (across all classes)
    */
   async getChartData(
-    classId: string,
     type: "income" | "expense",
     startDate?: Date,
     endDate?: Date
   ): Promise<ChartDataPoint[]> {
     // Generate cache key
-    const cacheKeyParts = [classId, type, startDate?.toISOString(), endDate?.toISOString()]
+    const cacheKeyParts = ['all', type, startDate?.toISOString(), endDate?.toISOString()]
       .filter((p) => p)
       .join(":");
     const cacheKey = `chart-data:${cacheKeyParts}`;
@@ -124,7 +121,6 @@ export class TransactionService {
 
     try {
       const chartData = await this.transactionRepository.getChartData(
-        classId,
         type,
         startDate,
         endDate
@@ -141,18 +137,17 @@ export class TransactionService {
   }
 
   /**
-   * Get transaction breakdown by category for pie charts
+   * Get transaction breakdown by category for pie charts (across all classes)
    * Returns { name, value, fill } format for frontend
    */
   async getBreakdown(
-    classId: string,
     type: "income" | "expense",
     startDate?: Date,
     endDate?: Date
   ): Promise<Array<{ name: string; value: number; fill: string }>> {
     const cacheKeyParts = [
       "breakdown",
-      classId,
+      'all',
       type,
       startDate?.toISOString(),
       endDate?.toISOString(),
@@ -172,7 +167,6 @@ export class TransactionService {
 
     try {
       const breakdown = await this.transactionRepository.getBreakdown(
-        classId,
         type,
         startDate,
         endDate

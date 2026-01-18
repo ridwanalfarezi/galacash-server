@@ -28,14 +28,12 @@ export class FundApplicationService {
   }
 
   /**
-   * Get all fund applications for a class with caching
+   * Get all fund applications across all classes with caching
    */
   async getAll(
-    classId: string,
     filters?: Partial<FundApplicationFilters>
   ): Promise<PaginatedResponse<FundApplication>> {
-    const mergedFilters: FundApplicationFilters = {
-      classId,
+    const mergedFilters: Partial<FundApplicationFilters> = {
       page: filters?.page || 1,
       limit: filters?.limit || 20,
       status: filters?.status,

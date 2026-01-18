@@ -8,7 +8,7 @@ import { DatabaseError } from "@/utils/errors";
 import { prisma } from "@/utils/prisma-client";
 
 export interface TransactionFilters {
-  classId: string;
+  classId?: string;
   type?: string;
   category?: string;
   startDate?: Date;
@@ -58,7 +58,7 @@ export class TransactionRepository {
   /**
    * Find all transactions with filters and pagination
    */
-  async findAll(filters: TransactionFilters): Promise<PaginatedResponse<Transaction>> {
+  async findAll(filters: Partial<TransactionFilters>): Promise<PaginatedResponse<Transaction>> {
     const {
       classId,
       type,
@@ -72,9 +72,11 @@ export class TransactionRepository {
     } = filters;
 
     try {
-      const where: Prisma.TransactionWhereInput = {
-        classId,
-      };
+      const where: Prisma.TransactionWhereInput = {};
+
+      if (classId) {
+        where.classId = classId;
+      }
 
       if (type) {
         where.type = type as TransactionType;
@@ -180,17 +182,15 @@ export class TransactionRepository {
   }
 
   /**
-   * Get chart data for transactions
+   * Get chart data for transactions (across all classes)
    */
   async getChartData(
-    classId: string,
     type: "income" | "expense",
     startDate?: Date,
     endDate?: Date
   ): Promise<ChartDataPoint[]> {
     try {
       const where: Prisma.TransactionWhereInput = {
-        classId,
         type,
       };
 
@@ -235,18 +235,16 @@ export class TransactionRepository {
   }
 
   /**
-   * Get transaction breakdown by category
+   * Get transaction breakdown by category (across all classes)
    * Returns data formatted for pie charts: { name, value, fill }
    */
   async getBreakdown(
-    classId: string,
     type: "income" | "expense",
     startDate?: Date,
     endDate?: Date
   ): Promise<Array<{ name: string; value: number; fill: string }>> {
     try {
       const where: Prisma.TransactionWhereInput = {
-        classId,
         type,
       };
 

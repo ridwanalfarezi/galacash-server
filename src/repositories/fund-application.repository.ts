@@ -45,7 +45,7 @@ export class FundApplicationRepository {
   /**
    * Find all fund applications with filters and pagination
    */
-  async findAll(filters: FundApplicationFilters): Promise<PaginatedResponse<FundApplication>> {
+  async findAll(filters: Partial<FundApplicationFilters>): Promise<PaginatedResponse<FundApplication>> {
     const {
       classId,
       userId,
@@ -58,13 +58,11 @@ export class FundApplicationRepository {
     } = filters;
 
     try {
-      if (!classId) {
-        throw new DatabaseError("Class ID is required to fetch fund applications");
-      }
+      const where: Prisma.FundApplicationWhereInput = {};
 
-      const where: Prisma.FundApplicationWhereInput = {
-        classId,
-      };
+      if (classId) {
+        where.classId = classId;
+      }
 
       if (userId) {
         where.userId = userId;
