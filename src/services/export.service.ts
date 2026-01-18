@@ -3,7 +3,6 @@ import { transactionRepository } from "@/repositories/transaction.repository";
 import ExcelJS from "exceljs";
 
 export interface ExportFilters {
-  classId?: string;
   startDate?: string;
   endDate?: string;
   type?: TransactionType;
@@ -18,7 +17,6 @@ export class ExportService {
   async exportTransactionsToExcel(filters: ExportFilters): Promise<Buffer> {
     // Fetch transactions from repository
     const transactions = await transactionRepository.findAll({
-      classId: filters.classId,
       type: filters.type,
       category: filters.category,
       startDate: filters.startDate ? new Date(filters.startDate) : undefined,
@@ -84,7 +82,6 @@ export class ExportService {
   async exportTransactionsToCSV(filters: ExportFilters): Promise<string> {
     // Fetch transactions from repository
     const transactions = await transactionRepository.findAll({
-      classId: filters.classId,
       type: filters.type,
       category: filters.category,
       startDate: filters.startDate ? new Date(filters.startDate) : undefined,
