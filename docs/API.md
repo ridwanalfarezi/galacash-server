@@ -1,6 +1,6 @@
 # GalaCash Backend API Specification
 
-> **Last Updated:** January 11, 2026  
+> **Last Updated:** January 19, 2026  
 > **Tech Stack:** Node.js (Express) + PostgreSQL + GCP Cloud Storage  
 > **Base URL:** `/api`
 
@@ -41,6 +41,15 @@ GalaCash is a financial management application for class treasurers. The backend
 - **Aju Dana**: Fund request/application system
 - **Tagihan Kas**: Monthly cash bill management
 - **Rekap Kas**: Financial recap & reporting
+
+### Data Transparency Model
+
+**Important**: As of January 2026, the system implements a **transparent data model** across all classes within an angkatan (batch):
+
+- Both `user` and `bendahara` roles can view **all financial data** across all classes in the same batch
+- The `classId` field is retained in the database for organizational purposes and future filtering capabilities
+- Dashboard summaries, transactions, fund applications, and cash bills aggregate data from all classes
+- This design allows for comprehensive batch-level financial oversight
 
 ---
 
@@ -674,7 +683,7 @@ Upload user avatar.
 
 #### GET `/api/dashboard/summary`
 
-Get financial summary for dashboard.
+Get financial summary for dashboard across all classes.
 
 **Headers:** `Authorization: Bearer <access_token>`
 
@@ -684,6 +693,12 @@ Get financial summary for dashboard.
 | `startDate` | `string` | No | Filter start date (YYYY-MM-DD) |
 | `endDate` | `string` | No | Filter end date (YYYY-MM-DD) |
 
+**Behavior:**
+
+- Returns aggregated financial data across **all classes** in the user's batch
+- When date filters are provided, only transactions within the range are included
+- Without date filters, returns complete historical data
+
 **Response (200 OK):**
 
 ```json
@@ -692,14 +707,13 @@ Get financial summary for dashboard.
   "data": {
     "totalBalance": 1573428.69,
     "totalIncome": 2500000.0,
-    "totalExpense": 926571.31,
-    "period": {
-      "startDate": "2025-01-01",
-      "endDate": "2025-01-31"
-    }
-  }
+    "totalExpense": 926571.31
+  },
+  "message": "Summary fetched"
 }
 ```
+
+**Note:** The `period` field has been removed; use query parameters for date filtering.
 
 ---
 
@@ -1207,9 +1221,15 @@ Cancel payment (revert to unpaid).
 
 #### GET `/api/bendahara/dashboard`
 
-Get treasurer dashboard overview.
+Get treasurer dashboard overview with data across all classes.
 
 **Headers:** `Authorization: Bearer <access_token>`
+
+**Behavior:**
+
+- Returns aggregated data from **all classes** in the batch
+- No date filtering; shows current state snapshot
+- For date-filtered summaries, use `/api/bendahara/rekap-kas` endpoint
 
 **Response (200 OK):**
 
@@ -1217,16 +1237,48 @@ Get treasurer dashboard overview.
 {
   "success": true,
   "data": {
-    "summary": {
-      "totalBalance": 1573428.69,
-      "totalIncome": 2500000.00,
-      "totalExpense": 926571.31,
-      "pendingApplications": 5,
-      "pendingPayments": 12
-    },
-    "recentTransactions": [...],
-    "upcomingDueDates": [...]
-  }
+    "totalBalance": 1573428.69,
+    "totalIncome": 2500000.0,
+    "totalExpense": 926571.31,
+    "totalStudents": 120,
+    "recentTransactions": [
+      {
+        "id": "uuid",
+        "type": "income",
+        "description": "Iuran Kas - Ridwan Alfarezi",
+        "amount": 31000,
+        "date": "2024-12-20",
+        "classId": "uuid"
+      }
+    ],
+    "recentFundApplications": [
+      {
+        "id": "uuid",
+        "applicant": {
+          "id": "uuid",
+          "name": "Ahmad Zaki"
+        },
+        "purpose": "Beli printer kelas",
+        "amount": 500000,
+        "status": "pending",
+        "date": "2024-12-15"
+      }
+    ],
+    "recentCashBills": [
+      {
+        "id": "uuid",
+        "user": {
+          "name": "Siti Nurhaliza",
+          "nim": "1313612346"
+        },
+        "month": "Desember",
+        "totalAmount": 31000,
+        "status": "menunggu_konfirmasi",
+        "dueDate": "2024-12-31"
+      }
+    ]
+  },
+  "message": "Dashboard fetched"
 }
 ```
 
@@ -1320,19 +1372,24 @@ Reject a fund application.
 
 #### GET `/api/bendahara/cash-bills`
 
-Get all cash bills for all students.
+Get all cash bills across all classes for review.
 
 **Headers:** `Authorization: Bearer <access_token>`
 
 **Query Parameters:**
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
-| `page` | `number` | No | Page number |
-| `limit` | `number` | No | Items per page |
+| `page` | `number` | No | Page number (default: 1) |
+| `limit` | `number` | No | Items per page (default: 20) |
 | `status` | `string` | No | Filter by status |
 | `userId` | `string` | No | Filter by student |
 | `month` | `string` | No | Filter by month |
 | `year` | `number` | No | Filter by year |
+
+**Behavior:**
+
+- Returns bills from **all classes** in the batch
+- Results are paginated for performance
 
 **Response (200 OK):**
 
@@ -1432,7 +1489,7 @@ Reject a payment (if proof is invalid).
 
 #### GET `/api/bendahara/rekap-kas`
 
-Get financial recap report.
+Get financial recap report across all classes.
 
 **Headers:** `Authorization: Bearer <access_token>`
 
@@ -1441,7 +1498,12 @@ Get financial recap report.
 |-------|------|----------|-------------|
 | `startDate` | `string` | No | Start date (YYYY-MM-DD) |
 | `endDate` | `string` | No | End date (YYYY-MM-DD) |
-| `groupBy` | `string` | No | `day`, `week`, `month`, `year` |
+
+**Behavior:**
+
+- Returns aggregated financial data from **all classes**
+- Date filtering applies to transaction timestamps
+- Without date filters, returns complete historical summary
 
 **Response (200 OK):**
 
@@ -1449,31 +1511,16 @@ Get financial recap report.
 {
   "success": true,
   "data": {
-    "period": {
-      "startDate": "2024-01-01",
-      "endDate": "2024-12-31"
-    },
-    "summary": {
-      "totalBalance": 1573428.69,
-      "totalIncome": 2500000.0,
-      "totalExpense": 926571.31,
-      "transactionCount": 150
-    },
-    "incomeBreakdown": [
-      { "category": "Iuran Kas", "amount": 2000000, "percentage": 80 },
-      { "category": "Donasi", "amount": 500000, "percentage": 20 }
-    ],
-    "expenseBreakdown": [
-      { "category": "ATK", "amount": 300000, "percentage": 32.4 },
-      { "category": "Konsumsi", "amount": 626571.31, "percentage": 67.6 }
-    ],
-    "monthlyTrend": [
-      { "month": "Januari", "income": 200000, "expense": 50000 },
-      { "month": "Februari", "income": 200000, "expense": 75000 }
-    ]
-  }
+    "totalIncome": 2500000.0,
+    "totalExpense": 926571.31,
+    "totalBalance": 1573428.69,
+    "transactionCount": 150
+  },
+  "message": "Rekap kas fetched"
 }
 ```
+
+**Note:** The detailed breakdown fields (`incomeBreakdown`, `expenseBreakdown`, `monthlyTrend`) are available in the frontend implementation but not currently returned by this endpoint.
 
 ---
 
@@ -1497,9 +1544,22 @@ Export financial recap.
 
 #### GET `/api/bendahara/students`
 
-Get list of students in the class.
+Get list of all students across all classes in the batch.
 
 **Headers:** `Authorization: Bearer <access_token>`
+
+**Query Parameters:**
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `page` | `number` | No | Page number (default: 1) |
+| `limit` | `number` | No | Items per page (default: 10) |
+| `search` | `string` | No | Search by name or NIM |
+
+**Behavior:**
+
+- Returns students from **all classes** in the batch
+- Results are paginated for performance
+- Search is case-insensitive and matches partial strings
 
 **Response (200 OK):**
 
@@ -1512,15 +1572,19 @@ Get list of students in the class.
         "id": "uuid",
         "nim": "1313612345",
         "name": "Ridwan Alfarezi",
+        "email": "ridwan@example.com",
         "avatarUrl": null,
-        "billStatus": {
-          "currentMonth": "sudah_dibayar",
-          "totalUnpaid": 0
-        }
+        "classId": "uuid"
       }
     ],
-    "total": 30
-  }
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 120,
+      "totalPages": 12
+    }
+  },
+  "message": "Students fetched"
 }
 ```
 
@@ -1669,13 +1733,13 @@ Job: Generate cash bills for all students in each class
 ```typescript
 // Pseudocode
 async function generateMonthlyBills() {
-  const classes = await getActiveClasses()
-  const currentMonth = getCurrentMonthName() // e.g., "Januari"
-  const currentYear = new Date().getFullYear()
-  const dueDate = getLastDayOfMonth()
+  const classes = await getActiveClasses();
+  const currentMonth = getCurrentMonthName(); // e.g., "Januari"
+  const currentYear = new Date().getFullYear();
+  const dueDate = getLastDayOfMonth();
 
   for (const classItem of classes) {
-    const students = await getStudentsByClass(classItem.id)
+    const students = await getStudentsByClass(classItem.id);
 
     for (const student of students) {
       await createCashBill({
@@ -1687,8 +1751,8 @@ async function generateMonthlyBills() {
         dueDate: dueDate,
         kasKelas: 30000, // Configurable per class
         biayaAdmin: 1000,
-        status: 'belum_dibayar',
-      })
+        status: "belum_dibayar",
+      });
     }
   }
 }

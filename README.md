@@ -1,7 +1,8 @@
 # GalaCash Server
 
 > **Financial management API for class treasurers**  
-> Built with Node.js, Express, TypeScript, PostgreSQL, Redis, and GCP Cloud Storage
+> Built with Node.js, Express, TypeScript, PostgreSQL, Redis, and GCP Cloud Storage  
+> **Last Updated:** January 19, 2026
 
 ---
 
@@ -28,16 +29,21 @@ GalaCash is a comprehensive backend API for managing class finances. It provides
 - **Students (user)**: View transactions, submit fund applications, pay monthly bills
 - **Treasurer (bendahara)**: Manage all finances, approve applications, confirm payments
 
+### Architecture
+
+**Multi-Class Transparency Model**: As of January 2026, both users and bendahara can view data across **all classes** within the same angkatan (batch). The `classId` field is retained for organizational purposes and future filtering capabilities.
+
 ### Key Features
 
 ✅ **Authentication**: NIM + Password with JWT tokens  
 ✅ **Fund Applications (Aju Dana)**: Submit and review funding requests  
 ✅ **Cash Bills (Tagihan Kas)**: Automated monthly bill generation  
-✅ **Transactions**: Track income and expenses  
-✅ **Financial Reports (Rekap Kas)**: Comprehensive financial summaries  
+✅ **Transactions**: Track income and expenses across all classes  
+✅ **Financial Reports (Rekap Kas)**: Comprehensive batch-level financial summaries  
 ✅ **File Uploads**: GCP Cloud Storage integration for payment proofs  
 ✅ **Caching**: Redis for improved performance  
-✅ **Auto-transactions**: Bills and approvals auto-create transactions
+✅ **Auto-transactions**: Bills and approvals auto-create transactions  
+✅ **Data Transparency**: Aggregated views across all classes in a batch
 
 ---
 

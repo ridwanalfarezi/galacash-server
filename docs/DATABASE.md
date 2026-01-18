@@ -1,5 +1,28 @@
 # GalaCash Database Schema
 
+> **Last Updated:** January 19, 2026
+
+## 📊 Data Architecture Overview
+
+### Multi-Class Transparency Model
+
+As of January 2026, GalaCash implements a **transparent data model** where:
+
+- Users and bendahara can view data across **all classes** within the same angkatan (batch)
+- The `classId` field is retained for:
+  - Organizational purposes
+  - Historical tracking
+  - Future per-class filtering capabilities
+  - Data relationship integrity
+
+This architecture allows for:
+
+- Comprehensive batch-level financial oversight
+- Simplified data aggregation for reports
+- Flexibility to add class-level filtering in the future if needed
+
+---
+
 ## 📊 Entity Relationship Diagram (ERD)
 
 ```
