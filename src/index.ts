@@ -180,14 +180,21 @@ async function startServer() {
     }
 
     // Initialize bill generator cron job (non-blocking)
-    setImmediate(() => {
-      try {
-        logger.info("[STARTUP] Initializing bill generator cron job...");
-        initializeBillGenerator();
-      } catch (error) {
-        logger.error("[STARTUP] Failed to initialize bill generator:", error);
-      }
-    });
+    // In production (Cloud Run), use Cloud Scheduler to call /api/cron/generate-bills instead
+    if (process.env.USE_LOCAL_CRON === "true") {
+      setImmediate(() => {
+        try {
+          logger.info("[STARTUP] Initializing local bill generator cron job...");
+          initializeBillGenerator();
+        } catch (error) {
+          logger.error("[STARTUP] Failed to initialize bill generator:", error);
+        }
+      });
+    } else {
+      logger.info(
+        "[STARTUP] Local cron disabled - use Cloud Scheduler for /api/cron/generate-bills"
+      );
+    }
 
     // Graceful shutdown
     const gracefulShutdown = async () => {

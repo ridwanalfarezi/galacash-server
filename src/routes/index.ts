@@ -2,6 +2,7 @@ import { Router } from "express";
 import authRoutes from "./auth.routes";
 import bendaharaRoutes from "./bendahara.routes";
 import cashBillRoutes from "./cash-bill.routes";
+import cronRoutes from "./cron.routes";
 import dashboardRoutes from "./dashboard.routes";
 import fundApplicationRoutes from "./fund-application.routes";
 import labelsRoutes from "./labels.routes";
@@ -23,5 +24,6 @@ router.use("/cash-bills", cashBillRoutes);
 router.use("/payment-accounts", paymentAccountRoutes);
 router.use("/labels", labelsRoutes);
 router.use("/bendahara", bendaharaRoutes);
+router.use("/cron", cronRoutes);
 
 export default router;
