@@ -9,18 +9,18 @@ import { Request, Response } from "express";
 export const getDashboard = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user;
 
-  if (!user) {
+  if (!user || !user.classId) {
     res.status(401).json({
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User not authenticated or class not assigned",
       },
     });
     return;
   }
 
-  const dashboard = await bendaharaService.getDashboard();
+  const dashboard = await bendaharaService.getDashboard(user.classId);
 
   res.status(200).json({
     success: true,
@@ -197,14 +197,14 @@ export const rejectPayment = asyncHandler(async (req: Request, res: Response): P
  */
 export const getRekapKas = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user;
-  const { startDate, endDate } = req.query;
+  const { startDate, endDate, search } = req.query;
 
-  if (!user) {
+  if (!user || !user.classId) {
     res.status(401).json({
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User not authenticated or class not assigned",
       },
     });
     return;
@@ -213,7 +213,11 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;
 
-  const rekapKas = await bendaharaService.getRekapKas(start, end);
+  const rekapKas = await bendaharaService.getRekapKas(user.classId, {
+    startDate: start,
+    endDate: end,
+    search: search as string | undefined,
+  });
 
   res.status(200).json({
     success: true,

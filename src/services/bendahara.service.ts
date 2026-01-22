@@ -1,7 +1,6 @@
 import {
   CashBill,
   FundApplication,
-  Prisma,
   Transaction,
   TransactionCategory,
   User,
@@ -20,7 +19,7 @@ import { prisma } from "@/utils/prisma-client";
 import { CacheService } from "./cache.service";
 
 export interface DashboardData {
-  pendingApplications: number;
+  pendingFundApplications: number;
   pendingPayments: number;
   totalBalance: number;
   totalIncome: number;
@@ -32,10 +31,24 @@ export interface DashboardData {
 }
 
 export interface RekapKasData {
-  totalIncome: number;
-  totalExpense: number;
-  totalBalance: number;
-  transactionCount: number;
+  summary: {
+    totalIncome: number;
+    totalExpense: number;
+    balance: number;
+  };
+  students: Array<{
+    userId: string;
+    name: string;
+    nim: string;
+    totalPaid: number;
+    totalUnpaid: number;
+    paymentStatus: "up-to-date" | "has-arrears";
+  }>;
+  transactions: Transaction[];
+  period: {
+    startDate: string;
+    endDate: string;
+  };
 }
 
 /**
@@ -55,77 +68,89 @@ export class BendaharaService {
   /**
    * Get dashboard with pending applications, payments, and total balance
    */
-  async getDashboard(): Promise<DashboardData> {
-    // Check cache first - use global cache key since data includes all classes
-    const cacheKey = `bendahara-dashboard:all`;
+  async getDashboard(classId: string): Promise<DashboardData> {
+    // Check cache first
+    const cacheKey = `bendahara-dashboard:${classId}`;
     const cached = await this.cacheService.getCached<DashboardData>(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
-      // Get pending applications count (efficient)
-      const pendingApplicationsCount =
-        await this.fundApplicationRepository.countByStatus("pending");
-
-      // Get pending payments count (efficient)
-      const pendingPaymentsCount =
-        await this.cashBillRepository.countByStatus("menunggu_konfirmasi");
-
-      // Get total balance (all classes)
-      const balance = await this.transactionRepository.getBalance();
-
-      // Get recent transactions (last 10, all classes)
-      const recentTransactionsResult = await this.transactionRepository.findAll({
-        page: 1,
-        limit: 10,
+      // Get pending applications count (filtered by class)
+      const pendingApplicationsCount = await prisma.fundApplication.count({
+        where: { classId, status: "pending" },
       });
 
-      // Get recent fund applications (last 5 pending, all classes)
-      const recentFundApplicationsResult = await this.fundApplicationRepository.findAll({
-        status: "pending",
-        page: 1,
-        limit: 5,
+      // Get pending payments count (filtered by class)
+      const pendingPaymentsCount = await prisma.cashBill.count({
+        where: { classId, status: "menunggu_konfirmasi" },
       });
 
-      // Get recent cash bills (last 5 pending, all classes)
-      const recentCashBillsResult = await this.cashBillRepository.findAll({
-        status: "menunggu_konfirmasi",
-        page: 1,
-        limit: 5,
+      // This is a bit simplified, balance should be calculated properly (income - expense)
+      const incomeAgg = await prisma.transaction.aggregate({
+        where: { classId, type: "income" },
+        _sum: { amount: true },
+      });
+      const expenseAgg = await prisma.transaction.aggregate({
+        where: { classId, type: "expense" },
+        _sum: { amount: true },
       });
 
-      // Get students count (efficient)
+      const totalIncome = Number(incomeAgg._sum.amount || 0);
+      const totalExpense = Number(expenseAgg._sum.amount || 0);
+
+      // Get recent transactions for the class
+      const recentTransactions = await prisma.transaction.findMany({
+        where: { classId },
+        take: 10,
+        orderBy: { date: "desc" },
+      });
+
+      // Get recent fund applications for the class
+      const recentFundApplications = await prisma.fundApplication.findMany({
+        where: { classId, status: "pending" },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: { user: true },
+      });
+
+      // Get recent cash bills for the class
+      const recentCashBills = await prisma.cashBill.findMany({
+        where: { classId, status: "menunggu_konfirmasi" },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: { user: true },
+      });
+
+      // Get students count for the class
       const studentsCount = await prisma.user.count({
-        where: { role: "user" },
+        where: { classId, role: "user" },
       });
-
-      // Calculate total income and expense from recent transactions
-      let totalIncome = 0;
-      let totalExpense = 0;
-
-      for (const transaction of recentTransactionsResult.data) {
-        if (transaction.type === "income") {
-          totalIncome += Number(transaction.amount);
-        } else {
-          totalExpense += Number(transaction.amount);
-        }
-      }
 
       const dashboardData: DashboardData = {
-        pendingApplications: pendingApplicationsCount,
+        pendingFundApplications: pendingApplicationsCount,
         pendingPayments: pendingPaymentsCount,
-        totalBalance: balance.balance,
+        totalBalance: totalIncome - totalExpense,
         totalIncome,
         totalExpense,
         totalStudents: studentsCount,
-        recentTransactions: recentTransactionsResult.data,
-        recentFundApplications: recentFundApplicationsResult.data,
-        recentCashBills: recentCashBillsResult.data,
+        recentTransactions: recentTransactions as any,
+        recentFundApplications: (recentFundApplications as any[]).map((app) => ({
+          ...app,
+          applicant: {
+            id: app.user.id,
+            name: app.user.name,
+          },
+        })) as any,
+        recentCashBills: (recentCashBills as any[]).map((bill) => ({
+          ...bill,
+          name: bill.user.name,
+        })) as any,
       };
 
-      // Cache the result
-      await this.cacheService.setCached(cacheKey, dashboardData, 300); // 5 minutes cache
+      // Cache the result for 1 minute
+      await this.cacheService.setCached(cacheKey, dashboardData, 60);
 
       return dashboardData;
     } catch (error) {
@@ -426,14 +451,21 @@ export class BendaharaService {
 
   /**
    * Get financial summary (rekap kas) for a class
-   * FIXED: Use SQL aggregate instead of fetching 10k rows
+   * Includes student billing summary and transaction history
    */
-  async getRekapKas(startDate?: Date, endDate?: Date): Promise<RekapKasData> {
-    // Generate cache key (without classId - all classes)
-    const cacheKeyParts = ["all", startDate?.toISOString(), endDate?.toISOString()]
-      .filter((p) => p)
-      .join(":");
-    const cacheKey = `rekap-kas:${cacheKeyParts}`;
+  async getRekapKas(
+    classId: string,
+    params: { startDate?: Date; endDate?: Date; search?: string }
+  ): Promise<RekapKasData> {
+    const { startDate, endDate, search } = params;
+
+    // Use current month/year if no date range provided
+    const now = new Date();
+    const start = startDate || new Date(now.getFullYear(), 0, 1); // Default to start of year
+    const end = endDate || new Date(now.getFullYear(), 11, 31); // Default to end of year
+
+    // Generate cache key
+    const cacheKey = `rekap-kas:${classId}:${start.toISOString()}:${end.toISOString()}:${search || ""}`;
 
     // Try to get from cache
     const cached = await this.cacheService.getCached<RekapKasData>(cacheKey);
@@ -442,40 +474,102 @@ export class BendaharaService {
     }
 
     try {
-      // Build where clause for date filtering
-      const where: Prisma.TransactionWhereInput = {};
-      if (startDate || endDate) {
-        where.date = {};
-        if (startDate) where.date.gte = startDate;
-        if (endDate) where.date.lte = endDate;
-      }
-
-      // Use SQL aggregation instead of fetching all rows
-      const [incomeAgg, expenseAgg, count] = await Promise.all([
+      // 1. Get Financial Summary for the class
+      const [incomeAgg, expenseAgg] = await Promise.all([
         prisma.transaction.aggregate({
-          where: { ...where, type: "income" },
+          where: { classId, type: "income", date: { gte: start, lte: end } },
           _sum: { amount: true },
         }),
         prisma.transaction.aggregate({
-          where: { ...where, type: "expense" },
+          where: { classId, type: "expense", date: { gte: start, lte: end } },
           _sum: { amount: true },
         }),
-        prisma.transaction.count({ where }),
       ]);
 
-      // Prisma aggregates return Decimal, convert to number for API
       const totalIncome = Number(incomeAgg._sum.amount || 0);
       const totalExpense = Number(expenseAgg._sum.amount || 0);
 
+      // 2. Get Students with their billing status
+      // We'll fetch students and then aggregate their bills
+      const students = await prisma.user.findMany({
+        where: {
+          classId,
+          role: "user",
+          OR: search
+            ? [
+                { name: { contains: search, mode: "insensitive" } },
+                { nim: { contains: search, mode: "insensitive" } },
+              ]
+            : undefined,
+        },
+        select: {
+          id: true,
+          name: true,
+          nim: true,
+          cashBills: {
+            where: {
+              month: {
+                // Approximate filtering by month date string if needed,
+                // but usually bills are created per month.
+                // We'll filter by the date field if present or just get all for simplicity if small.
+              },
+            },
+            select: {
+              status: true,
+              totalAmount: true,
+            },
+          },
+        },
+        orderBy: { nim: "asc" },
+      });
+
+      const studentSummaries = (students as any[]).map((s) => {
+        let totalPaid = 0;
+        let totalUnpaid = 0;
+
+        s.cashBills.forEach((bill: any) => {
+          if (bill.status === "sudah_dibayar") {
+            totalPaid += Number(bill.totalAmount);
+          } else {
+            totalUnpaid += Number(bill.totalAmount);
+          }
+        });
+
+        return {
+          userId: s.id,
+          name: s.name,
+          nim: s.nim,
+          totalPaid,
+          totalUnpaid,
+          paymentStatus: (totalUnpaid === 0 ? "up-to-date" : "has-arrears") as
+            | "up-to-date"
+            | "has-arrears",
+        };
+      });
+
+      // 3. Get Recent Transactions for the class
+      const transactions = await prisma.transaction.findMany({
+        where: { classId, date: { gte: start, lte: end } },
+        orderBy: { date: "desc" },
+        take: 50,
+      });
+
       const rekapData: RekapKasData = {
-        totalIncome,
-        totalExpense,
-        totalBalance: totalIncome - totalExpense,
-        transactionCount: count,
+        summary: {
+          totalIncome,
+          totalExpense,
+          balance: totalIncome - totalExpense,
+        },
+        students: studentSummaries,
+        transactions,
+        period: {
+          startDate: start.toISOString(),
+          endDate: end.toISOString(),
+        },
       };
 
-      // Cache the result
-      await this.cacheService.setCached(cacheKey, rekapData, 600); // 10 minutes cache
+      // Cache the result for 5 minutes
+      await this.cacheService.setCached(cacheKey, rekapData, 300);
 
       return rekapData;
     } catch (error) {
