@@ -101,9 +101,25 @@ export class CashBillRepository {
           take: limit,
           orderBy: { [orderByField]: sortOrder },
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                nim: true,
+                name: true,
+                email: true,
+                role: true,
+                avatarUrl: true,
+                classId: true,
+              },
+            },
             class: true,
-            confirmer: true,
+            confirmer: {
+              select: {
+                id: true,
+                name: true,
+                role: true,
+              },
+            },
           },
         }),
         prisma.cashBill.count({ where }),
@@ -175,9 +191,25 @@ export class CashBillRepository {
           take: limit,
           orderBy: { [orderByField]: sortOrder },
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                nim: true,
+                name: true,
+                email: true,
+                role: true,
+                avatarUrl: true,
+                classId: true,
+              },
+            },
             class: true,
-            confirmer: true,
+            confirmer: {
+              select: {
+                id: true,
+                name: true,
+                role: true,
+              },
+            },
           },
         }),
         prisma.cashBill.count({ where }),
