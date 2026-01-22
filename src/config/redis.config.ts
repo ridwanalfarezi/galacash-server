@@ -108,25 +108,45 @@ export async function safeRedisDel(pattern: string): Promise<void> {
     return;
   }
 
-  try {
-    // Use SCAN instead of KEYS to avoid blocking the Redis server
-    const stream = redisClient.scanStream({
-      match: pattern,
-      count: 100,
-    });
+  return new Promise((resolve) => {
+    try {
+      // Use SCAN instead of KEYS to avoid blocking the Redis server
+      const stream = redisClient!.scanStream({
+        match: pattern,
+        count: 100,
+      });
 
-    stream.on("data", async (keys: string[]) => {
-      if (keys.length > 0) {
-        await redisClient!.del(...keys);
-      }
-    });
+      const pipeline = redisClient!.pipeline();
+      let hasKeys = false;
 
-    stream.on("error", (err) => {
-      logger.error("Redis SCAN stream error:", err);
-    });
-  } catch (error) {
-    logger.error("Redis DEL error:", error);
-  }
+      stream.on("data", (keys: string[]) => {
+        if (keys.length > 0) {
+          hasKeys = true;
+          pipeline.del(...keys);
+        }
+      });
+
+      stream.on("end", async () => {
+        if (hasKeys) {
+          try {
+            await pipeline.exec();
+          } catch (error) {
+            logger.error("Redis DEL pipeline error:", error);
+          }
+        }
+        resolve();
+      });
+
+      stream.on("error", (err) => {
+        logger.error("Redis SCAN stream error:", err);
+        // resolve anyway to avoid breaking flow, but log error
+        resolve();
+      });
+    } catch (error) {
+      logger.error("Redis DEL error:", error);
+      resolve();
+    }
+  });
 }
 
 /**
