@@ -487,10 +487,10 @@ export class BendaharaService {
   /**
    * Get all students in all classes
    */
-  async getStudents(): Promise<User[]> {
+  async getStudents(): Promise<Omit<User, "password">[]> {
     // Try to get from cache
     const cacheKey = `all-students`;
-    const cached = await this.cacheService.getCached<User[]>(cacheKey);
+    const cached = await this.cacheService.getCached<Omit<User, "password">[]>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -501,10 +501,16 @@ export class BendaharaService {
         limit: 10000, // Get all students across all classes
       });
 
-      // Cache the result
-      await this.cacheService.setCached(cacheKey, students.data, 600); // 10 minutes cache
+      const safeStudents = students.data.map((user) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, ...safeUser } = user;
+        return safeUser;
+      });
 
-      return students.data;
+      // Cache the result
+      await this.cacheService.setCached(cacheKey, safeStudents, 600); // 10 minutes cache
+
+      return safeStudents;
     } catch (error) {
       logger.error("Failed to fetch students:", error);
       throw error;

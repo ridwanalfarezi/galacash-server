@@ -149,13 +149,18 @@ export class UserService {
   }
 
   async getStudents(filters: GetStudentsFilters) {
-    return userRepository.findAll({
+    const studentsResponse = await userRepository.findAll({
       role: "user",
       classId: filters.classId,
       page: filters.page,
       limit: filters.limit,
       search: filters.search,
     });
+
+    return {
+      ...studentsResponse,
+      data: studentsResponse.data.map((user) => this.sanitizeUser(user)),
+    };
   }
 
   /**
