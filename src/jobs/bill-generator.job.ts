@@ -1,3 +1,4 @@
+import { Prisma } from "@/prisma/generated/client";
 import { logger } from "@/utils/logger";
 import { prisma } from "@/utils/prisma-client";
 import cron from "node-cron";
@@ -16,7 +17,7 @@ async function generateMonthlyBills(): Promise<void> {
     logger.info("🔄 Starting monthly bill generation...");
 
     const now = new Date();
-    const month = now.toLocaleString("id-ID", { month: "long" });
+    const month = now.getMonth() + 1; // 1-12
     const year = now.getFullYear();
     const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 10); // Due on 10th of next month
 
@@ -42,21 +43,6 @@ async function generateMonthlyBills(): Promise<void> {
     let skippedCount = 0;
 
     for (const user of users) {
-      // Check if bill already exists for this user and month
-      const existingBill = await prisma.cashBill.findFirst({
-        where: {
-          userId: user.id,
-          month,
-          year,
-        },
-      });
-
-      if (existingBill) {
-        logger.info(`Bill already exists for ${user.name} (${user.nim}) for ${month} ${year}`);
-        skippedCount++;
-        continue;
-      }
-
       // Generate unique bill ID
       const billId = `BILL-${year}-${(now.getMonth() + 1)
         .toString()
@@ -64,24 +50,36 @@ async function generateMonthlyBills(): Promise<void> {
 
       const totalAmount = KAS_KELAS_AMOUNT + BIAYA_ADMIN;
 
-      // Create bill
-      await prisma.cashBill.create({
-        data: {
-          userId: user.id,
-          classId: user.classId,
-          billId,
-          month,
-          year,
-          dueDate,
-          kasKelas: KAS_KELAS_AMOUNT,
-          biayaAdmin: BIAYA_ADMIN,
-          totalAmount,
-          status: "belum_dibayar",
-        },
-      });
+      try {
+        // Create bill directly - unique constraint will prevent duplicates
+        await prisma.cashBill.create({
+          data: {
+            userId: user.id,
+            classId: user.classId,
+            billId,
+            month,
+            year,
+            dueDate,
+            kasKelas: KAS_KELAS_AMOUNT,
+            biayaAdmin: BIAYA_ADMIN,
+            totalAmount,
+            status: "belum_dibayar",
+          },
+        });
 
-      createdCount++;
-      logger.info(`✅ Created bill ${billId} for ${user.name} (${user.nim}) - ${month} ${year}`);
+        createdCount++;
+        logger.info(`✅ Created bill ${billId} for ${user.name} (${user.nim}) - ${month} ${year}`);
+      } catch (error) {
+        // Handle unique constraint violation gracefully
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+          // P2002 = unique constraint violation (bill already exists)
+          logger.info(`Bill already exists for ${user.name} (${user.nim}) for ${month} ${year}`);
+          skippedCount++;
+        } else {
+          // Log other errors but continue processing other users
+          logger.error(`Failed to create bill for ${user.name} (${user.nim}):`, error);
+        }
+      }
     }
 
     logger.info(

@@ -259,26 +259,18 @@ export class CashBillService {
   }
 
   async getPendingByUser(userId: string) {
-    // Get both unpaid bills and bills awaiting confirmation
-    const [unpaidBills, pendingConfirmationBills] = await Promise.all([
-      this.cashBillRepository.findByUserId(userId, {
-        userId,
-        status: "belum_dibayar",
-        page: 1,
-        limit: 50,
-      }),
-      this.cashBillRepository.findByUserId(userId, {
-        userId,
-        status: "menunggu_konfirmasi",
-        page: 1,
-        limit: 50,
-      }),
-    ]);
+    // FIXED: Use single query with statuses array instead of two queries
+    const result = await this.cashBillRepository.findByUserId(userId, {
+      statuses: ["belum_dibayar", "menunggu_konfirmasi"],
+      page: 1,
+      limit: 100,
+      sortBy: "dueDate",
+      sortOrder: "asc",
+    });
 
-    // Combine and return
     return {
-      data: [...unpaidBills.data, ...pendingConfirmationBills.data],
-      total: unpaidBills.total + pendingConfirmationBills.total,
+      data: result.data,
+      total: result.total,
     };
   }
 

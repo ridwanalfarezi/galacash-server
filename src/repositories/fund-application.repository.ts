@@ -269,6 +269,22 @@ export class FundApplicationRepository {
       throw error;
     }
   }
+
+  /**
+   * Count fund applications by status (efficient - no data fetch)
+   */
+  async countByStatus(status: FundStatus): Promise<number> {
+    try {
+      return await prisma.fundApplication.count({
+        where: { status },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Failed to count fund applications");
+      }
+      throw error;
+    }
+  }
 }
 
 export const fundApplicationRepository = new FundApplicationRepository();

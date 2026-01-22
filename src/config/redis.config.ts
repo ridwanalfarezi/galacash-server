@@ -109,10 +109,21 @@ export async function safeRedisDel(pattern: string): Promise<void> {
   }
 
   try {
-    const keys = await redisClient.keys(pattern);
-    if (keys.length > 0) {
-      await redisClient.del(...keys);
-    }
+    // Use SCAN instead of KEYS to avoid blocking the Redis server
+    const stream = redisClient.scanStream({
+      match: pattern,
+      count: 100,
+    });
+
+    stream.on("data", async (keys: string[]) => {
+      if (keys.length > 0) {
+        await redisClient!.del(...keys);
+      }
+    });
+
+    stream.on("error", (err) => {
+      logger.error("Redis SCAN stream error:", err);
+    });
   } catch (error) {
     logger.error("Redis DEL error:", error);
   }

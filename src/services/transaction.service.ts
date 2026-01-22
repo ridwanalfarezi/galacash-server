@@ -1,4 +1,4 @@
-import { Transaction } from "@/prisma/generated/client";
+import { Prisma, Transaction } from "@/prisma/generated/client";
 import {
   BalanceData,
   ChartDataPoint,
@@ -8,6 +8,7 @@ import {
 } from "@/repositories/transaction.repository";
 import { AuthorizationError, NotFoundError } from "@/utils/errors";
 import { logger } from "@/utils/logger";
+import { prisma } from "@/utils/prisma-client";
 import { CacheService } from "./cache.service";
 
 /**
@@ -176,6 +177,7 @@ export class TransactionService {
 
   /**
    * Get total balance across all classes with caching (for transparency)
+   * FIXED: Use repository aggregate instead of fetching 100k rows
    */
   async getBalance(): Promise<BalanceData> {
     // Try to get from cache
@@ -186,33 +188,20 @@ export class TransactionService {
     }
 
     try {
-      // Fetch all transactions and aggregate
-      const transactions = await this.transactionRepository.findAll({
-        page: 1,
-        limit: 100000, // Get all transactions
-      });
+      // Use repository's aggregate method (already optimized with SQL)
+      const balance = await this.transactionRepository.getBalance();
 
-      let totalIncome = 0;
-      let totalExpense = 0;
-
-      transactions.data.forEach((transaction) => {
-        if (transaction.type === "income") {
-          totalIncome += transaction.amount;
-        } else {
-          totalExpense += transaction.amount;
-        }
-      });
-
-      const balance: BalanceData = {
-        income: totalIncome,
-        expense: totalExpense,
-        balance: totalIncome - totalExpense,
+      // Prisma aggregates return Decimal, convert to number for API consistency
+      const balanceData: BalanceData = {
+        income: Number(balance.income),
+        expense: Number(balance.expense),
+        balance: Number(balance.balance),
       };
 
       // Cache the result
-      await this.cacheService.setCached(cacheKey, balance, 300); // 5 minutes cache
+      await this.cacheService.setCached(cacheKey, balanceData, 300); // 5 minutes cache
 
-      return balance;
+      return balanceData;
     } catch (error) {
       logger.error("Failed to fetch balance:", error);
       throw error;
@@ -220,25 +209,29 @@ export class TransactionService {
   }
 
   async getDashboardSummary(startDate?: Date, endDate?: Date) {
-    // If date range is provided, filter transactions
+    // If date range is provided, use aggregation
     if (startDate || endDate) {
-      const transactions = await this.transactionRepository.findAll({
-        startDate,
-        endDate,
-        page: 1,
-        limit: 10000, // Get all for aggregation
-      });
+      const where: Prisma.TransactionWhereInput = {};
+      if (startDate || endDate) {
+        where.date = {};
+        if (startDate) where.date.gte = startDate;
+        if (endDate) where.date.lte = endDate;
+      }
 
-      let totalIncome = 0;
-      let totalExpense = 0;
+      // Use SQL aggregation instead of fetching all rows
+      const [incomeAgg, expenseAgg] = await Promise.all([
+        prisma.transaction.aggregate({
+          where: { ...where, type: "income" },
+          _sum: { amount: true },
+        }),
+        prisma.transaction.aggregate({
+          where: { ...where, type: "expense" },
+          _sum: { amount: true },
+        }),
+      ]);
 
-      transactions.data.forEach((transaction) => {
-        if (transaction.type === "income") {
-          totalIncome += transaction.amount;
-        } else {
-          totalExpense += transaction.amount;
-        }
-      });
+      const totalIncome = Number(incomeAgg._sum.amount || 0);
+      const totalExpense = Number(expenseAgg._sum.amount || 0);
 
       return {
         totalIncome,

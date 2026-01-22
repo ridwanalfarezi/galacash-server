@@ -1,6 +1,7 @@
 import {
   CashBill,
   FundApplication,
+  Prisma,
   Transaction,
   TransactionCategory,
   User,
@@ -15,6 +16,7 @@ import { transactionRepository } from "@/repositories/transaction.repository";
 import { userRepository } from "@/repositories/user.repository";
 import { BusinessLogicError, NotFoundError } from "@/utils/errors";
 import { logger } from "@/utils/logger";
+import { prisma } from "@/utils/prisma-client";
 import { CacheService } from "./cache.service";
 
 export interface DashboardData {
@@ -62,19 +64,13 @@ export class BendaharaService {
     }
 
     try {
-      // Get pending applications count (all classes)
-      const pendingApplications = await this.fundApplicationRepository.findAll({
-        status: "pending",
-        page: 1,
-        limit: 1,
-      });
+      // Get pending applications count (efficient)
+      const pendingApplicationsCount =
+        await this.fundApplicationRepository.countByStatus("pending");
 
-      // Get pending payments count (all classes)
-      const pendingPayments = await this.cashBillRepository.findAll({
-        status: "menunggu_konfirmasi",
-        page: 1,
-        limit: 1,
-      });
+      // Get pending payments count (efficient)
+      const pendingPaymentsCount =
+        await this.cashBillRepository.countByStatus("menunggu_konfirmasi");
 
       // Get total balance (all classes)
       const balance = await this.transactionRepository.getBalance();
@@ -99,10 +95,9 @@ export class BendaharaService {
         limit: 5,
       });
 
-      // Get students count (all classes)
-      const studentsResult = await this.userRepository.findAll({
-        page: 1,
-        limit: 1,
+      // Get students count (efficient)
+      const studentsCount = await prisma.user.count({
+        where: { role: "user" },
       });
 
       // Calculate total income and expense from recent transactions
@@ -111,19 +106,19 @@ export class BendaharaService {
 
       for (const transaction of recentTransactionsResult.data) {
         if (transaction.type === "income") {
-          totalIncome += transaction.amount;
+          totalIncome += Number(transaction.amount);
         } else {
-          totalExpense += transaction.amount;
+          totalExpense += Number(transaction.amount);
         }
       }
 
       const dashboardData: DashboardData = {
-        pendingApplications: pendingApplications.total,
-        pendingPayments: pendingPayments.total,
+        pendingApplications: pendingApplicationsCount,
+        pendingPayments: pendingPaymentsCount,
         totalBalance: balance.balance,
         totalIncome,
         totalExpense,
-        totalStudents: studentsResult.total,
+        totalStudents: studentsCount,
         recentTransactions: recentTransactionsResult.data,
         recentFundApplications: recentFundApplicationsResult.data,
         recentCashBills: recentCashBillsResult.data,
@@ -141,48 +136,65 @@ export class BendaharaService {
 
   /**
    * Approve fund application and auto-create expense transaction
+   * FIXED: Wrapped in database transaction for atomicity
    */
   async approveFundApplication(
     applicationId: string,
     bendaharaId: string
   ): Promise<FundApplication> {
     try {
-      // Get the application
-      const application = await this.fundApplicationRepository.findById(applicationId);
+      // Use database transaction to ensure atomicity
+      const updatedApplication = await prisma.$transaction(async (tx) => {
+        // Get the application within transaction
+        const application = await tx.fundApplication.findUnique({
+          where: { id: applicationId },
+        });
 
-      if (!application) {
-        throw new NotFoundError("Fund application not found", "FundApplication");
-      }
+        if (!application) {
+          throw new NotFoundError("Fund application not found", "FundApplication");
+        }
 
-      // Check if already reviewed
-      if (application.status !== "pending") {
-        throw new BusinessLogicError(
-          `Cannot approve application with status '${application.status}'. Only pending applications can be approved.`
-        );
-      }
+        // Check if already reviewed
+        if (application.status !== "pending") {
+          throw new BusinessLogicError(
+            `Cannot approve application with status '${application.status}'. Only pending applications can be approved.`
+          );
+        }
 
-      // Update application status
-      const updatedApplication = await this.fundApplicationRepository.update(applicationId, {
-        status: "approved",
-        reviewer: {
-          connect: { id: bendaharaId },
-        },
-        reviewedAt: new Date(),
+        // Update application status (within transaction)
+        const updated = await tx.fundApplication.update({
+          where: { id: applicationId },
+          data: {
+            status: "approved",
+            reviewer: {
+              connect: { id: bendaharaId },
+            },
+            reviewedAt: new Date(),
+          },
+          include: {
+            user: true,
+            reviewer: true,
+          },
+        });
+
+        // Auto-create expense transaction (within same transaction)
+        await tx.transaction.create({
+          data: {
+            class: {
+              connect: { id: application.classId },
+            },
+            type: "expense",
+            category: this.mapFundCategoryToTransactionCategory(application.category),
+            description: `Fund approval: ${application.purpose}`,
+            amount: application.amount,
+            date: new Date(),
+          },
+        });
+
+        return updated;
       });
 
-      // Auto-create expense transaction
-      await this.transactionRepository.create({
-        class: {
-          connect: { id: application.classId },
-        },
-        type: "expense",
-        category: this.mapFundCategoryToTransactionCategory(application.category),
-        description: `Fund approval: ${application.purpose}`,
-        amount: application.amount,
-        date: new Date(),
-      });
-
-      // Invalidate caches
+      // Invalidate caches (outside transaction)
       await this.invalidateBendaharaCaches();
 
       logger.info(`Fund application approved: ${applicationId} by bendahara ${bendaharaId}`);
@@ -286,45 +298,76 @@ export class BendaharaService {
 
   /**
    * Confirm payment and auto-create income transaction
+   * FIXED: Wrapped in database transaction with optimistic locking to prevent race conditions
    */
   async confirmPayment(billId: string, bendaharaId: string): Promise<CashBill> {
     try {
-      // Get the bill
-      const bill = await this.cashBillRepository.findById(billId);
+      // Use database transaction with optimistic locking
+      const updatedBill = await prisma.$transaction(async (tx) => {
+        // Get the bill within transaction
+        const bill = await tx.cashBill.findUnique({
+          where: { id: billId },
+        });
 
-      if (!bill) {
-        throw new NotFoundError("Cash bill not found", "CashBill");
-      }
-
-      // Check if payment is waiting for confirmation
-      if (bill.status !== "menunggu_konfirmasi") {
-        throw new BusinessLogicError(
-          `Cannot confirm bill with status '${bill.status}'. Only bills waiting for confirmation can be confirmed.`
-        );
-      }
-
-      // Update bill status to sudah_dibayar
-      const updatedBill = await this.cashBillRepository.updatePaymentStatus(
-        billId,
-        "sudah_dibayar",
-        {
-          confirmedBy: bendaharaId,
+        if (!bill) {
+          throw new NotFoundError("Cash bill not found", "CashBill");
         }
-      );
 
-      // Auto-create income transaction
-      await this.transactionRepository.create({
-        class: {
-          connect: { id: bill.classId },
-        },
-        type: "income",
-        category: "kas_kelas" as TransactionCategory,
-        description: `Bill payment confirmed: ${bill.billId}`,
-        amount: bill.totalAmount,
-        date: new Date(),
+        // Check if payment is waiting for confirmation
+        if (bill.status !== "menunggu_konfirmasi") {
+          throw new BusinessLogicError(
+            `Cannot confirm bill with status '${bill.status}'. Only bills waiting for confirmation can be confirmed.`
+          );
+        }
+
+        // Update with WHERE clause to ensure status hasn't changed (optimistic locking)
+        const updateResult = await tx.cashBill.updateMany({
+          where: {
+            id: billId,
+            status: "menunggu_konfirmasi", // Ensure status is still pending
+          },
+          data: {
+            status: "sudah_dibayar",
+            confirmedBy: bendaharaId,
+            confirmedAt: new Date(),
+          },
+        });
+
+        // Check if update actually happened (race condition check)
+        if (updateResult.count === 0) {
+          throw new BusinessLogicError(
+            "Bill status changed during confirmation. Please try again."
+          );
+        }
+
+        // Auto-create income transaction (within same transaction)
+        await tx.transaction.create({
+          data: {
+            class: {
+              connect: { id: bill.classId },
+            },
+            type: "income",
+            category: "kas_kelas" as TransactionCategory,
+            description: `Bill payment confirmed: ${bill.billId}`,
+            amount: bill.totalAmount,
+            date: new Date(),
+          },
+        });
+
+        // Fetch and return updated bill with relations
+        const updated = await tx.cashBill.findUnique({
+          where: { id: billId },
+          include: {
+            user: true,
+            class: true,
+            confirmer: true,
+          },
+        });
+
+        return updated!;
       });
 
-      // Invalidate caches
+      // Invalidate caches (outside transaction)
       await this.invalidateBendaharaCaches();
 
       logger.info(`Bill payment confirmed: ${billId} by bendahara ${bendaharaId}`);
@@ -383,6 +426,7 @@ export class BendaharaService {
 
   /**
    * Get financial summary (rekap kas) for a class
+   * FIXED: Use SQL aggregate instead of fetching 10k rows
    */
   async getRekapKas(startDate?: Date, endDate?: Date): Promise<RekapKasData> {
     // Generate cache key (without classId - all classes)
@@ -398,31 +442,36 @@ export class BendaharaService {
     }
 
     try {
-      // Get transactions with filters (all classes)
-      const transactions = await this.transactionRepository.findAll({
-        startDate,
-        endDate,
-        page: 1,
-        limit: 10000, // Get all transactions for summary from all classes
-      });
+      // Build where clause for date filtering
+      const where: Prisma.TransactionWhereInput = {};
+      if (startDate || endDate) {
+        where.date = {};
+        if (startDate) where.date.gte = startDate;
+        if (endDate) where.date.lte = endDate;
+      }
 
-      // Calculate totals
-      let totalIncome = 0;
-      let totalExpense = 0;
+      // Use SQL aggregation instead of fetching all rows
+      const [incomeAgg, expenseAgg, count] = await Promise.all([
+        prisma.transaction.aggregate({
+          where: { ...where, type: "income" },
+          _sum: { amount: true },
+        }),
+        prisma.transaction.aggregate({
+          where: { ...where, type: "expense" },
+          _sum: { amount: true },
+        }),
+        prisma.transaction.count({ where }),
+      ]);
 
-      transactions.data.forEach((transaction) => {
-        if (transaction.type === "income") {
-          totalIncome += transaction.amount;
-        } else {
-          totalExpense += transaction.amount;
-        }
-      });
+      // Prisma aggregates return Decimal, convert to number for API
+      const totalIncome = Number(incomeAgg._sum.amount || 0);
+      const totalExpense = Number(expenseAgg._sum.amount || 0);
 
       const rekapData: RekapKasData = {
         totalIncome,
         totalExpense,
         totalBalance: totalIncome - totalExpense,
-        transactionCount: transactions.total,
+        transactionCount: count,
       };
 
       // Cache the result

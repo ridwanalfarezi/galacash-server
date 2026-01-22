@@ -107,7 +107,7 @@ export class ExportService {
     });
 
     // Add totals row
-    const totalAmount = transactions.data.reduce((sum, t) => sum + t.amount, 0);
+    const totalAmount = transactions.data.reduce((sum, t) => sum + Number(t.amount), 0);
     rows.push(`"TOTAL",,,,${totalAmount}`);
 
     return rows.join("\n");

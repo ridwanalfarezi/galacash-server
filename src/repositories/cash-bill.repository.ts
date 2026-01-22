@@ -6,7 +6,8 @@ export interface CashBillFilters {
   classId?: string;
   userId?: string;
   status?: string;
-  month?: string;
+  statuses?: string[]; // Support array of statuses for efficient queries
+  month?: number; // Changed to number (1-12)
   year?: number;
   page?: number;
   limit?: number;
@@ -52,6 +53,7 @@ export class CashBillRepository {
       classId,
       userId,
       status,
+      statuses,
       month,
       year,
       page = 1,
@@ -71,7 +73,10 @@ export class CashBillRepository {
         where.userId = userId;
       }
 
-      if (status) {
+      // Support both single status and array of statuses
+      if (statuses && statuses.length > 0) {
+        where.status = { in: statuses as BillStatus[] };
+      } else if (status) {
         where.status = status as BillStatus;
       }
 
@@ -128,6 +133,7 @@ export class CashBillRepository {
   ): Promise<PaginatedResponse<CashBill>> {
     const {
       status,
+      statuses,
       month,
       year,
       page = 1,
@@ -141,7 +147,10 @@ export class CashBillRepository {
         userId,
       };
 
-      if (status) {
+      // Support both single status and array of statuses
+      if (statuses && statuses.length > 0) {
+        where.status = { in: statuses as BillStatus[] };
+      } else if (status) {
         where.status = status as BillStatus;
       }
 
@@ -310,7 +319,7 @@ export class CashBillRepository {
   /**
    * Find cash bill by user and month/year
    */
-  async findByUserAndMonth(userId: string, month: string, year: number): Promise<CashBill | null> {
+  async findByUserAndMonth(userId: string, month: number, year: number): Promise<CashBill | null> {
     try {
       return await prisma.cashBill.findUnique({
         where: {
@@ -329,6 +338,22 @@ export class CashBillRepository {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError("Failed to fetch cash bill");
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Count cash bills by status (efficient - no data fetch)
+   */
+  async countByStatus(status: BillStatus): Promise<number> {
+    try {
+      return await prisma.cashBill.count({
+        where: { status },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Failed to count cash bills");
       }
       throw error;
     }

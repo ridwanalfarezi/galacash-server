@@ -163,8 +163,8 @@ export class TransactionRepository {
         }),
       ]);
 
-      const income = incomeResult._sum.amount || 0;
-      const expense = expenseResult._sum.amount || 0;
+      const income = Number(incomeResult._sum.amount || 0);
+      const expense = Number(expenseResult._sum.amount || 0);
 
       return {
         income,
@@ -217,7 +217,7 @@ export class TransactionRepository {
       transactions.forEach((tx: Transaction) => {
         const dateStr = tx.date.toISOString().split("T")[0];
         const current = groupedData.get(dateStr) || 0;
-        groupedData.set(dateStr, current + tx.amount);
+        groupedData.set(dateStr, current + Number(tx.amount));
       });
 
       return Array.from(groupedData.entries()).map(([date, amount]) => ({
@@ -270,7 +270,7 @@ export class TransactionRepository {
       transactions.forEach((tx) => {
         const category = tx.category || "other";
         const current = categoryMap.get(category) || 0;
-        categoryMap.set(category, current + tx.amount);
+        categoryMap.set(category, current + Number(tx.amount));
       });
 
       // Color palettes
