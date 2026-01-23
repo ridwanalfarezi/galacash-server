@@ -744,6 +744,10 @@ export class BendaharaService {
       consumption: "consumption",
       event: "event",
       maintenance: "maintenance",
+      education: "education",
+      health: "health",
+      emergency: "emergency",
+      equipment: "equipment",
       other: "other",
     };
 
@@ -755,10 +759,10 @@ export class BendaharaService {
    */
   private mapFundCategoryToTransactionCategory(fundCategory: string): TransactionCategory {
     const categoryMap: Record<string, TransactionCategory> = {
-      education: "office_supplies",
-      health: "other",
-      emergency: "other",
-      equipment: "office_supplies",
+      education: "education",
+      health: "health",
+      emergency: "emergency",
+      equipment: "equipment",
     };
 
     return categoryMap[fundCategory] || "other";

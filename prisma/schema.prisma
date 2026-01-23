@@ -31,6 +31,10 @@ enum TransactionCategory {
   consumption
   event
   maintenance
+  education
+  health
+  emergency
+  equipment
   other
 }
 
