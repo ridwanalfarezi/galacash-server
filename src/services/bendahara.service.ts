@@ -320,6 +320,7 @@ export class BendaharaService {
       month: filters?.month,
       year: filters?.year,
       classId: filters?.classId,
+      userId: filters?.userId,
     };
 
     // Generate cache key
