@@ -10,7 +10,7 @@ export interface UpdateProfileData {
 }
 
 export interface GetStudentsFilters {
-  classId: string;
+  classId?: string;
   page?: number;
   limit?: number;
   search?: string;

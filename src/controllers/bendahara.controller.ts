@@ -199,12 +199,12 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
   const user = req.user;
   const { startDate, endDate, search } = req.query;
 
-  if (!user || !user.classId) {
+  if (!user) {
     res.status(401).json({
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated or class not assigned",
+        message: "User not authenticated",
       },
     });
     return;
@@ -213,7 +213,8 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;
 
-  const rekapKas = await bendaharaService.getRekapKas(user.classId, {
+  // Pass undefined as classId to get data for all classes
+  const rekapKas = await bendaharaService.getRekapKas(undefined, {
     startDate: start,
     endDate: end,
     search: search as string | undefined,
@@ -243,7 +244,6 @@ export const getStudents = asyncHandler(async (req: Request, res: Response): Pro
   }
 
   const students = await userService.getStudents({
-    classId: user.classId,
     page: Number(page),
     limit: Number(limit),
     search: search as string | undefined,

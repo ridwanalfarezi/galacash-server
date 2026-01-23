@@ -454,7 +454,7 @@ export class BendaharaService {
    * Includes student billing summary and transaction history
    */
   async getRekapKas(
-    classId: string,
+    classId: string | undefined,
     params: { startDate?: Date; endDate?: Date; search?: string }
   ): Promise<RekapKasData> {
     const { startDate, endDate, search } = params;
