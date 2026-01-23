@@ -17,6 +17,7 @@ export interface TransactionFilters {
   limit?: number;
   sortBy?: "date" | "amount" | "createdAt";
   sortOrder?: "asc" | "desc";
+  search?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -69,6 +70,7 @@ export class TransactionRepository {
       limit = 20,
       sortBy = "date",
       sortOrder = "desc",
+      search,
     } = filters;
 
     try {
@@ -94,6 +96,12 @@ export class TransactionRepository {
         if (endDate) {
           where.date.lte = endDate;
         }
+      }
+      if (search) {
+        where.description = {
+          contains: search,
+          mode: "insensitive",
+        };
       }
 
       const skip = (page - 1) * limit;
