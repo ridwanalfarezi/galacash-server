@@ -1,3 +1,4 @@
+import { uploadAttachment } from "@/config/multer.config";
 import { bendaharaController } from "@/controllers";
 import {
   authenticate,
@@ -78,6 +79,7 @@ router.get("/students", bendaharaController.getStudents);
  */
 router.post(
   "/transactions",
+  uploadAttachment.single("attachment"),
   handleFileUpload("transactions"),
   validateBody(createTransactionSchema),
   bendaharaController.createTransaction

@@ -50,7 +50,7 @@ export class ExportService {
     // Add data rows
     transactions.data.forEach((transaction) => {
       worksheet.addRow({
-        date: new Date(transaction.date).toLocaleDateString("id-ID"),
+        date: new Date(transaction.date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" }),
         type: transaction.type === "income" ? "Income" : "Expense",
         category: this.formatCategory(transaction.category),
         description: transaction.description,
@@ -97,7 +97,7 @@ export class ExportService {
     // Add data rows
     transactions.data.forEach((transaction) => {
       const row = [
-        new Date(transaction.date).toLocaleDateString("id-ID"),
+        new Date(transaction.date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" }),
         transaction.type === "income" ? "Income" : "Expense",
         this.formatCategory(transaction.category),
         `"${transaction.description.replace(/"/g, '""')}"`, // Escape quotes

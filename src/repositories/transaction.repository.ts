@@ -215,7 +215,10 @@ export class TransactionRepository {
       const groupedData: Map<string, number> = new Map();
 
       transactions.forEach((tx: Transaction) => {
-        const dateStr = tx.date.toISOString().split("T")[0];
+        // Use Jakarta timezone for grouping
+        const dateStr = new Date(tx.date).toLocaleDateString("en-CA", {
+          timeZone: "Asia/Jakarta",
+        });
         const current = groupedData.get(dateStr) || 0;
         groupedData.set(dateStr, current + Number(tx.amount));
       });
