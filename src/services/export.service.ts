@@ -130,6 +130,160 @@ export class ExportService {
 
     return categoryMap[category] || category;
   }
+  /**
+   * Export Rekap Kas to Excel with Multi-sheet support
+   */
+  async exportRekapKasToExcel(data: import("./bendahara.service").RekapKasData): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+
+    // SHEET 1: RINGKASAN & TRANSAKSI
+    const summarySheet = workbook.addWorksheet("Ringkasan & Transaksi");
+
+    // Title
+    summarySheet.mergeCells("A1:E1");
+    summarySheet.getCell("A1").value = "LAPORAN KAS KELAS";
+    summarySheet.getCell("A1").font = {
+      bold: true,
+      size: 16,
+      color: { argb: "FF4472C4" },
+    };
+    summarySheet.getCell("A1").alignment = { horizontal: "center" };
+
+    // Period
+    summarySheet.mergeCells("A2:E2");
+    summarySheet.getCell("A2").value = `Periode: ${new Date(
+      data.period.startDate
+    ).toLocaleDateString("id-ID")} - ${new Date(data.period.endDate).toLocaleDateString("id-ID")}`;
+    summarySheet.getCell("A2").alignment = { horizontal: "center" };
+
+    // Financial Summary Table
+    summarySheet.getCell("A4").value = "RINGKASAN KEUANGAN";
+    summarySheet.getCell("A4").font = { bold: true };
+
+    const summaryRows = [
+      ["Total Pemasukan", data.summary.totalIncome],
+      ["Total Pengeluaran", data.summary.totalExpense],
+      ["Saldo Akhir", data.summary.balance],
+    ];
+
+    summaryRows.forEach((row, index) => {
+      const r = 5 + index;
+      summarySheet.getCell(`A${r}`).value = row[0];
+      summarySheet.getCell(`B${r}`).value = row[1];
+      summarySheet.getCell(`B${r}`).numFmt = '"Rp"#,##0';
+      if (index === 2) summarySheet.getCell(`B${r}`).font = { bold: true };
+    });
+
+    // Transactions Table
+    summarySheet.getCell("A9").value = "RIWAYAT TRANSAKSI";
+    summarySheet.getCell("A9").font = { bold: true };
+
+    // Headers
+    const transHeaders = ["Tanggal", "Tipe", "Kategori", "Keterangan", "Jumlah"];
+    const headerRow = summarySheet.getRow(10);
+    transHeaders.forEach((h, i) => {
+      const cell = headerRow.getCell(i + 1);
+      cell.value = h;
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF4472C4" },
+      };
+    });
+
+    // Transaction Data
+    data.transactions.forEach((t, i) => {
+      const r = 11 + i;
+      const row = summarySheet.getRow(r);
+      row.getCell(1).value = new Date(t.date).toLocaleDateString("id-ID");
+      row.getCell(2).value = t.type === "income" ? "Pemasukan" : "Pengeluaran";
+      row.getCell(3).value = this.formatCategory(t.category);
+      row.getCell(4).value = t.description;
+      row.getCell(5).value = Number(t.amount);
+      row.getCell(5).numFmt = '"Rp"#,##0';
+    });
+
+    // Auto-width columns
+    [15, 12, 18, 40, 15].forEach((w, i) => {
+      summarySheet.getColumn(i + 1).width = w;
+    });
+
+    // SHEET 2: STATUS SISWA
+    const studentSheet = workbook.addWorksheet("Status Siswa");
+
+    studentSheet.columns = [
+      { header: "Nama", key: "name", width: 25 },
+      { header: "NIM", key: "nim", width: 15 },
+      { header: "Status", key: "status", width: 15 },
+      { header: "Total Dibayar", key: "paid", width: 18 },
+      { header: "Total Tunggakan", key: "unpaid", width: 18 },
+      { header: "Rincian Bulan", key: "months", width: 50 },
+    ];
+
+    // Header Style
+    studentSheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    studentSheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF4472C4" },
+    };
+
+    data.students.forEach((s) => {
+      // Format months details
+      // Group by status
+      const paidMonths = s.bills
+        .filter((b) => b.status === "sudah_dibayar")
+        .map((b) => `${this.getMonthName(b.month)} ${b.year}`)
+        .join(", ");
+
+      const unpaidMonths = s.bills
+        .filter((b) => b.status !== "sudah_dibayar")
+        .map((b) => `${this.getMonthName(b.month)} ${b.year} (Unpaid)`)
+        .join(", ");
+
+      const details = [
+        unpaidMonths ? `TUNGGAKAN: ${unpaidMonths}` : "",
+        paidMonths ? `LUNAS: ${paidMonths}` : "",
+      ]
+        .filter(Boolean)
+        .join(" | ");
+
+      studentSheet.addRow({
+        name: s.name,
+        nim: s.nim,
+        status: s.paymentStatus === "up-to-date" ? "Lunas" : "Menunggak",
+        paid: s.totalPaid,
+        unpaid: s.totalUnpaid,
+        months: details,
+      });
+    });
+
+    // Format currency columns
+    studentSheet.getColumn("paid").numFmt = '"Rp"#,##0';
+    studentSheet.getColumn("unpaid").numFmt = '"Rp"#,##0';
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  private getMonthName(month: number): string {
+    const months = [
+      "Jan",
+      "feb",
+      "Mar",
+      "Apr",
+      "Mei",
+      "Jun",
+      "Jul",
+      "Agu",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Des",
+    ];
+    return months[month - 1] || String(month);
+  }
 }
 
 export const exportService = new ExportService();

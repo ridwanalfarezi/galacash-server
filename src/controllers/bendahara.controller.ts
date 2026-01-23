@@ -244,6 +244,54 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
 });
 
 /**
+ * Export rekap kas
+ * GET /api/bendahara/rekap-kas/export
+ */
+export const exportRekapKas = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const user = req.user;
+  const { startDate, endDate, search, paymentStatus, classId } = req.query;
+
+  if (!user) {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "User not authenticated",
+      },
+    });
+    return;
+  }
+
+  const { exportService } = await import("@/services/export.service");
+
+  const start = startDate ? new Date(startDate as string) : undefined;
+  const end = endDate ? new Date(endDate as string) : undefined;
+  const targetClassId = typeof classId === "string" ? classId : undefined;
+
+  // Get data for export (using large limit to get all)
+  const rekapKas = await bendaharaService.getRekapKas(targetClassId, {
+    startDate: start,
+    endDate: end,
+    search: search as string | undefined,
+    page: 1,
+    limit: 10000, // Export all
+    paymentStatus: paymentStatus as "up-to-date" | "has-arrears" | undefined,
+  });
+
+  const buffer = await exportService.exportRekapKasToExcel(rekapKas);
+
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="rekap-kas-${new Date().toISOString().split("T")[0]}.xlsx"`
+  );
+  res.send(buffer);
+});
+
+/**
  * Get all students
  * GET /api/bendahara/students
  */

@@ -62,6 +62,16 @@ router.post("/cash-bills/:id/confirm-payment", bendaharaController.confirmPaymen
 router.post("/cash-bills/:id/reject-payment", bendaharaController.rejectPayment);
 
 /**
+ * Export rekap kas
+ * GET /rekap-kas/export
+ */
+router.get(
+  "/rekap-kas/export",
+  validateQuery(rekapKasFilterSchema),
+  bendaharaController.exportRekapKas
+);
+
+/**
  * GET /rekap-kas
  * Get cash recap with date range and grouping
  */

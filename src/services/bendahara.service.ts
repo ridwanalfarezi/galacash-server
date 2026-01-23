@@ -43,6 +43,12 @@ export interface RekapKasData {
     totalPaid: number;
     totalUnpaid: number;
     paymentStatus: "up-to-date" | "has-arrears";
+    bills: Array<{
+      month: number;
+      year: number;
+      status: string;
+      amount: number;
+    }>;
   }>;
   transactions: Transaction[];
   period: {
@@ -579,6 +585,8 @@ export class BendaharaService {
             select: {
               status: true,
               totalAmount: true,
+              month: true,
+              year: true,
             },
           },
         },
@@ -590,6 +598,13 @@ export class BendaharaService {
       const studentSummaries = (students as any[]).map((s) => {
         let totalPaid = 0;
         let totalUnpaid = 0;
+
+        const bills = s.cashBills.map((bill: any) => ({
+          month: bill.month,
+          year: bill.year,
+          status: bill.status,
+          amount: Number(bill.totalAmount),
+        }));
 
         s.cashBills.forEach((bill: any) => {
           if (bill.status === "sudah_dibayar") {
@@ -608,6 +623,7 @@ export class BendaharaService {
           paymentStatus: (totalUnpaid === 0 ? "up-to-date" : "has-arrears") as
             | "up-to-date"
             | "has-arrears",
+          bills,
         };
       });
 
@@ -687,6 +703,9 @@ export class BendaharaService {
     await this.cacheService.invalidateCache(`bendahara-bills:all*`);
     await this.cacheService.invalidateCache(`rekap-kas:all*`);
     await this.cacheService.invalidateCache(`all-students*`);
+    await this.cacheService.invalidateTransactions("all");
+    await this.cacheService.invalidateCache("chart-data*");
+    await this.cacheService.invalidateCache("breakdown*");
   }
 
   /**
@@ -748,6 +767,10 @@ export class BendaharaService {
       health: "health",
       emergency: "emergency",
       equipment: "equipment",
+      fine: "fine",
+      printing: "printing",
+      transport: "transport",
+      social: "social",
       other: "other",
     };
 
