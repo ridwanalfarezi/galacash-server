@@ -7,15 +7,17 @@ import { Request, Response } from "express";
  * GET /api/fund-applications
  */
 export const getAll = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { page = 1, limit = 10, status } = req.query;
+  const { page = 1, limit = 10, status, classId } = req.query;
 
   const statusFilter =
     typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
+  const targetClassId = typeof classId === "string" ? classId : undefined;
 
   const applications = await fundApplicationService.getAll({
     page: Number(page),
     limit: Number(limit),
     status: statusFilter,
+    classId: targetClassId,
   });
 
   res.status(200).json({

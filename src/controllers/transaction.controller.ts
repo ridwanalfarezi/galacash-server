@@ -7,7 +7,7 @@ import { Request, Response } from "express";
  * GET /api/transactions
  */
 export const getTransactions = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { page = 1, limit = 10, type, startDate, endDate, sortBy, sortOrder } = req.query;
+  const { page = 1, limit = 10, type, startDate, endDate, sortBy, sortOrder, classId } = req.query;
 
   const typeFilter =
     typeof type === "string" ? type : Array.isArray(type) ? String(type[0]) : undefined;
@@ -15,6 +15,7 @@ export const getTransactions = asyncHandler(async (req: Request, res: Response):
   // Convert date strings to Date objects
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;
+  const targetClassId = typeof classId === "string" ? classId : undefined;
 
   const transactions = await transactionService.getTransactions({
     page: Number(page),
@@ -24,6 +25,7 @@ export const getTransactions = asyncHandler(async (req: Request, res: Response):
     endDate: end,
     sortBy: sortBy as "date" | "amount" | "createdAt" | undefined,
     sortOrder: sortOrder as "asc" | "desc" | undefined,
+    classId: targetClassId,
   });
 
   res.status(200).json({

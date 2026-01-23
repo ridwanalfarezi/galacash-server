@@ -40,6 +40,7 @@ export class FundApplicationService {
       category: filters?.category,
       sortBy: filters?.sortBy || "createdAt",
       sortOrder: filters?.sortOrder || "desc",
+      classId: filters?.classId,
     };
 
     // Generate cache key

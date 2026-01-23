@@ -9,18 +9,26 @@ import { Request, Response } from "express";
 export const getDashboard = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user;
 
-  if (!user || !user.classId) {
+  if (!user) {
     res.status(401).json({
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated or class not assigned",
+        message: "User not authenticated",
       },
     });
     return;
   }
 
-  const dashboard = await bendaharaService.getDashboard(user.classId);
+  const { startDate, endDate, classId } = req.query;
+  const start = startDate ? new Date(startDate as string) : undefined;
+  const end = endDate ? new Date(endDate as string) : undefined;
+
+  // Use query classId filter if provided, otherwise default to undefined (global)
+  // Note: We intentionally don't default to user.classId for transparency
+  const targetClassId = typeof classId === "string" ? classId : undefined;
+
+  const dashboard = await bendaharaService.getDashboard(targetClassId, start, end);
 
   res.status(200).json({
     success: true,
@@ -106,7 +114,7 @@ export const rejectFundApplication = asyncHandler(
  */
 export const getAllCashBills = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user;
-  const { page = 1, limit = 10, status } = req.query;
+  const { page = 1, limit = 10, status, classId } = req.query;
 
   if (!user) {
     res.status(401).json({
@@ -118,11 +126,13 @@ export const getAllCashBills = asyncHandler(async (req: Request, res: Response):
 
   const statusFilter =
     typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
+  const targetClassId = typeof classId === "string" ? classId : undefined;
 
   const bills = await bendaharaService.getAllCashBills({
     page: Number(page),
     limit: Number(limit),
     status: statusFilter,
+    classId: targetClassId,
   });
 
   res.status(200).json({
@@ -197,7 +207,7 @@ export const rejectPayment = asyncHandler(async (req: Request, res: Response): P
  */
 export const getRekapKas = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user;
-  const { startDate, endDate, search } = req.query;
+  const { startDate, endDate, search, page = 1, limit = 10, paymentStatus, classId } = req.query;
 
   if (!user) {
     res.status(401).json({
@@ -212,12 +222,16 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
 
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;
+  const targetClassId = typeof classId === "string" ? classId : undefined;
 
-  // Pass undefined as classId to get data for all classes
-  const rekapKas = await bendaharaService.getRekapKas(undefined, {
+  // Pass classId to filter by class, or undefined for global
+  const rekapKas = await bendaharaService.getRekapKas(targetClassId, {
     startDate: start,
     endDate: end,
     search: search as string | undefined,
+    page: Number(page),
+    limit: Number(limit),
+    paymentStatus: paymentStatus as "up-to-date" | "has-arrears" | undefined,
   });
 
   res.status(200).json({
@@ -233,7 +247,7 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
  */
 export const getStudents = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user;
-  const { page = 1, limit = 10, search } = req.query;
+  const { page = 1, limit = 10, search, classId } = req.query;
 
   if (!user) {
     res.status(401).json({
@@ -243,10 +257,13 @@ export const getStudents = asyncHandler(async (req: Request, res: Response): Pro
     return;
   }
 
+  const targetClassId = typeof classId === "string" ? classId : undefined;
+
   const students = await userService.getStudents({
     page: Number(page),
     limit: Number(limit),
     search: search as string | undefined,
+    classId: targetClassId,
   });
 
   res.status(200).json({
