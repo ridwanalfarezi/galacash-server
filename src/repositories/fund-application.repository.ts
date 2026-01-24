@@ -9,8 +9,9 @@ export interface FundApplicationFilters {
   category?: string;
   page?: number;
   limit?: number;
-  sortBy?: "createdAt" | "amount" | "status";
-  sortOrder?: "asc" | "desc";
+  sortBy?: "createdAt" | "amount" | "status"
+  sortOrder?: "asc" | "desc"
+  search?: string
 }
 
 export interface PaginatedResponse<T> {
@@ -57,6 +58,7 @@ export class FundApplicationRepository {
       limit = 20,
       sortBy = "createdAt",
       sortOrder = "desc",
+      search,
     } = filters;
 
     try {
@@ -76,6 +78,12 @@ export class FundApplicationRepository {
 
       if (category) {
         where.category = category as FundCategory;
+      }
+      if (search) {
+        where.OR = [
+          { purpose: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ];
       }
 
       const skip = (page - 1) * limit;
@@ -123,6 +131,7 @@ export class FundApplicationRepository {
       sortOrder = "desc",
       status,
       category,
+      search,
     } = filters || {};
 
     try {
@@ -136,6 +145,12 @@ export class FundApplicationRepository {
 
       if (category) {
         where.category = category as FundCategory;
+      }
+      if (search) {
+        where.OR = [
+          { purpose: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ];
       }
 
       const skip = (page - 1) * limit;
