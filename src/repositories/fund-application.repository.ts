@@ -9,9 +9,9 @@ export interface FundApplicationFilters {
   category?: string;
   page?: number;
   limit?: number;
-  sortBy?: "createdAt" | "amount" | "status"
-  sortOrder?: "asc" | "desc"
-  search?: string
+  sortBy?: "createdAt" | "amount" | "status";
+  sortOrder?: "asc" | "desc";
+  search?: string;
 }
 
 export interface PaginatedResponse<T> {
