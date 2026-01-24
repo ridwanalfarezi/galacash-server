@@ -13,6 +13,7 @@ export interface CashBillFilters {
   limit?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  search?: string; // Search by billId
 }
 
 export interface PaginatedResponse<T> {
@@ -156,6 +157,7 @@ export class CashBillRepository {
       limit = 20,
       sortBy = "createdAt",
       sortOrder = "desc",
+      search,
     } = filters || {};
 
     try {
@@ -176,6 +178,11 @@ export class CashBillRepository {
 
       if (year) {
         where.year = year;
+      }
+
+      // Search by billId (case-insensitive contains)
+      if (search) {
+        where.billId = { contains: search, mode: "insensitive" };
       }
 
       const skip = (page - 1) * limit;
