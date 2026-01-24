@@ -114,7 +114,7 @@ export const rejectFundApplication = asyncHandler(
  */
 export const getAllCashBills = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const user = req.user;
-  const { page = 1, limit = 10, status, classId, userId } = req.query;
+  const { page = 1, limit = 10, status, classId, userId, search } = req.query;
 
   if (!user) {
     res.status(401).json({
@@ -128,6 +128,7 @@ export const getAllCashBills = asyncHandler(async (req: Request, res: Response):
     typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
   const targetClassId = typeof classId === "string" ? classId : undefined;
   const targetUserId = typeof userId === "string" ? userId : undefined;
+  const searchQuery = typeof search === "string" ? search : undefined;
 
   const bills = await bendaharaService.getAllCashBills({
     page: Number(page),
@@ -135,6 +136,7 @@ export const getAllCashBills = asyncHandler(async (req: Request, res: Response):
     status: statusFilter,
     classId: targetClassId,
     userId: targetUserId,
+    search: searchQuery,
   });
 
   res.status(200).json({
