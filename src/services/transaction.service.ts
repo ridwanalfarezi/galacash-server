@@ -36,6 +36,7 @@ export class TransactionService {
       endDate: filters?.endDate,
       sortBy: filters?.sortBy || "date",
       sortOrder: filters?.sortOrder || "desc",
+      search: filters?.search,
     };
 
     // Generate cache key

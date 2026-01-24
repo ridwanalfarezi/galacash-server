@@ -38,6 +38,7 @@ export class CashBillService {
       status: filters?.status,
       month: filters?.month,
       year: filters?.year,
+      search: filters?.search,
     };
 
     // Generate cache key

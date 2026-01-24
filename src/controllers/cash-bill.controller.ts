@@ -8,7 +8,7 @@ import { Request, Response } from "express";
  */
 export const getMyBills = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.sub;
-  const { page = 1, limit = 10, status } = req.query;
+  const { page = 1, limit = 10, status, search } = req.query;
 
   if (!userId) {
     res.status(401).json({
@@ -23,11 +23,13 @@ export const getMyBills = asyncHandler(async (req: Request, res: Response): Prom
 
   const statusFilter =
     typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
+  const searchQuery = typeof search === "string" ? search : undefined;
 
   const bills = await cashBillService.getMyBills(userId, {
     page: Number(page),
     limit: Number(limit),
     status: statusFilter,
+    search: searchQuery,
   });
 
   res.status(200).json({

@@ -7,17 +7,19 @@ import { Request, Response } from "express";
  * GET /api/fund-applications
  */
 export const getAll = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { page = 1, limit = 10, status, classId } = req.query;
+  const { page = 1, limit = 10, status, classId, search } = req.query;
 
   const statusFilter =
     typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
   const targetClassId = typeof classId === "string" ? classId : undefined;
+  const searchQuery = typeof search === "string" ? search : undefined;
 
   const applications = await fundApplicationService.getAll({
     page: Number(page),
     limit: Number(limit),
     status: statusFilter,
     classId: targetClassId,
+    search: searchQuery,
   });
 
   res.status(200).json({
@@ -33,10 +35,11 @@ export const getAll = asyncHandler(async (req: Request, res: Response): Promise<
  */
 export const getMy = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.sub;
-  const { page = 1, limit = 10, status } = req.query;
+  const { page = 1, limit = 10, status, search } = req.query;
 
   const statusFilter =
     typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
+  const searchQuery = typeof search === "string" ? search : undefined;
 
   if (!userId) {
     res.status(401).json({
@@ -53,6 +56,7 @@ export const getMy = asyncHandler(async (req: Request, res: Response): Promise<v
     page: Number(page),
     limit: Number(limit),
     status: statusFilter,
+    search: searchQuery,
   });
 
   res.status(200).json({
