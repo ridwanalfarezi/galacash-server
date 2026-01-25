@@ -44,6 +44,8 @@ GalaCash is a comprehensive backend API for managing class finances. It provides
 ✅ **Caching**: Redis for improved performance  
 ✅ **Auto-transactions**: Bills and approvals auto-create transactions  
 ✅ **Data Transparency**: Aggregated views across all classes in a batch
+✅ **Payment Accounts**: Manage bank accounts and e-wallets for treasury  
+✅ **Transaction Labels**: Organize transactions with custom labels
 
 ---
 
@@ -57,13 +59,15 @@ GalaCash is a comprehensive backend API for managing class finances. It provides
 | **PostgreSQL**         | Primary database                                 |
 | **Prisma v7**          | ORM and migrations (with prisma-client provider) |
 | **@prisma/adapter-pg** | PostgreSQL adapter for Prisma                    |
-| **Redis**              | Caching layer                                    |
+| **Redis (ioredis)**    | Caching layer                                    |
 | **JWT**                | Authentication (HS256)                           |
 | **bcrypt**             | Password hashing                                 |
 | **GCP Cloud Storage**  | File uploads                                     |
 | **Winston**            | Logging                                          |
 | **Joi**                | Input validation                                 |
 | **node-cron**          | Scheduled jobs                                   |
+| **Helmet**             | Security headers                                 |
+| **Express Rate Limit** | Rate limiting                                    |
 | **Swagger UI**         | API documentation                                |
 | **Docker**             | Containerization                                 |
 
