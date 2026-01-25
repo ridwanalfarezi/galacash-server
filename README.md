@@ -241,6 +241,9 @@ Key environment variables (see `.env.example` for complete list):
 | `GCP_BUCKET_NAME`          | GCS bucket name              | `galacash-bucket`                                              |
 | `BILL_GENERATION_SCHEDULE` | Cron for monthly bills       | `0 0 1 * *` (1st of each month at midnight)                    |
 | `KAS_KELAS_AMOUNT`         | Monthly class dues (IDR)     | `15000`                                                        |
+| `USE_LOCAL_CRON`           | Use node-cron (local only)   | `true`                                                         |
+| `CRON_SECRET_KEY`          | Key for Cloud Scheduler      | _Required for production_                                      |
+| `CORS_ORIGIN`              | Allowed CORS origins         | `*` (dev)                                                      |
 | `PORT`                     | Server port                  | `3000`                                                         |
 | `NODE_ENV`                 | Environment                  | `development`                                                  |
 
