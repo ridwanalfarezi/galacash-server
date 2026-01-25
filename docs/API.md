@@ -20,6 +20,8 @@
    - [Fund Application APIs](#5-fund-application-aju-dana-apis)
    - [Cash Bill APIs](#6-cash-bill-tagihan-kas-apis)
    - [Treasurer APIs](#7-treasurer-bendahara-apis)
+   - [Payment Account APIs](#8-payment-account-apis)
+   - [Label APIs](#9-label-apis)
 6. [File Upload](#file-upload)
 7. [Error Handling](#error-handling)
 8. [Response Formats](#response-formats)
@@ -1585,6 +1587,90 @@ Get list of all students across all classes in the batch.
     }
   },
   "message": "Students fetched"
+}
+```
+
+---
+
+---
+
+### 8. Payment Account APIs
+
+#### GET `/api/payment-accounts/active`
+
+Get active payment accounts (public).
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "BCA - Bendahara",
+      "accountType": "bank",
+      "accountNumber": "1234567890",
+      "accountHolder": "Galacash Treasury",
+      "status": "active"
+    }
+  ]
+}
+```
+
+---
+
+#### GET `/api/payment-accounts`
+
+Get all payment accounts (Bendahara only).
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | active/inactive |
+| `accountType` | `string` | bank/ewallet |
+
+**Response (200 OK):** [List of Payment Accounts]
+
+---
+
+#### POST `/api/payment-accounts`
+
+Create new payment account (Bendahara only).
+
+**Request Body:**
+
+```json
+{
+  "name": "OVO Treasury",
+  "accountType": "ewallet",
+  "accountNumber": "08123456789",
+  "accountHolder": "Galacash"
+}
+```
+
+---
+
+### 9. Label APIs
+
+#### GET `/api/labels`
+
+Get all available labels and options.
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "billStatuses": [...],
+    "fundStatuses": [...],
+    "fundCategories": [...],
+    "transactionTypes": [...],
+    "paymentMethods": [...]
+  }
 }
 ```
 

@@ -19,7 +19,17 @@ async function generateMonthlyBills(): Promise<void> {
     const now = new Date();
     const month = now.getMonth() + 1; // 1-12
     const year = now.getFullYear();
-    const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 10); // Due on 10th of next month
+
+    // Skip bill generation for holiday months: Jan (1), Feb (2), Jul (7), Aug (8)
+    const excludedMonths = [1, 2, 7, 8];
+    if (excludedMonths.includes(month)) {
+      logger.info(
+        `🚫 Skipping bill generation for month ${month} (Holiday Month - Semester Break)`
+      );
+      return;
+    }
+
+    const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 1); // Due on 1st of next month
 
     // Get all users with role 'user' (exclude bendahara)
     const users = await prisma.user.findMany({

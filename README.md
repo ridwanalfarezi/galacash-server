@@ -142,10 +142,10 @@ pnpm prisma:migrate
 
 This will create:
 
-- 2 classes (A and B)
-- 80 students (40 per class)
-- 1 bendahara (treasurer): Ridwan Alfarezi
-- Default password for all users: `password123`
+- 2 classes (A, B)
+- 83 students (40 in A, 43 in B)
+- 1 bendahara (treasurer): Fatya Khairani R
+- Default password for all users: `12345678`
 
 ### 6. Start development server
 
@@ -202,21 +202,6 @@ galacash-server/
 │   ├── migrations/          # Database migrations
 │   │   └── migration_lock.toml
 │   └── config.ts            # Prisma v7 configuration
-├── scripts/
-│   ├── endpoint_smoke.py     # Comprehensive smoke test suite
-│   ├── run-smoke-test.sh     # Linux/Mac test runner
-│   ├── run-smoke-test.bat    # Windows test runner
-│   ├── README.md             # Smoke test documentation
-│   ├── EXAMPLES.md           # Usage examples and scenarios
-│   └── requirements.txt      # Python dependencies (empty - no deps needed)
-├── docker-compose.yml       # Local development services
-├── Dockerfile               # Production container
-├── prisma.config.ts         # Prisma v7 configuration (datasource, migrations, seed)
-├── tsconfig.json
-├── .env                     # Environment variables (git-ignored)
-├── .env.example             # Environment template
-├── eslint.config.js         # ESLint flat config
-├── pnpm-workspace.yaml
 ├── package.json
 ├── docs/                    # Documentation
 │   ├── API.md              # API documentation
@@ -266,42 +251,25 @@ Swagger UI is available at: **http://localhost:3000/api/docs**
 **Bendahara (Treasurer):**
 
 ```
-NIM: 1313699999
-Password: password123
+NIM: 1313624000
+Password: 12345678
 Role: bendahara
 ```
 
 **Students (Class A):**
 
 ```
-NIMs: 1313600001 - 1313600040
-Password: password123
+NIMs: 1313624001 - 1313624068 (40 students)
+Password: 12345678
 Role: user
 ```
 
 **Students (Class B):**
 
 ```
-NIMs: 1313600041 - 1313600080
-Password: password123
+NIMs: 1313624011 - 1313624085 (43 students)
+Password: 12345678
 Role: user
-```
-
-### Quick API Examples
-
-**Login:**
-
-```bash
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"nim":"1313699999","password":"password123"}'
-```
-
-**Get Dashboard (requires token):**
-
-```bash
-curl -X GET http://localhost:3000/api/dashboard/summary \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 ---
@@ -321,42 +289,6 @@ curl -X GET http://localhost:3000/api/dashboard/summary \
 | `pnpm prisma:generate` | Generate Prisma Client to src/generated/ |
 | `pnpm prisma:migrate`  | Run database migrations                  |
 | `pnpm prisma:studio`   | Open Prisma Studio (interactive DB GUI)  |
-| `pnpm test:smoke`      | Run comprehensive smoke tests            |
-
-### Testing
-
-**Run comprehensive smoke tests:**
-
-```bash
-# Quick run with summary
-pnpm test:smoke
-
-# Or run directly with Python
-python scripts/endpoint_smoke.py
-
-# With verbose output
-VERBOSE=1 python scripts/endpoint_smoke.py
-
-# Save export files
-SAVE_DIR=./tmp/exports python scripts/endpoint_smoke.py
-
-# Windows PowerShell
-$env:VERBOSE="1"; python scripts/endpoint_smoke.py
-```
-
-**What the smoke tests cover:**
-
-- ✅ 127+ endpoint tests across all features
-- ✅ Authentication flows (login, refresh, logout)
-- ✅ User dashboard and transactions
-- ✅ Fund applications with all filters
-- ✅ Cash bills management
-- ✅ Bendahara operations
-- ✅ Export functionality (Excel/CSV)
-- ✅ Pagination, sorting, and date ranges
-- ✅ Labels and payment accounts
-
-See [`scripts/README.md`](scripts/README.md) for detailed documentation and [`scripts/EXAMPLES.md`](scripts/EXAMPLES.md) for usage examples.
 
 ### Database Management
 
@@ -377,30 +309,6 @@ pnpm prisma migrate dev --name your_migration_name
 ```bash
 pnpm prisma migrate reset
 ```
-
-### Testing
-
-**Run endpoint smoke test:**
-
-```bash
-python scripts/endpoint_smoke.py
-```
-
-Tests all major endpoints using stdlib (no external dependencies):
-
-- Authentication (login, token refresh)
-- Dashboard endpoints
-- Transaction management
-- Fund applications
-- Cash bills
-- Bendahara administrative endpoints
-
-### Debugging
-
-Logs are stored in the `logs/` directory:
-
-- `logs/combined.log` - All logs
-- `logs/error.log` - Errors only
 
 ## 🏗️ Architecture & Design
 
@@ -545,33 +453,9 @@ To use different ports, edit `docker-compose.yml` and update `.env`.
 
 ---
 
-## 🤖 Testing
-
-### Smoke Test
-
-The project includes a comprehensive endpoint smoke test using Python (stdlib only):
-
-```bash
-python scripts/endpoint_smoke.py
-```
-
-This test:
-
-- Logs in as both student and bendahara
-- Tests all major endpoint groups
-- Validates response status codes
-- Measures response times
-- Handles conflicts gracefully
-- Requires no external Python dependencies
-
-**Expected Output**: ✅ All tests passed
-
----
-
 ## ✨ Project Highlights
 
 - **Type-Safe**: Full TypeScript with strict mode
-- **Tested**: Comprehensive endpoint smoke test included
 - **Documented**: Swagger UI, OpenAPI spec, and detailed README
 - **Modern Stack**: Express 5.x, Prisma v7, PostgreSQL 16
 - **Production-Ready**: Docker support, proper error handling, structured logging

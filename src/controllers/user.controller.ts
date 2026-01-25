@@ -49,14 +49,10 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response): P
     return;
   }
 
-  const updatedUser = await userService.updateProfile(
-    userId,
-    {
-      name,
-      email,
-    },
-    req.user?.role ?? "user"
-  );
+  const updatedUser = await userService.updateProfile(userId, {
+    name,
+    email,
+  });
 
   res.status(200).json({
     success: true,

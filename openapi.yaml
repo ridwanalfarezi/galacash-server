@@ -20,7 +20,7 @@ info:
 servers:
   - url: http://localhost:3000/api
     description: Development server
-  - url: https://api.galacash.com/api
+  - url: https://galacash-server-2-66220284668.asia-southeast2.run.app/api
     description: Production server
 
 tags:
@@ -38,6 +38,10 @@ tags:
     description: Cash bill (Tagihan Kas) management
   - name: Bendahara
     description: Treasurer-only endpoints
+  - name: Payment Accounts
+    description: Treasury payment account management
+  - name: Labels
+    description: Status and category labels
 
 paths:
   # ========== AUTH ==========
@@ -765,6 +769,192 @@ paths:
         "401":
           description: Unauthorized
 
+  # ========== PAYMENT ACCOUNTS ==========
+  /payment-accounts:
+    get:
+      tags: [Payment Accounts]
+      summary: Get all payment accounts (bendahara only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+        - name: accountType
+          in: query
+          schema:
+            type: string
+            enum: [bank, ewallet]
+      responses:
+        "200":
+          description: List of payment accounts
+    post:
+      tags: [Payment Accounts]
+      summary: Create payment account
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentAccountInput"
+      responses:
+        "201":
+          description: Account created
+
+  /payment-accounts/active:
+    get:
+      tags: [Payment Accounts]
+      summary: Get active payment accounts (public)
+      responses:
+        "200":
+          description: Active accounts list
+
+  /payment-accounts/{id}:
+    get:
+      tags: [Payment Accounts]
+      summary: Get payment account details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Account details
+    put:
+      tags: [Payment Accounts]
+      summary: Update payment account
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentAccountUpdate"
+      responses:
+        "200":
+          description: Account updated
+    delete:
+      tags: [Payment Accounts]
+      summary: Delete payment account
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Account deleted
+
+  /payment-accounts/{id}/activate:
+    post:
+      tags: [Payment Accounts]
+      summary: Activate payment account
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Account activated
+
+  /payment-accounts/{id}/deactivate:
+    post:
+      tags: [Payment Accounts]
+      summary: Deactivate payment account
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Account deactivated
+
+  # ========== LABELS ==========
+  /labels:
+    get:
+      tags: [Labels]
+      summary: Get all labels
+      responses:
+        "200":
+          description: All labels
+
+  /labels/bill-statuses:
+    get:
+      tags: [Labels]
+      summary: Get bill status labels
+      responses:
+        "200":
+          description: Bill statuses
+
+  /labels/fund-statuses:
+    get:
+      tags: [Labels]
+      summary: Get fund status labels
+      responses:
+        "200":
+          description: Fund statuses
+
+  /labels/fund-categories:
+    get:
+      tags: [Labels]
+      summary: Get fund category labels
+      responses:
+        "200":
+          description: Fund categories
+
+  /labels/transaction-types:
+    get:
+      tags: [Labels]
+      summary: Get transaction type labels
+      responses:
+        "200":
+          description: Transaction types
+
+  /labels/transaction-categories:
+    get:
+      tags: [Labels]
+      summary: Get transaction category labels
+      responses:
+        "200":
+          description: Transaction categories
+
+  /labels/payment-methods:
+    get:
+      tags: [Labels]
+      summary: Get payment method labels
+      responses:
+        "200":
+          description: Payment methods
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1071,9 +1261,36 @@ components:
         format:
           type: string
           enum: [xlsx, pdf]
-        startDate:
+    PaymentAccountInput:
+      type: object
+      required: [name, accountType]
+      properties:
+        name:
           type: string
-          format: date
+        accountType:
+          type: string
+          enum: [bank, ewallet]
+        accountNumber:
+          type: string
+        accountHolder:
+          type: string
+        description:
+          type: string
+
+    PaymentAccountUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        accountNumber:
+          type: string
+        accountHolder:
+          type: string
+        description:
+          type: string
         endDate:
           type: string
           format: date

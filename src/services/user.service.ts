@@ -1,6 +1,6 @@
 import { User } from "@/prisma/generated/client";
 import { userRepository } from "@/repositories/user.repository";
-import { AuthenticationError, AuthorizationError, NotFoundError } from "@/utils/errors";
+import { AuthenticationError, NotFoundError } from "@/utils/errors";
 import bcrypt from "bcrypt";
 import { CacheService } from "./cache.service";
 
@@ -68,19 +68,10 @@ export class UserService {
    * Update user profile
    * Email field can only be updated by bendahara role
    */
-  async updateProfile(
-    userId: string,
-    data: UpdateProfileData,
-    userRole: "user" | "bendahara" = "user"
-  ): Promise<SafeUser> {
+  async updateProfile(userId: string, data: UpdateProfileData): Promise<SafeUser> {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new NotFoundError("User not found", "User");
-    }
-
-    // Only bendahara can update email
-    if (data.email && userRole !== "bendahara") {
-      throw new AuthorizationError("Only bendahara can update email");
     }
 
     // Update user profile
