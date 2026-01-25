@@ -84,6 +84,12 @@ router.get("/rekap-kas", validateQuery(rekapKasFilterSchema), bendaharaControlle
 router.get("/students", bendaharaController.getStudents);
 
 /**
+ * GET /students/:id
+ * Get student detail
+ */
+router.get("/students/:id", bendaharaController.getStudentDetail);
+
+/**
  * POST /transactions
  * Create manual transaction (income/expense)
  */
