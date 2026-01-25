@@ -326,6 +326,44 @@ export const getStudents = asyncHandler(async (req: Request, res: Response): Pro
 });
 
 /**
+ * Get student detail
+ * GET /api/bendahara/students/:id
+ */
+export const getStudentDetail = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const user = req.user;
+  const { id } = req.params;
+  const studentId = Array.isArray(id) ? id[0] : id;
+
+  if (!user) {
+    res.status(401).json({
+      success: false,
+      error: { code: "UNAUTHORIZED", message: "User not authenticated" },
+    });
+    return;
+  }
+
+  const student = await bendaharaService.getStudentDetail(studentId);
+
+  if (!student) {
+    res.status(404).json({
+      success: false,
+      error: { code: "NOT_FOUND", message: "Student not found" },
+    });
+    return;
+  }
+
+  // Sanitize password
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password, ...safeStudent } = student;
+
+  res.status(200).json({
+    success: true,
+    data: safeStudent,
+    message: "Student detail fetched",
+  });
+});
+
+/**
  * Create manual transaction
  * POST /api/bendahara/transactions
  */

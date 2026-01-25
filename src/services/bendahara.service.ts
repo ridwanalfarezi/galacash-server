@@ -314,6 +314,13 @@ export class BendaharaService {
   }
 
   /**
+   * Get student detail by ID
+   */
+  async getStudentDetail(studentId: string) {
+    return this.userRepository.findById(studentId);
+  }
+
+  /**
    * Get all cash bills (across all classes)
    */
   async getAllCashBills(

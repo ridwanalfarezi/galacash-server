@@ -61,10 +61,18 @@ export class CashBillRepository {
       limit = 20,
       sortBy = "createdAt",
       sortOrder = "desc",
+      search,
     } = filters;
 
     try {
       const where: Prisma.CashBillWhereInput = {};
+
+      if (search) {
+        where.OR = [
+          { billId: { contains: search, mode: "insensitive" } },
+          // You can add more search fields here if needed
+        ];
+      }
 
       if (classId) {
         where.classId = classId;
