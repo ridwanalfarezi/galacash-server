@@ -31,11 +31,12 @@ export class ExportService {
 
     // Set column headers
     worksheet.columns = [
-      { header: "Date", key: "date", width: 15 },
-      { header: "Type", key: "type", width: 12 },
-      { header: "Category", key: "category", width: 18 },
-      { header: "Description", key: "description", width: 40 },
-      { header: "Amount", key: "amount", width: 15 },
+      { header: "Tanggal", key: "date", width: 15 },
+      { header: "Tipe", key: "type", width: 15 },
+      { header: "Kategori", key: "category", width: 20 },
+      { header: "Keperluan", key: "description", width: 40 },
+      { header: "Nominal", key: "amount", width: 15 },
+      { header: "Lampiran", key: "attachment", width: 40 },
     ];
 
     // Style header row
@@ -51,25 +52,49 @@ export class ExportService {
     transactions.data.forEach((transaction) => {
       worksheet.addRow({
         date: new Date(transaction.date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" }),
-        type: transaction.type === "income" ? "Income" : "Expense",
+        type: transaction.type === "income" ? "Pemasukan" : "Pengeluaran",
         category: this.formatCategory(transaction.category),
         description: transaction.description,
         amount: transaction.amount,
+        attachment: transaction.attachmentUrl || "-",
       });
     });
 
     // Format amount column as currency
     worksheet.getColumn("amount").numFmt = '"Rp"#,##0.00';
+    // Align attachment column to left (default is usually left but good to valid)
+    worksheet.getColumn("attachment").alignment = { vertical: "middle", wrapText: true };
 
     // Add totals row
-    const lastRow = worksheet.rowCount + 1;
-    worksheet.getCell(`A${lastRow}`).value = "TOTAL";
+    // Calculate totals manually or using formula
+    // Let's add specific summary block at bottom like rekap kas
+
+    const lastRow = worksheet.rowCount + 2; // leave 1 empty row
+
+    // Total Income
+    worksheet.getCell(`A${lastRow}`).value = "Total Pemasukan";
     worksheet.getCell(`A${lastRow}`).font = { bold: true };
     worksheet.getCell(`E${lastRow}`).value = {
-      formula: `SUM(E2:E${lastRow - 1})`,
+      formula: `SUMIF(B2:B${lastRow - 2}, "Pemasukan", E2:E${lastRow - 2})`,
     };
-    worksheet.getCell(`E${lastRow}`).font = { bold: true };
     worksheet.getCell(`E${lastRow}`).numFmt = '"Rp"#,##0.00';
+
+    // Total Expense
+    worksheet.getCell(`A${lastRow + 1}`).value = "Total Pengeluaran";
+    worksheet.getCell(`A${lastRow + 1}`).font = { bold: true };
+    worksheet.getCell(`E${lastRow + 1}`).value = {
+      formula: `SUMIF(B2:B${lastRow - 2}, "Pengeluaran", E2:E${lastRow - 2})`,
+    };
+    worksheet.getCell(`E${lastRow + 1}`).numFmt = '"Rp"#,##0.00';
+
+    // Balance
+    worksheet.getCell(`A${lastRow + 2}`).value = "Sisa Saldo";
+    worksheet.getCell(`A${lastRow + 2}`).font = { bold: true };
+    worksheet.getCell(`E${lastRow + 2}`).value = {
+      formula: `E${lastRow} - E${lastRow + 1}`,
+    };
+    worksheet.getCell(`E${lastRow + 2}`).numFmt = '"Rp"#,##0.00';
+    worksheet.getCell(`E${lastRow + 2}`).font = { bold: true };
 
     // Generate buffer
     const buffer = await workbook.xlsx.writeBuffer();
@@ -91,24 +116,34 @@ export class ExportService {
     });
 
     // CSV header
-    const headers = ["Date", "Type", "Category", "Description", "Amount"];
+    const headers = ["Tanggal", "Tipe", "Kategori", "Keperluan", "Nominal", "Lampiran"];
     const rows = [headers.join(",")];
+
+    let totalIncome = 0;
+    let totalExpense = 0;
 
     // Add data rows
     transactions.data.forEach((transaction) => {
+      const amount = Number(transaction.amount);
+      if (transaction.type === "income") totalIncome += amount;
+      else totalExpense += amount;
+
       const row = [
         new Date(transaction.date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" }),
-        transaction.type === "income" ? "Income" : "Expense",
+        transaction.type === "income" ? "Pemasukan" : "Pengeluaran",
         this.formatCategory(transaction.category),
         `"${transaction.description.replace(/"/g, '""')}"`, // Escape quotes
-        transaction.amount.toString(),
+        amount.toString(),
+        `"${transaction.attachmentUrl || "-"}"`,
       ];
       rows.push(row.join(","));
     });
 
     // Add totals row
-    const totalAmount = transactions.data.reduce((sum, t) => sum + Number(t.amount), 0);
-    rows.push(`"TOTAL",,,,${totalAmount}`);
+    rows.push(``); // Empty line
+    rows.push(`"Total Pemasukan",,,,${totalIncome},`);
+    rows.push(`"Total Pengeluaran",,,,${totalExpense},`);
+    rows.push(`"Sisa Saldo",,,,${totalIncome - totalExpense},`);
 
     return rows.join("\n");
   }
@@ -118,14 +153,24 @@ export class ExportService {
    */
   private formatCategory(category: string): string {
     const categoryMap: Record<string, string> = {
-      kas_kelas: "Class Cash",
-      donation: "Donation",
+      kas_kelas: "Kas Kelas",
+      donation: "Sumbangan",
       fundraising: "Fundraising",
-      office_supplies: "Office Supplies",
-      consumption: "Consumption",
-      event: "Event",
-      maintenance: "Maintenance",
-      other: "Other",
+      office_supplies: "Alat Tulis Kantor",
+      consumption: "Konsumsi",
+      event: "Acara",
+      maintenance: "Pemeliharaan",
+      other: "Lainnya",
+      education: "Pendidikan",
+      health: "Kesehatan",
+      emergency: "Darurat",
+      equipment: "Peralatan",
+      subscription: "Langganan",
+      competition: "Lomba",
+      printing: "Cetak",
+      fine: "Denda",
+      transport: "Transportasi",
+      social: "Sosial",
     };
 
     return categoryMap[category] || category;

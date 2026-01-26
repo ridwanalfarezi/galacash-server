@@ -735,13 +735,14 @@ export class BendaharaService {
         ? this.mapCategoryStringToEnum(data.category)
         : "other";
 
-      // Create transaction (note: attachment not stored in Transaction model)
+      // Create transaction
       const transaction = await this.transactionRepository.create({
         date: data.date,
         description: data.description,
         type: data.type,
         amount: data.amount,
         category: transactionCategory,
+        attachmentUrl: data.attachment,
         class: {
           connect: { id: data.classId },
         },

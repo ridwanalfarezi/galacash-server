@@ -40,6 +40,8 @@ enum TransactionCategory {
   transport
   social
   other
+  subscription
+  competition
 }
 
 enum FundCategory {
@@ -47,6 +49,12 @@ enum FundCategory {
   health
   emergency
   equipment
+  subscription
+  consumption
+  competition
+  printing
+  donation
+  other
 }
 
 enum FundStatus {
@@ -135,15 +143,16 @@ model RefreshToken {
 }
 
 model Transaction {
-  id          String              @id @default(uuid())
-  classId     String
-  type        TransactionType
-  category    TransactionCategory @default(other)
-  description String
-  amount      Decimal             @db.Decimal(12, 2)
-  date        DateTime            @default(now())
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id            String              @id @default(uuid())
+  classId       String
+  type          TransactionType
+  category      TransactionCategory @default(other)
+  description   String
+  attachmentUrl String?
+  amount        Decimal             @db.Decimal(12, 2)
+  date          DateTime            @default(now())
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   // Relations
   class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
