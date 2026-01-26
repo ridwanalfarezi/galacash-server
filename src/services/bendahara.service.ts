@@ -118,9 +118,8 @@ export class BendaharaService {
       const totalBalance = totalIncome - totalExpense;
 
       // 2. Get Transactions (Recent or for the period)
-      // If date range is specified, we fetch more transactions to ensure the chart/list is useful
-      // Otherwise default to 10 recent
-      const transactionLimit = startDate || endDate ? 100 : 10;
+      // Limit to 5 items for the dashboard widget to prevent data overload
+      const transactionLimit = 5;
       const recentTransactions = await prisma.transaction.findMany({
         where: { ...baseFilter, ...dateFilter },
         take: transactionLimit,
