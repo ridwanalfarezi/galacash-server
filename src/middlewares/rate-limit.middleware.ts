@@ -1,133 +1,93 @@
-import { logger } from "@/utils/logger";
-import { NextFunction, Request, Response } from "express";
-
-interface RateLimitStore {
-  [key: string]: {
-    count: number;
-    resetTime: number;
-  };
-}
-
-const store: RateLimitStore = {};
-
-// Cleanup old entries every 10 minutes
-setInterval(
-  () => {
-    const now = Date.now();
-    Object.keys(store).forEach((key) => {
-      if (store[key].resetTime < now) {
-        delete store[key];
-      }
-    });
-  },
-  10 * 60 * 1000
-);
+import { redisClient } from "@/config/redis.config";
+import { Request, Response } from "express";
+import { rateLimit } from "express-rate-limit";
+import RedisStore from "rate-limit-redis";
 
 /**
- * Rate limiting middleware
- * Limits requests per IP address
+ * Helper to create Redis-backed rate limiter
  */
-export const rateLimit = (options: {
-  windowMs: number; // Time window in milliseconds
-  max: number; // Max requests per window
+const createLimiter = (options: {
+  windowMs: number;
+  max: number;
   message?: string;
   skipSuccessfulRequests?: boolean;
+  prefix: string;
 }) => {
-  const {
+  const { windowMs, max, message, skipSuccessfulRequests = false, prefix } = options;
+
+  return rateLimit({
     windowMs,
     max,
-    message = "Too many requests, please try again later.",
-    skipSuccessfulRequests = false,
-  } = options;
-
-  return (req: Request, res: Response, next: NextFunction): void => {
-    // Get client identifier (IP address + user agent for better uniqueness)
-    const identifier = `${req.ip}-${req.get("user-agent") || "unknown"}`;
-    const now = Date.now();
-
-    // Initialize or get existing entry
-    if (!store[identifier] || store[identifier].resetTime < now) {
-      store[identifier] = {
-        count: 0,
-        resetTime: now + windowMs,
-      };
-    }
-
-    // Increment request count
-    store[identifier].count++;
-
-    // Check if limit exceeded
-    if (store[identifier].count > max) {
-      logger.warn(`Rate limit exceeded for ${req.ip} on ${req.path}`);
+    message: {
+      success: false,
+      error: {
+        code: "RATE_LIMIT_EXCEEDED",
+        message: message || "Too many requests, please try again later.",
+      },
+    },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    skipSuccessfulRequests,
+    store: new RedisStore({
+      // @ts-expect-error - Known type mismatch with ioredis and rate-limit-redis
+      sendCommand: (...args: string[]) => redisClient!.call(...args),
+      prefix: `rl:${prefix}:`,
+    }),
+    // Fallback to memory store if Redis is not connected
+    skip: () => !redisClient || redisClient.status !== "ready",
+    handler: (req: Request, res: Response) => {
       res.status(429).json({
         success: false,
         error: {
           code: "RATE_LIMIT_EXCEEDED",
-          message,
+          message: message || "Too many requests, please try again later.",
         },
       });
-      return;
-    }
-
-    // Add rate limit headers
-    res.setHeader("X-RateLimit-Limit", max.toString());
-    res.setHeader("X-RateLimit-Remaining", Math.max(0, max - store[identifier].count).toString());
-    res.setHeader("X-RateLimit-Reset", new Date(store[identifier].resetTime).toISOString());
-
-    // If skipSuccessfulRequests is true, decrement count on successful responses
-    if (skipSuccessfulRequests) {
-      const originalSend = res.send;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      res.send = function (data: any) {
-        if (res.statusCode < 400) {
-          store[identifier].count--;
-        }
-        return originalSend.call(this, data);
-      };
-    }
-
-    next();
-  };
+    },
+  });
 };
 
 /**
  * Rate limit for auth endpoints
- * 30 requests per 15 minutes (only failed attempts count due to skipSuccessfulRequests)
- * This allows for retries and multiple login attempts while still preventing brute force
+ * 100 requests per 15 minutes (Relaxed from 30)
  */
-export const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30,
-  message: "Too many login attempts, please try again later.",
+export const authRateLimit = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Terlalu banyak percobaan login. Silakan coba lagi dalam 15 menit.",
   skipSuccessfulRequests: true,
+  prefix: "auth",
 });
 
 /**
  * General API rate limit
- * 500 requests per minute
+ * 1000 requests per minute
  */
-export const generalRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 500,
-  message: "Too many requests, please slow down.",
+export const generalRateLimit = createLimiter({
+  windowMs: 60 * 1000,
+  max: 1000,
+  message: "Terlalu banyak permintaan. Silakan tunggu sebentar.",
+  prefix: "general",
 });
 
 /**
  * Moderate rate limit for file uploads
- * 30 requests per 10 minutes
+ * 50 requests per 15 minutes
  */
-export const uploadRateLimit = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 30,
-  message: "Too many upload attempts, please try again later.",
+export const uploadRateLimit = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  message: "Terlalu banyak percobaan upload. Silakan coba lagi nanti.",
+  prefix: "upload",
 });
 
 /**
  * Strict rate limit for sensitive operations (e.g., password change)
- * 10 requests per 10 minutes
+ * 30 requests per 15 minutes (Relaxed from 10)
  */
-export const strictRateLimit = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 10,
-  message: "Too many attempts for this sensitive operation, please try again later.",
+export const strictRateLimit = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: "Terlalu banyak percobaan untuk operasi ini. Silakan coba lagi nanti.",
+  prefix: "strict",
 });

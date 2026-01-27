@@ -29,7 +29,7 @@ export class LabelsController {
         accountStatuses: getAllAccountStatusLabels(),
       };
 
-      res.json(successResponse(labels, "All labels retrieved successfully"));
+      res.json(successResponse(labels, "Semua label berhasil diambil"));
     } catch (error) {
       next(error);
     }
@@ -42,7 +42,7 @@ export class LabelsController {
   async getBillStatuses(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const labels = getAllBillStatusLabels();
-      res.json(successResponse(labels, "Bill status labels retrieved successfully"));
+      res.json(successResponse(labels, "Label status tagihan berhasil diambil"));
     } catch (error) {
       next(error);
     }
@@ -55,7 +55,7 @@ export class LabelsController {
   async getFundStatuses(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const labels = getAllFundStatusLabels();
-      res.json(successResponse(labels, "Fund status labels retrieved successfully"));
+      res.json(successResponse(labels, "Label status pengajuan dana berhasil diambil"));
     } catch (error) {
       next(error);
     }
@@ -68,7 +68,7 @@ export class LabelsController {
   async getFundCategories(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const labels = getAllFundCategoryLabels();
-      res.json(successResponse(labels, "Fund category labels retrieved successfully"));
+      res.json(successResponse(labels, "Label kategori pengajuan dana berhasil diambil"));
     } catch (error) {
       next(error);
     }
@@ -81,7 +81,7 @@ export class LabelsController {
   async getTransactionTypes(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const labels = getAllTransactionTypeLabels();
-      res.json(successResponse(labels, "Transaction type labels retrieved successfully"));
+      res.json(successResponse(labels, "Label tipe transaksi berhasil diambil"));
     } catch (error) {
       next(error);
     }
@@ -94,7 +94,7 @@ export class LabelsController {
   async getTransactionCategories(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const labels = getAllTransactionCategoryLabels();
-      res.json(successResponse(labels, "Transaction category labels retrieved successfully"));
+      res.json(successResponse(labels, "Label kategori transaksi berhasil diambil"));
     } catch (error) {
       next(error);
     }
@@ -107,7 +107,7 @@ export class LabelsController {
   async getPaymentMethods(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const labels = getAllPaymentMethodLabels();
-      res.json(successResponse(labels, "Payment method labels retrieved successfully"));
+      res.json(successResponse(labels, "Label metode pembayaran berhasil diambil"));
     } catch (error) {
       next(error);
     }

@@ -25,7 +25,7 @@ export const getAll = asyncHandler(async (req: Request, res: Response): Promise<
   res.status(200).json({
     success: true,
     data: applications,
-    message: "Fund applications fetched",
+    message: "Data pengajuan dana berhasil diambil",
   });
 });
 
@@ -46,7 +46,7 @@ export const getMy = asyncHandler(async (req: Request, res: Response): Promise<v
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -62,7 +62,7 @@ export const getMy = asyncHandler(async (req: Request, res: Response): Promise<v
   res.status(200).json({
     success: true,
     data: applications,
-    message: "User fund applications fetched",
+    message: "Pengajuan dana Anda berhasil diambil",
   });
 });
 
@@ -79,7 +79,7 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
   res.status(200).json({
     success: true,
     data: application,
-    message: "Fund application fetched",
+    message: "Detail pengajuan dana berhasil diambil",
   });
 });
 
@@ -97,7 +97,7 @@ export const create = asyncHandler(async (req: Request, res: Response): Promise<
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -114,6 +114,6 @@ export const create = asyncHandler(async (req: Request, res: Response): Promise<
   res.status(201).json({
     success: true,
     data: application,
-    message: "Fund application created",
+    message: "Pengajuan dana berhasil dibuat",
   });
 });

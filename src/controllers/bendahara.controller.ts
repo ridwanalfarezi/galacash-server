@@ -14,7 +14,7 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response): Pr
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -33,7 +33,7 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response): Pr
   res.status(200).json({
     success: true,
     data: dashboard,
-    message: "Dashboard fetched",
+    message: "Dashboard berhasil diambil",
   });
 });
 
@@ -56,7 +56,7 @@ export const approveFundApplication = asyncHandler(
         success: false,
         error: {
           code: "UNAUTHORIZED",
-          message: "User not authenticated",
+          message: "User belum terautentikasi",
         },
       });
       return;
@@ -67,7 +67,7 @@ export const approveFundApplication = asyncHandler(
     res.status(200).json({
       success: true,
       data: application,
-      message: "Fund application approved",
+      message: "Pengajuan dana disetujui",
     });
   }
 );
@@ -88,7 +88,7 @@ export const rejectFundApplication = asyncHandler(
         success: false,
         error: {
           code: "UNAUTHORIZED",
-          message: "User not authenticated",
+          message: "User belum terautentikasi",
         },
       });
       return;
@@ -103,7 +103,7 @@ export const rejectFundApplication = asyncHandler(
     res.status(200).json({
       success: true,
       data: application,
-      message: "Fund application rejected",
+      message: "Pengajuan dana ditolak",
     });
   }
 );
@@ -142,7 +142,7 @@ export const getAllCashBills = asyncHandler(async (req: Request, res: Response):
   res.status(200).json({
     success: true,
     data: bills,
-    message: "All cash bills fetched",
+    message: "Semua tagihan kas berhasil diambil",
   });
 });
 
@@ -160,7 +160,7 @@ export const confirmPayment = asyncHandler(async (req: Request, res: Response): 
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -171,7 +171,7 @@ export const confirmPayment = asyncHandler(async (req: Request, res: Response): 
   res.status(200).json({
     success: true,
     data: bill,
-    message: "Payment confirmed",
+    message: "Pembayaran dikonfirmasi",
   });
 });
 
@@ -190,7 +190,7 @@ export const rejectPayment = asyncHandler(async (req: Request, res: Response): P
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -201,7 +201,7 @@ export const rejectPayment = asyncHandler(async (req: Request, res: Response): P
   res.status(200).json({
     success: true,
     data: bill,
-    message: "Payment rejected",
+    message: "Pembayaran ditolak",
   });
 });
 
@@ -218,7 +218,7 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -241,7 +241,7 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
   res.status(200).json({
     success: true,
     data: rekapKas,
-    message: "Rekap kas fetched",
+    message: "Rekap kas berhasil diambil",
   });
 });
 
@@ -258,7 +258,7 @@ export const exportRekapKas = asyncHandler(async (req: Request, res: Response): 
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -321,7 +321,7 @@ export const getStudents = asyncHandler(async (req: Request, res: Response): Pro
   res.status(200).json({
     success: true,
     data: students,
-    message: "Students fetched",
+    message: "Data siswa berhasil diambil",
   });
 });
 
@@ -347,7 +347,7 @@ export const getStudentDetail = asyncHandler(async (req: Request, res: Response)
   if (!student) {
     res.status(404).json({
       success: false,
-      error: { code: "NOT_FOUND", message: "Student not found" },
+      error: { code: "NOT_FOUND", message: "Siswa tidak ditemukan" },
     });
     return;
   }
@@ -359,7 +359,7 @@ export const getStudentDetail = asyncHandler(async (req: Request, res: Response)
   res.status(200).json({
     success: true,
     data: safeStudent,
-    message: "Student detail fetched",
+    message: "Detail siswa berhasil diambil",
   });
 });
 
@@ -378,7 +378,7 @@ export const createTransaction = asyncHandler(
         success: false,
         error: {
           code: "UNAUTHORIZED",
-          message: "User not authenticated",
+          message: "User belum terautentikasi",
         },
       });
       return;
@@ -398,7 +398,7 @@ export const createTransaction = asyncHandler(
     res.status(201).json({
       success: true,
       data: transaction,
-      message: "Transaction created successfully",
+      message: "Transaksi berhasil dibuat",
     });
   }
 );

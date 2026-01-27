@@ -15,7 +15,7 @@ export const getMyBills = asyncHandler(async (req: Request, res: Response): Prom
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -35,7 +35,7 @@ export const getMyBills = asyncHandler(async (req: Request, res: Response): Prom
   res.status(200).json({
     success: true,
     data: bills,
-    message: "User cash bills fetched",
+    message: "Tagihan kas Anda berhasil diambil",
   });
 });
 
@@ -54,7 +54,7 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
   res.status(200).json({
     success: true,
     data: bill,
-    message: "Cash bill fetched",
+    message: "Detail tagihan kas berhasil diambil",
   });
 });
 
@@ -75,7 +75,7 @@ export const pay = asyncHandler(async (req: Request, res: Response): Promise<voi
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -86,7 +86,7 @@ export const pay = asyncHandler(async (req: Request, res: Response): Promise<voi
       success: false,
       error: {
         code: "BAD_REQUEST",
-        message: "Payment proof is required",
+        message: "Bukti pembayaran wajib diupload",
       },
     });
     return;
@@ -103,7 +103,7 @@ export const pay = asyncHandler(async (req: Request, res: Response): Promise<voi
   res.status(200).json({
     success: true,
     data: result,
-    message: "Cash bill paid",
+    message: "Pembayaran tagihan berhasil",
   });
 });
 
@@ -122,7 +122,7 @@ export const cancelPayment = asyncHandler(async (req: Request, res: Response): P
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -133,6 +133,6 @@ export const cancelPayment = asyncHandler(async (req: Request, res: Response): P
   res.status(200).json({
     success: true,
     data: result,
-    message: "Payment cancelled",
+    message: "Pembayaran berhasil dibatalkan",
   });
 });

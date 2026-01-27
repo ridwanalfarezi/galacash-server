@@ -15,7 +15,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response): Prom
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -26,7 +26,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response): Prom
   res.status(200).json({
     success: true,
     data: user,
-    message: "Profile fetched",
+    message: "Profil berhasil diambil",
   });
 });
 
@@ -43,7 +43,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response): P
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -57,7 +57,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response): P
   res.status(200).json({
     success: true,
     data: updatedUser,
-    message: "Profile updated",
+    message: "Profil berhasil diperbarui",
   });
 });
 
@@ -74,7 +74,7 @@ export const changePassword = asyncHandler(async (req: Request, res: Response): 
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -91,7 +91,7 @@ export const changePassword = asyncHandler(async (req: Request, res: Response): 
 
   res.status(200).json({
     success: true,
-    message: "Password changed. Please log in again.",
+    message: "Password berhasil diubah. Silakan login kembali.",
   });
 });
 
@@ -108,7 +108,7 @@ export const uploadAvatar = asyncHandler(async (req: Request, res: Response): Pr
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -119,7 +119,7 @@ export const uploadAvatar = asyncHandler(async (req: Request, res: Response): Pr
       success: false,
       error: {
         code: "BAD_REQUEST",
-        message: "File not uploaded",
+        message: "File belum diupload",
       },
     });
     return;
@@ -130,7 +130,7 @@ export const uploadAvatar = asyncHandler(async (req: Request, res: Response): Pr
   res.status(200).json({
     success: true,
     data: updatedUser,
-    message: "Avatar uploaded",
+    message: "Avatar berhasil diupload",
   });
 });
 
@@ -146,7 +146,7 @@ export const getClassmates = asyncHandler(async (req: Request, res: Response): P
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -157,6 +157,6 @@ export const getClassmates = asyncHandler(async (req: Request, res: Response): P
   res.status(200).json({
     success: true,
     data: classmates,
-    message: "Classmates fetched",
+    message: "Data teman sekelas berhasil diambil",
   });
 });

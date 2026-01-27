@@ -17,7 +17,7 @@ export const getSummary = asyncHandler(async (req: Request, res: Response): Prom
   res.status(200).json({
     success: true,
     data: summary,
-    message: "Summary fetched",
+    message: "Ringkasan berhasil diambil",
   });
 });
 
@@ -33,7 +33,7 @@ export const getPendingBills = asyncHandler(async (req: Request, res: Response):
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -44,7 +44,7 @@ export const getPendingBills = asyncHandler(async (req: Request, res: Response):
   res.status(200).json({
     success: true,
     data: bills,
-    message: "Pending bills fetched",
+    message: "Tagihan tertunda berhasil diambil",
   });
 });
 
@@ -61,7 +61,7 @@ export const getPendingApplications = asyncHandler(
         success: false,
         error: {
           code: "UNAUTHORIZED",
-          message: "User not authenticated",
+          message: "User belum terautentikasi",
         },
       });
       return;
@@ -72,7 +72,7 @@ export const getPendingApplications = asyncHandler(
     res.status(200).json({
       success: true,
       data: applications,
-      message: "Pending applications fetched",
+      message: "Pengajuan tertunda berhasil diambil",
     });
   }
 );

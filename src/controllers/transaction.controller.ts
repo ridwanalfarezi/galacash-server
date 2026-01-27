@@ -43,7 +43,7 @@ export const getTransactions = asyncHandler(async (req: Request, res: Response):
   res.status(200).json({
     success: true,
     data: transactions,
-    message: "Transactions fetched",
+    message: "Data transaksi berhasil diambil",
   });
 });
 
@@ -60,7 +60,7 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
   res.status(200).json({
     success: true,
     data: transaction,
-    message: "Transaction fetched",
+    message: "Detail transaksi berhasil diambil",
   });
 });
 
@@ -83,7 +83,7 @@ export const getChartData = asyncHandler(async (req: Request, res: Response): Pr
   res.status(200).json({
     success: true,
     data: chartData,
-    message: "Chart data fetched",
+    message: "Data grafik berhasil diambil",
   });
 });
 
@@ -109,7 +109,7 @@ export const getBreakdown = asyncHandler(async (req: Request, res: Response): Pr
   res.status(200).json({
     success: true,
     data: breakdown,
-    message: "Transaction breakdown fetched",
+    message: "Rincian transaksi berhasil diambil",
   });
 });
 

@@ -16,7 +16,7 @@ export class PaymentAccountController {
         search: search as string | undefined,
       });
 
-      res.json(successResponse(accounts, "Payment accounts retrieved successfully"));
+      res.json(successResponse(accounts, "Data akun pembayaran berhasil diambil"));
     } catch (error) {
       next(error);
     }
@@ -28,7 +28,7 @@ export class PaymentAccountController {
   async getActive(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const accounts = await paymentAccountService.getActive();
-      res.json(successResponse(accounts, "Active payment accounts retrieved successfully"));
+      res.json(successResponse(accounts, "Akun pembayaran aktif berhasil diambil"));
     } catch (error) {
       next(error);
     }
@@ -42,7 +42,7 @@ export class PaymentAccountController {
       const { id } = req.params;
       const accountId = Array.isArray(id) ? id[0] : id;
       const account = await paymentAccountService.getById(accountId);
-      res.json(successResponse(account, "Payment account retrieved successfully"));
+      res.json(successResponse(account, "Detail akun pembayaran berhasil diambil"));
     } catch (error) {
       next(error);
     }
@@ -54,7 +54,7 @@ export class PaymentAccountController {
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const account = await paymentAccountService.create(req.body);
-      res.status(201).json(successResponse(account, "Payment account created successfully"));
+      res.status(201).json(successResponse(account, "Akun pembayaran berhasil dibuat"));
     } catch (error) {
       next(error);
     }
@@ -68,7 +68,7 @@ export class PaymentAccountController {
       const { id } = req.params;
       const accountId = Array.isArray(id) ? id[0] : id;
       const account = await paymentAccountService.update(accountId, req.body);
-      res.json(successResponse(account, "Payment account updated successfully"));
+      res.json(successResponse(account, "Akun pembayaran berhasil diperbarui"));
     } catch (error) {
       next(error);
     }
@@ -82,7 +82,7 @@ export class PaymentAccountController {
       const { id } = req.params;
       const accountId = Array.isArray(id) ? id[0] : id;
       await paymentAccountService.delete(accountId);
-      res.json(successResponse(null, "Payment account deleted successfully"));
+      res.json(successResponse(null, "Akun pembayaran berhasil dihapus"));
     } catch (error) {
       next(error);
     }
@@ -96,7 +96,7 @@ export class PaymentAccountController {
       const { id } = req.params;
       const accountId = Array.isArray(id) ? id[0] : id;
       const account = await paymentAccountService.activate(accountId);
-      res.json(successResponse(account, "Payment account activated successfully"));
+      res.json(successResponse(account, "Akun pembayaran berhasil diaktifkan"));
     } catch (error) {
       next(error);
     }
@@ -110,7 +110,7 @@ export class PaymentAccountController {
       const { id } = req.params;
       const accountId = Array.isArray(id) ? id[0] : id;
       const account = await paymentAccountService.deactivate(accountId);
-      res.json(successResponse(account, "Payment account deactivated successfully"));
+      res.json(successResponse(account, "Akun pembayaran berhasil dinonaktifkan"));
     } catch (error) {
       next(error);
     }

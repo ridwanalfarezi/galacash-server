@@ -67,7 +67,7 @@ export const globalErrorHandler = (
         success: false,
         error: {
           code: "CONFLICT_ERROR",
-          message: `${field} already exists`,
+          message: `${field} sudah terdaftar`,
           field,
         },
       });
@@ -80,7 +80,7 @@ export const globalErrorHandler = (
         success: false,
         error: {
           code: "NOT_FOUND",
-          message: "Record not found",
+          message: "Data tidak ditemukan",
         },
       });
       return;
@@ -93,7 +93,7 @@ export const globalErrorHandler = (
       success: false,
       error: {
         code: "TOKEN_INVALID",
-        message: "Invalid token",
+        message: "Token tidak valid",
       },
     });
     return;
@@ -104,7 +104,7 @@ export const globalErrorHandler = (
       success: false,
       error: {
         code: "TOKEN_EXPIRED",
-        message: "Token has expired",
+        message: "Sesi telah berakhir",
       },
     });
     return;
@@ -119,7 +119,7 @@ export const globalErrorHandler = (
         success: false,
         error: {
           code: "FILE_TOO_LARGE",
-          message: "File size exceeds the allowed limit",
+          message: "Ukuran file melebihi batas yang diizinkan",
         },
       });
       return;
@@ -129,7 +129,7 @@ export const globalErrorHandler = (
       success: false,
       error: {
         code: "FILE_UPLOAD_FAILED",
-        message: error.message,
+        message: "Gagal mengupload file: " + error.message,
       },
     });
     return;
@@ -140,7 +140,7 @@ export const globalErrorHandler = (
     success: false,
     error: {
       code: "INTERNAL_SERVER_ERROR",
-      message: "An unexpected error occurred",
+      message: "Terjadi kesalahan internal server",
       ...(process.env.NODE_ENV === "development" && {
         details: error.message,
         stack: error.stack,

@@ -32,7 +32,7 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
     data: {
       user: result.user,
     },
-    message: "Login successful",
+    message: "Login berhasil",
   });
 });
 
@@ -49,7 +49,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response): Promise
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "No refresh token provided",
+        message: "Refresh token tidak ditemukan",
       },
     });
     return;
@@ -67,7 +67,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response): Promise
 
   res.status(200).json({
     success: true,
-    message: "Token refreshed",
+    message: "Token berhasil diperbarui",
   });
 });
 
@@ -83,7 +83,7 @@ export const logout = asyncHandler(async (req: Request, res: Response): Promise<
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "User not authenticated",
+        message: "User belum terautentikasi",
       },
     });
     return;
@@ -99,6 +99,6 @@ export const logout = asyncHandler(async (req: Request, res: Response): Promise<
 
   res.status(200).json({
     success: true,
-    message: "Logout successful",
+    message: "Logout berhasil",
   });
 });
