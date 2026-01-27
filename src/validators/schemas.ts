@@ -53,18 +53,7 @@ export const createFundApplicationSchema = Joi.object({
   }),
   description: Joi.string().allow("").optional(),
   category: Joi.string()
-    .valid(
-      "education",
-      "health",
-      "emergency",
-      "equipment",
-      "subscription",
-      "consumption",
-      "competition",
-      "printing",
-      "donation",
-      "other"
-    )
+    .valid("subscription", "consumption", "competition", "printing", "donation", "other")
     .required()
     .messages({
       "any.only": "Kategori tidak valid",
@@ -136,18 +125,7 @@ export const transactionFilterSchema = paginationSchema.keys({
 export const fundApplicationFilterSchema = paginationSchema.keys({
   status: Joi.string().valid("pending", "approved", "rejected").optional(),
   category: Joi.string()
-    .valid(
-      "education",
-      "health",
-      "emergency",
-      "equipment",
-      "subscription",
-      "consumption",
-      "competition",
-      "printing",
-      "donation",
-      "other"
-    )
+    .valid("subscription", "consumption", "competition", "printing", "donation", "other")
     .optional(),
   applicantId: Joi.string().uuid().optional(),
   minAmount: Joi.number().positive().optional(),
