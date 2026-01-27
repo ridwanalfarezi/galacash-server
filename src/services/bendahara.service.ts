@@ -370,6 +370,7 @@ export class BendaharaService {
         // Get the bill within transaction
         const bill = await tx.cashBill.findUnique({
           where: { id: billId },
+          include: { user: true },
         });
 
         if (!bill) {
@@ -403,6 +404,32 @@ export class BendaharaService {
           );
         }
 
+        if (!bill.user) {
+          logger.warn(
+            `User not found for bill ${billId} during confirmation. Using default description.`
+          );
+        }
+
+        const monthNames = [
+          "Januari",
+          "Februari",
+          "Maret",
+          "April",
+          "Mei",
+          "Juni",
+          "Juli",
+          "Agustus",
+          "September",
+          "Oktober",
+          "November",
+          "Desember",
+        ];
+        const monthName = monthNames[bill.month - 1] || "Unknown";
+
+        const description = bill.user
+          ? `Kas-${monthName} ${bill.year}: ${bill.user.name}`
+          : `Bill payment confirmed: ${bill.billId}`;
+
         // Auto-create income transaction (within same transaction)
         await tx.transaction.create({
           data: {
@@ -411,9 +438,10 @@ export class BendaharaService {
             },
             type: "income",
             category: "kas_kelas" as TransactionCategory,
-            description: `Bill payment confirmed: ${bill.billId}`,
+            description: description,
             amount: bill.totalAmount,
             date: new Date(),
+            attachmentUrl: bill.paymentProofUrl,
           },
         });
 
