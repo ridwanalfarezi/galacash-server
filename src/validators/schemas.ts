@@ -78,7 +78,7 @@ export const reviewFundApplicationSchema = Joi.object({
 // ============ CASH BILL SCHEMAS ============
 
 export const payBillSchema = Joi.object({
-  paymentMethod: Joi.string().valid("bank", "ewallet", "cash").required().messages({
+  paymentMethod: Joi.string().valid("bank", "cash").required().messages({
     "any.only": "Metode pembayaran tidak valid",
     "any.required": "Metode pembayaran wajib diisi",
   }),
