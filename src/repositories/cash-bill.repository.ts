@@ -47,6 +47,49 @@ export class CashBillRepository {
   }
 
   /**
+   * Helper to parse search string into query conditions
+   */
+  private parseSearchQuery(search: string): Prisma.CashBillWhereInput[] {
+    const conditions: Prisma.CashBillWhereInput[] = [];
+
+    // 1. Always search by billId
+    conditions.push({ billId: { contains: search, mode: "insensitive" } });
+
+    // 2. Search by Month Name (Indonesian)
+    const lowerSearch = search.toLowerCase();
+    const monthNames = [
+      "januari",
+      "februari",
+      "maret",
+      "april",
+      "mei",
+      "juni",
+      "juli",
+      "agustus",
+      "september",
+      "oktober",
+      "november",
+      "desember",
+    ];
+
+    const matchedMonthIndex = monthNames.findIndex((m) => m.includes(lowerSearch));
+    if (matchedMonthIndex !== -1) {
+      conditions.push({ month: matchedMonthIndex + 1 });
+    }
+
+    // 3. Search by Amount (exact match for now, or could be range/contains if string)
+    // If user types "15000", we try to match totalAmount
+    const amount = Number(search);
+    if (!isNaN(amount)) {
+      conditions.push({ totalAmount: amount });
+      // Also match if using shorthand like "15" -> could strictly be month or part of amount?
+      // Let's stick to strict number match for amount
+    }
+
+    return conditions;
+  }
+
+  /**
    * Find all cash bills with filters and pagination
    */
   async findAll(filters: CashBillFilters = {}): Promise<PaginatedResponse<CashBill>> {
@@ -68,10 +111,7 @@ export class CashBillRepository {
       const where: Prisma.CashBillWhereInput = {};
 
       if (search) {
-        where.OR = [
-          { billId: { contains: search, mode: "insensitive" } },
-          // You can add more search fields here if needed
-        ];
+        where.OR = this.parseSearchQuery(search);
       }
 
       if (classId) {
@@ -188,9 +228,9 @@ export class CashBillRepository {
         where.year = year;
       }
 
-      // Search by billId (case-insensitive contains)
+      // Enhanced Search
       if (search) {
-        where.billId = { contains: search, mode: "insensitive" };
+        where.OR = this.parseSearchQuery(search);
       }
 
       const skip = (page - 1) * limit;
