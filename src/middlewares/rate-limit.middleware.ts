@@ -35,7 +35,7 @@ const createLimiter = (options: {
     }),
     // Fallback to memory store if Redis is not connected
     skip: () => !redisClient || redisClient.status !== "ready",
-    handler: (req: Request, res: Response) => {
+    handler: (_req: Request, res: Response) => {
       res.status(429).json({
         success: false,
         error: {

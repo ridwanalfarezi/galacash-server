@@ -69,6 +69,9 @@ importers:
       pg:
         specifier: ^8.17.1
         version: 8.17.1
+      rate-limit-redis:
+        specifier: ^4.3.1
+        version: 4.3.1(express-rate-limit@8.2.1(express@5.2.1))
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@5.2.1)
@@ -109,6 +112,9 @@ importers:
       '@types/pg':
         specifier: ^8.16.0
         version: 8.16.0
+      '@types/rate-limit-redis':
+        specifier: ^3.0.0
+        version: 3.0.0(express-rate-limit@8.2.1(express@5.2.1))
       '@types/swagger-ui-express':
         specifier: ^4.1.8
         version: 4.1.8
@@ -609,6 +615,10 @@ packages:
 
   '@types/range-parser@1.2.7':
     resolution: {integrity: sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==}
+
+  '@types/rate-limit-redis@3.0.0':
+    resolution: {integrity: sha512-BW3tros2nmZOJLkoQPBViUhzOWBOwFnIWUevG5+NpFVmngb8RulB4p/nkEhYyOrrKR5UJ74GCT7nyDG6zr+isQ==}
+    deprecated: This is a stub types definition. rate-limit-redis provides its own type definitions, so you do not need this installed.
 
   '@types/react@19.2.8':
     resolution: {integrity: sha512-3MbSL37jEchWZz2p2mjntRZtPt837ij10ApxKfgmXCTuHWagYg7iA5bqPw6C8BMPfwidlvfPI/fxOc42HLhcyg==}
@@ -1946,6 +1956,12 @@ packages:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
 
+  rate-limit-redis@4.3.1:
+    resolution: {integrity: sha512-+a1zU8+D7L8siDK9jb14refQXz60vq427VuiplgnaLk9B2LnvGe/APLTfhwb4uNIL7eWVknh8GnRp/unCj+lMA==}
+    engines: {node: '>= 16'}
+    peerDependencies:
+      express-rate-limit: '>= 6'
+
   raw-body@3.0.2:
     resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
     engines: {node: '>= 0.10'}
@@ -2172,6 +2188,7 @@ packages:
   tar@7.5.2:
     resolution: {integrity: sha512-7NyxrTE4Anh8km8iEy7o0QYPs+0JKBTj5ZaqHg6B39erLg0qYXN3BijtShwbsNSvQ+LN75+KV+C4QR/f6Gwnpg==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
 
   teeny-request@9.0.0:
     resolution: {integrity: sha512-resvxdc6Mgb7YEThw6G6bExlXKkv6+YbuzGg9xuXxSgxJF7Ozs+o8Y9+2R3sArdWdW8nOokoQb1yrpFB0pQK2g==}
@@ -2770,6 +2787,12 @@ snapshots:
   '@types/qs@6.14.0': {}
 
   '@types/range-parser@1.2.7': {}
+
+  '@types/rate-limit-redis@3.0.0(express-rate-limit@8.2.1(express@5.2.1))':
+    dependencies:
+      rate-limit-redis: 4.3.1(express-rate-limit@8.2.1(express@5.2.1))
+    transitivePeerDependencies:
+      - express-rate-limit
 
   '@types/react@19.2.8':
     dependencies:
@@ -4211,6 +4234,10 @@ snapshots:
   queue-microtask@1.2.3: {}
 
   range-parser@1.2.1: {}
+
+  rate-limit-redis@4.3.1(express-rate-limit@8.2.1(express@5.2.1)):
+    dependencies:
+      express-rate-limit: 8.2.1(express@5.2.1)
 
   raw-body@3.0.2:
     dependencies:
