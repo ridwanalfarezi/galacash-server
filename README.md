@@ -465,7 +465,26 @@ To use different ports, edit `docker-compose.yml` and update `.env`.
 
 ## 👥 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](../CONTRIBUTING.md) for guidelines.
+We follow **Conventional Commits** and ensure code quality via Husky hooks.
+
+### Commit Workflow
+
+Instead of `git commit`, use the following command to start an interactive commit prompt:
+
+```bash
+pnpm run commit
+```
+
+This ensures your commit messages follow the standard: `<type>(<scope>): <subject>`.
+
+### Pre-commit Checks
+
+Before committing, the following checks run automatically:
+
+1.  **Lint-staged**: Runs `eslint` and `prettier` on staged files.
+2.  **Type-check**: Runs `tsc --noEmit` to ensure type safety.
+
+Please see our [Contributing Guide](../CONTRIBUTING.md) for more details.
 
 ---
 
