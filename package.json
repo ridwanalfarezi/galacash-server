@@ -17,6 +17,9 @@
     "prisma:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
     "test:smoke": "python scripts/endpoint_smoke.py",
+    "type-check": "tsc --noEmit",
+    "commit": "git-cz",
+    "lint-staged": "lint-staged",
     "prepare": "husky"
   },
   "keywords": [
@@ -28,6 +31,11 @@
   ],
   "author": "Ridwan Alfarezi",
   "license": "ISC",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
   "packageManager": "pnpm@10.28.0",
   "pnpm": {
     "overrides": {
@@ -63,6 +71,8 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.3.1",
+    "@commitlint/config-conventional": "^20.3.1",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
@@ -77,10 +87,13 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.8.0",
     "prisma": "^7.2.0",
     "tsc-alias": "^1.8.10",
