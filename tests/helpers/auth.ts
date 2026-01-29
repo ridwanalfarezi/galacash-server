@@ -36,8 +36,8 @@ export const createTestUser = async (nim = "1313624000", role = "user") => {
   return { user, cls, password: "password123" };
 };
 
-export const loginUser = async (nim = "1313624000") => {
-  const { password } = await createTestUser(nim);
+export const loginUser = async (nim = "1313624000", role = "user") => {
+  const { password } = await createTestUser(nim, role);
 
   const response = await request(app)
     .post("/api/auth/login")
