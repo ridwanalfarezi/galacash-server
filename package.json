@@ -16,7 +16,11 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
-    "test:smoke": "python scripts/endpoint_smoke.py",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:up": "docker compose -f docker-compose.test.yml up -d",
+    "test:down": "docker compose -f docker-compose.test.yml down",
+    "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
     "type-check": "tsc --noEmit",
     "commit": "git-cz",
     "lint-staged": "lint-staged",
@@ -84,11 +88,13 @@
     "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.16.0",
     "@types/rate-limit-redis": "^3.0.0",
+    "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
@@ -96,8 +102,10 @@
     "lint-staged": "^16.2.7",
     "prettier": "^3.8.0",
     "prisma": "^7.2.0",
+    "supertest": "^7.2.2",
     "tsc-alias": "^1.8.10",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }
