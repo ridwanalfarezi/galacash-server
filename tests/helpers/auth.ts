@@ -1,6 +1,5 @@
 import app from "@/app";
 import { prisma } from "@/utils/prisma-client";
-import bcrypt from "bcrypt";
 import request from "supertest";
 
 export const createTestUser = async (nim = "1313624000", role = "user") => {
@@ -20,7 +19,10 @@ export const createTestUser = async (nim = "1313624000", role = "user") => {
     return { user: existingUser, cls, password: "password123" };
   }
 
-  const hashedPassword = await bcrypt.hash("password123", 10);
+  const hashedPassword = await Bun.password.hash("password123", {
+    algorithm: "bcrypt",
+    cost: 10,
+  });
 
   // Enum role casting if needed, but string works with Prisma types usually if matches enum
   const user = await prisma.user.create({

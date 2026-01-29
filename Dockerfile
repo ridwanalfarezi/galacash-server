@@ -1,20 +1,13 @@
 # ===================================
-# Stage 1: Build
+# Stage 1: Build & Generate
 # ===================================
-FROM node:20-alpine AS builder
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm@latest
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-# Copy package files
-COPY package.json pnpm-lock.yaml* ./
-
-# Install dependencies
-RUN pnpm install --no-frozen-lockfile --ignore-scripts
-
-# Copy source code
 COPY . .
 
 # Set dummy database URL for build
@@ -22,29 +15,25 @@ ARG DATABASE_URL="postgresql://placeholder:5432/db"
 ENV DATABASE_URL=$DATABASE_URL
 
 # Generate Prisma Client
-RUN pnpm prisma:generate
-
-# Build TypeScript
-RUN pnpm build
+RUN bun run prisma:generate
 
 # ===================================
 # Stage 2: Production
 # ===================================
-FROM node:20-alpine AS runner
+FROM oven/bun:1 AS runner
 
 WORKDIR /app
 
-# Copy package files
-COPY --from=builder /app/package.json ./package.json
+# Install production dependencies
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
 
-# Copy all dependencies from builder (includes Prisma client)
-COPY --from=builder /app/node_modules ./node_modules
+# Copy generated prisma client from builder
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Copy Prisma schema
+# Copy source code and config
+COPY --from=builder /app/src ./src
 COPY --from=builder /app/prisma ./prisma
-
-# Copy built application from builder
-COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/openapi.yaml ./openapi.yaml
 
 # Create logs directory
@@ -56,9 +45,9 @@ ENV NODE_ENV=production
 # Expose port
 EXPOSE 3000
 
-# Health check (enabled with extended timeout for Cloud Run)
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD bun -e "fetch('http://localhost:3000/health').then(r => process.exit(r.status === 200 ? 0 : 1))"
 
 # Start application
-CMD ["node", "dist/index.js"]
+CMD ["bun", "src/index.ts"]

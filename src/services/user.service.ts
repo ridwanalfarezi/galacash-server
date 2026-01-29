@@ -1,7 +1,6 @@
 import { User } from "@/prisma/generated/client";
 import { userRepository } from "@/repositories/user.repository";
 import { AuthenticationError, NotFoundError } from "@/utils/errors";
-import bcrypt from "bcrypt";
 import { CacheService } from "./cache.service";
 
 export interface UpdateProfileData {
@@ -102,13 +101,16 @@ export class UserService {
     }
 
     // Verify old password
-    const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    const isOldPasswordValid = await Bun.password.verify(oldPassword, user.password);
     if (!isOldPasswordValid) {
       throw new AuthenticationError("Old password is incorrect");
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await Bun.password.hash(newPassword, {
+      algorithm: "bcrypt",
+      cost: 10,
+    });
 
     // Update password
     await userRepository.update(userId, {

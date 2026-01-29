@@ -9,7 +9,6 @@ import {
   storeRefreshToken,
   verifyRefreshToken,
 } from "@/utils/generate-tokens";
-import bcrypt from "bcrypt";
 import { CacheService } from "./cache.service";
 
 export interface LoginResponse {
@@ -46,7 +45,7 @@ export class AuthService {
     }
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await Bun.password.verify(password, user.password);
     if (!isPasswordValid) {
       throw new AuthenticationError("Invalid NIM or password");
     }
