@@ -39,6 +39,8 @@ jobs:
 
       - name: Type Check & Build
         run: bun run build
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/postgres
 
       - name: Run Tests
         run: bun test
