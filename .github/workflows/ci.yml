@@ -22,6 +22,20 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      # Postgres service for integration tests
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: galacash
+          POSTGRES_PASSWORD: galacash123
+          POSTGRES_DB: galacash_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -40,14 +54,15 @@ jobs:
       - name: Type Check & Build
         run: bun run build
         env:
-          DATABASE_URL: postgresql://user:password@localhost:5432/postgres
+          DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
+
+      - name: Prisma Migrate
+        run: bun run prisma:deploy
+        env:
+          DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
 
       - name: Run Tests
         run: bun test
         env:
           NODE_ENV: test
-          DATABASE_URL: ${{ secrets.DATABASE_URL }} # Required if running integration tests against a real DB
-          # For CI, we might want to skip DB integration tests if no DB service is attached,
-          # or use docker-compose to spin up Postgres.
-          # For now, let's assume unit tests or mocked DB tests will run.
-          # If real DB needed, add postgres service above.
+          DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
