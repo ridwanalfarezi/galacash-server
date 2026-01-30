@@ -2,9 +2,9 @@ name: Galacash Server CI
 
 on:
   push:
-    branches: ["main", "develop"]
+    branches: ["main", "develop", "migrate-to-bun-9072459063361523470"]
   pull_request:
-    branches: ["main", "develop"]
+    branches: ["main", "develop", "migrate-to-bun-9072459063361523470"]
 
 jobs:
   build-and-test:
