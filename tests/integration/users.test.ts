@@ -1,7 +1,7 @@
 import app from "@/app";
-import { beforeEach, describe, expect, it } from "bun:test";
 import request from "supertest";
-import { createTestUser, loginUser } from "../helpers/auth";
+import { describe, expect, it, beforeEach } from "vitest";
+import { loginUser, createTestUser } from "../helpers/auth";
 import { resetDb } from "../helpers/reset-db";
 
 describe("User Management Integration", () => {
@@ -13,10 +13,13 @@ describe("User Management Integration", () => {
     const { user } = await createTestUser();
     const cookie = await loginUser(user.nim);
 
-    const response = await request(app).put("/api/users/profile").set("Cookie", [cookie]).send({
-      name: "Updated Name",
-      email: "updated@example.com",
-    });
+    const response = await request(app)
+      .put("/api/users/profile")
+      .set("Cookie", [cookie])
+      .send({
+        name: "Updated Name",
+        email: "updated@example.com",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
@@ -28,7 +31,9 @@ describe("User Management Integration", () => {
     const { user } = await createTestUser();
     const cookie = await loginUser(user.nim, "user");
 
-    const response = await request(app).get("/api/bendahara/dashboard").set("Cookie", [cookie]);
+    const response = await request(app)
+      .get("/api/bendahara/dashboard")
+      .set("Cookie", [cookie]);
 
     // Expect 403 Forbidden or 401 Unauthorized
     expect([401, 403]).toContain(response.status);
@@ -38,7 +43,9 @@ describe("User Management Integration", () => {
   it("should allow bendahara to access bendahara routes", async () => {
     const cookie = await loginUser("1313624999", "bendahara");
 
-    const response = await request(app).get("/api/bendahara/dashboard").set("Cookie", [cookie]);
+    const response = await request(app)
+      .get("/api/bendahara/dashboard")
+      .set("Cookie", [cookie]);
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

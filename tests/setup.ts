@@ -1,46 +1,31 @@
-import { mock } from "bun:test";
+import dotenv from "dotenv";
+import path from "path";
+import { vi } from "vitest";
+import bcrypt from "bcrypt";
 
-// Load test environment variables is handled by Bun automatic loading or run config
-// dotenv.config({ path: path.resolve(__dirname, "../.env.test") });
+// Load test environment variables
+dotenv.config({ path: path.resolve(__dirname, "../.env.test") });
 
 // Mock console.log to keep test output clean, if desired.
-// console.log = mock(() => {});
+// console.log = vi.fn();
 
 // Mock express-rate-limit to bypass Redis connection in tests
-mock.module("express-rate-limit", () => ({
+vi.mock("express-rate-limit", () => ({
   rateLimit: () => (req: any, res: any, next: any) => next(),
 }));
 
-// Mock Redis config to prevent undefined redisClient errors
-mock.module("@/config/redis.config", () => ({
-  redisClient: {
-    call: (command: string, ...args: any[]) => {
-      if (command === "SCRIPT" && args[0] === "LOAD") {
-        return Promise.resolve("mock-script-sha");
-      }
-      return Promise.resolve();
-    },
-    status: "ready",
-    get: () => Promise.resolve(null),
-    set: () => Promise.resolve("OK"),
-    del: () => Promise.resolve(1),
-    scanStream: () => ({
-      on: (event: string, callback: any) => {
-        if (event === "end") callback();
-        return this;
+// Polyfill Bun.password for tests running in Node environment
+if (!globalThis.Bun) {
+  // @ts-expect-error - Polyfill for testing
+  globalThis.Bun = {
+    password: {
+      verify: async (password: string, hash: string) => {
+        return bcrypt.compare(password, hash);
       },
-      pause: () => {},
-      resume: () => {},
-    }),
-    pipeline: () => ({
-      del: () => {},
-      exec: () => Promise.resolve(),
-    }),
-  },
-  isRedisAvailable: true,
-  connectRedis: async () => {},
-  disconnectRedis: async () => {},
-  safeRedisGet: async () => null,
-  safeRedisSet: async () => {},
-  safeRedisDel: async () => {},
-}));
+      hash: async (password: string, options: any) => {
+        const rounds = options?.cost || 10;
+        return bcrypt.hash(password, rounds);
+      },
+    },
+  };
+}

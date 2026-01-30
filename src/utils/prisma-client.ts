@@ -1,11 +1,14 @@
 import { PrismaClient } from "@/prisma/generated/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
+import "dotenv/config";
 import { logger } from "./logger";
 
 /**
  * Prisma client singleton instance using Prisma Accelerate / Data Proxy
  * LAZY INITIALIZATION: Only creates client when first accessed, not at module load
  */
+let prismaInstance: ReturnType<typeof createPrismaClient> | null = null;
+
 const createPrismaClient = () => {
   const datasourceUrl = process.env.PRISMA_DATABASE_URL || process.env.DATABASE_URL;
 
@@ -36,19 +39,11 @@ const createPrismaClient = () => {
   }
 };
 
-export type ExtendedPrismaClient = ReturnType<typeof createPrismaClient>;
-
-/**
- * Prisma client singleton instance using Prisma Accelerate / Data Proxy
- * LAZY INITIALIZATION: Only creates client when first accessed, not at module load
- */
-let prismaInstance: ExtendedPrismaClient | null = null;
-
 /**
  * Get Prisma Client instance (lazy initialization)
  * Only creates the client when first accessed, preventing blocking on module import
  */
-export const getPrisma = (): ExtendedPrismaClient => {
+export const getPrisma = () => {
   if (!prismaInstance) {
     prismaInstance = createPrismaClient();
   }
@@ -56,7 +51,7 @@ export const getPrisma = (): ExtendedPrismaClient => {
 };
 
 // Export a proxy that lazy-loads Prisma for backwards compatibility
-export const prisma = new Proxy({} as ExtendedPrismaClient, {
+export const prisma = new Proxy({} as ReturnType<typeof createPrismaClient>, {
   get: (_target, prop) => {
     const client = getPrisma();
     return client[prop as keyof typeof client];

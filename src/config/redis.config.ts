@@ -1,29 +1,51 @@
-import Redis from "ioredis";
+import Redis, { RedisOptions } from "ioredis";
 import { logger } from "../utils/logger";
 
-// let redisClient: Redis | null = null; // Replaced by const export
+let redisClient: Redis | null = null;
 let isRedisAvailable = false;
 
 /**
  * Initialize Redis client
  */
-export const redisClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
-  maxRetriesPerRequest: 3,
-  retryStrategy: (times) => {
-    if (times > 3) {
-      logger.warn("Redis connection failed after 3 retries. Disabling cache.");
-      isRedisAvailable = false;
-      return null;
-    }
-    return Math.min(times * 50, 2000);
-  },
-});
-
-/**
- * Initialize Redis client events
- */
 export async function connectRedis(): Promise<void> {
   try {
+    const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+    // Log connection target without credentials
+    try {
+      const urlObj = new URL(REDIS_URL);
+      const safeHost = `${urlObj.hostname}:${urlObj.port || "6379"}`;
+      logger.info(`🔌 Redis connecting via ${urlObj.protocol} to ${safeHost}`);
+    } catch {}
+
+    // Improve compatibility with managed/TLS providers (e.g., Upstash)
+    const urlObj = (() => {
+      try {
+        return new URL(REDIS_URL);
+      } catch {
+        return null;
+      }
+    })();
+    const isTLS = urlObj?.protocol === "rediss:";
+    const isUpstash = urlObj?.hostname?.includes("upstash.io") ?? false;
+
+    const options: RedisOptions = {
+      maxRetriesPerRequest: 3,
+      retryStrategy: (times) => {
+        if (times > 3) {
+          logger.warn("Redis connection failed after 3 retries. Disabling cache.");
+          isRedisAvailable = false;
+          return null; // stop retrying
+        }
+        return Math.min(times * 50, 2000);
+      },
+      // Some managed providers don't support ready check commands
+      enableReadyCheck: isUpstash ? false : true,
+      // Ensure TLS is enabled when using rediss:// scheme
+      tls: isTLS ? {} : undefined,
+    };
+
+    redisClient = new Redis(REDIS_URL, options);
+
     redisClient.on("connect", () => {
       logger.info("✅ Redis connected successfully");
       isRedisAvailable = true;
@@ -40,7 +62,7 @@ export async function connectRedis(): Promise<void> {
     });
 
     // Test connection
-    // await redisClient.ping(); // ioredis connects automatically
+    await redisClient.ping();
   } catch (error) {
     logger.warn("Redis is not available. Running without cache:", error);
     isRedisAvailable = false;
@@ -142,4 +164,4 @@ export async function disconnectRedis(): Promise<void> {
   }
 }
 
-export { isRedisAvailable };
+export { isRedisAvailable, redisClient };
