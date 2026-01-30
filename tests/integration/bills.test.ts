@@ -1,8 +1,8 @@
 import app from "@/app";
 import { prisma } from "@/utils/prisma-client";
-import { beforeEach, describe, expect, it } from "bun:test";
 import request from "supertest";
-import { createTestUser, loginUser } from "../helpers/auth";
+import { describe, expect, it, beforeEach } from "vitest";
+import { loginUser, createTestUser } from "../helpers/auth";
 import { resetDb } from "../helpers/reset-db";
 
 describe("Cash Bills Integration", () => {
@@ -30,7 +30,9 @@ describe("Cash Bills Integration", () => {
       },
     });
 
-    const response = await request(app).get("/api/cash-bills/my").set("Cookie", [cookie]);
+    const response = await request(app)
+      .get("/api/cash-bills/my")
+      .set("Cookie", [cookie]);
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
@@ -58,7 +60,9 @@ describe("Cash Bills Integration", () => {
       },
     });
 
-    const response = await request(app).get(`/api/cash-bills/${bill.id}`).set("Cookie", [cookie]);
+    const response = await request(app)
+      .get(`/api/cash-bills/${bill.id}`)
+      .set("Cookie", [cookie]);
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

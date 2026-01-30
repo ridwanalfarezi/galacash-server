@@ -1,6 +1,6 @@
 import app from "@/app";
-import { beforeEach, describe, expect, it } from "bun:test";
 import request from "supertest";
+import { describe, expect, it, beforeEach } from "vitest";
 import { loginUser } from "../helpers/auth";
 import { resetDb } from "../helpers/reset-db";
 
@@ -51,7 +51,9 @@ describe("Transactions Integration", () => {
       .field("category", transactionData.category)
       .attach("attachment", Buffer.from("dummy"), "test.png"); // Use .png extension
 
-    const response = await request(app).get("/api/transactions").set("Cookie", [cookie]);
+    const response = await request(app)
+      .get("/api/transactions")
+      .set("Cookie", [cookie]);
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

@@ -1,7 +1,7 @@
 import app from "@/app";
-import { beforeEach, describe, expect, it } from "bun:test";
 import request from "supertest";
-import { createTestUser, loginUser } from "../helpers/auth";
+import { describe, expect, it, beforeEach } from "vitest";
+import { loginUser, createTestUser } from "../helpers/auth";
 import { resetDb } from "../helpers/reset-db";
 
 describe("Fund Applications Integration", () => {
@@ -43,7 +43,9 @@ describe("Fund Applications Integration", () => {
       .set("Cookie", [cookie])
       .send(validApplication);
 
-    const response = await request(app).get("/api/fund-applications/my").set("Cookie", [cookie]);
+    const response = await request(app)
+      .get("/api/fund-applications/my")
+      .set("Cookie", [cookie]);
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

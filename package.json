@@ -1,13 +1,14 @@
 {
   "name": "galacash-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "GalaCash - Financial management API for class treasurers",
   "main": "src/index.ts",
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "bun run prisma:generate && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "build:binary": "bun build ./src/index.ts --compile --outfile galacash-server",
-    "start": "bun dist/index.js",
+    "start": "bun src/index.ts",
     "start:prod": "bun run prisma:deploy && bun run start",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -21,7 +22,7 @@
     "test:watch": "bun test --watch",
     "test:up": "docker compose -f docker-compose.test.yml up -d",
     "test:down": "docker compose -f docker-compose.test.yml down",
-    "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
+    "test:migrate": "bun run prisma:deploy",
     "type-check": "tsc --noEmit",
     "commit": "git-cz",
     "lint-staged": "lint-staged",
@@ -43,7 +44,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.18.0",
-    "@prisma/client": "^7.2.0",
+    "@prisma/client": "^7.3.0",
     "@prisma/extension-accelerate": "^3.0.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -88,9 +89,10 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.8.0",
-    "prisma": "^7.2.0",
+    "prisma": "^7.3.0",
     "supertest": "^7.2.2",
     "tsc-alias": "^1.8.10",
     "typescript": "^5.9.3"
-  }
+  },
+  "packageManager": "pnpm@10.28.0+sha512.05df71d1421f21399e053fde567cea34d446fa02c76571441bfc1c7956e98e363088982d940465fd34480d4d90a0668bc12362f8aa88000a64e83d0b0e47be48"
 }

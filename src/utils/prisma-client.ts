@@ -2,10 +2,6 @@ import { PrismaClient } from "@/prisma/generated/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { logger } from "./logger";
 
-/**
- * Prisma client singleton instance using Prisma Accelerate / Data Proxy
- * LAZY INITIALIZATION: Only creates client when first accessed, not at module load
- */
 const createPrismaClient = () => {
   const datasourceUrl = process.env.PRISMA_DATABASE_URL || process.env.DATABASE_URL;
 
