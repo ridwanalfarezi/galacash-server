@@ -2,7 +2,6 @@ import { Prisma } from "@/prisma/generated/client";
 import { logger } from "@/utils/logger";
 import { prisma } from "@/utils/prisma-client";
 import cron from "node-cron";
-import { v4 as uuidv4 } from "uuid";
 
 const BILL_GENERATION_SCHEDULE = process.env.BILL_GENERATION_SCHEDULE || "0 0 1 * *"; // Default: 1st of every month at midnight
 
@@ -56,7 +55,7 @@ async function generateMonthlyBills(): Promise<void> {
       // Generate unique bill ID
       const billId = `BILL-${year}-${(now.getMonth() + 1)
         .toString()
-        .padStart(2, "0")}-${uuidv4().slice(0, 8).toUpperCase()}`;
+        .padStart(2, "0")}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 
       const totalAmount = KAS_KELAS_AMOUNT + BIAYA_ADMIN;
 

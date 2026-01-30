@@ -4,7 +4,6 @@ import { globalErrorHandler } from "@/utils/errors";
 import { logger } from "@/utils/logger";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import "dotenv/config";
 import express, { Application, Request, Response } from "express";
 import fs from "fs";
 import helmet from "helmet";
