@@ -1,0 +1,31 @@
+steps:
+  # 1. Build the binary using Bun
+  - name: "oven/bun:1"
+    entrypoint: "bun"
+    args: ["run", "build:binary"]
+    id: "build-binary"
+
+  # 2. Build the Docker image (using the binary from step 1)
+  # note: we need to use a Dockerfile that expects the binary to exist,
+  # or use multi-stage build in Dockerfile directly.
+  # Since Dockerfile.binary uses multi-stage build, step 1 above is actually redundant
+  # IF we just run docker build on Dockerfile.binary.
+  # Let's just run docker build on Dockerfile.binary which handles the bun build inside.
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      ["build", "-f", "Dockerfile.binary", "-t", "gcr.io/$PROJECT_ID/galacash-server:latest", "."]
+    id: "docker-build"
+
+  # 3. Push the image to GCR (or Artifact Registry)
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/galacash-server:latest"]
+    id: "docker-push"
+
+  # Optional: Deploy to Cloud Run
+  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  #   entrypoint: gcloud
+  #   args: ['run', 'deploy', 'galacash-server', '--image', 'gcr.io/$PROJECT_ID/galacash-server:latest', '--region', 'asia-southeast1', '--platform', 'managed']
+
+options:
+  logging: CLOUD_LOGGING_ONLY

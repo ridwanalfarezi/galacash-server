@@ -14,7 +14,7 @@ export default [
     ],
   },
   {
-    files: ["src/**/*.ts"],
+    files: ["src/**/*.ts", "tests/**/*.ts"],
     languageOptions: {
       ecmaVersion: 2021,
       sourceType: "module",
@@ -23,7 +23,7 @@ export default [
         ecmaFeatures: {
           jsx: false,
         },
-        project: "./tsconfig.json",
+        project: "./tsconfig.eslint.json",
       },
     },
     plugins: {

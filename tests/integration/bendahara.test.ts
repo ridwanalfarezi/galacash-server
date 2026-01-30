@@ -1,8 +1,8 @@
 import app from "@/app";
 import { prisma } from "@/utils/prisma-client";
+import { beforeEach, describe, expect, it } from "bun:test";
 import request from "supertest";
-import { describe, expect, it, beforeEach } from "vitest";
-import { loginUser, createTestUser } from "../helpers/auth";
+import { createTestUser, loginUser } from "../helpers/auth";
 import { resetDb } from "../helpers/reset-db";
 
 describe("Bendahara Operations Integration", () => {
@@ -78,10 +78,10 @@ describe("Bendahara Operations Integration", () => {
     // For now, let's assume if it passes, we check if status is rejected.
 
     if (response.status === 200) {
-        expect(response.body.success).toBe(true);
-        expect(response.body.data.status).toBe("rejected");
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.status).toBe("rejected");
     } else {
-        expect(response.status).toBe(400);
+      expect(response.status).toBe(400);
     }
   });
 });

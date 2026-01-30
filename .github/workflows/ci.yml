@@ -1,0 +1,51 @@
+name: Galacash Server CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      # Redis service for integration tests
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint Code
+        run: bun run lint
+
+      - name: Type Check & Build
+        run: bun run build
+
+      - name: Run Tests
+        run: bun test
+        env:
+          NODE_ENV: test
+          DATABASE_URL: ${{ secrets.DATABASE_URL }} # Required if running integration tests against a real DB
+          # For CI, we might want to skip DB integration tests if no DB service is attached,
+          # or use docker-compose to spin up Postgres.
+          # For now, let's assume unit tests or mocked DB tests will run.
+          # If real DB needed, add postgres service above.
