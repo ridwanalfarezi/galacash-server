@@ -47,6 +47,7 @@ coverage/
 # GCP
 *.json
 !tsconfig.json
+!tsconfig.eslint.json
 !package.json
 
 # Misc
