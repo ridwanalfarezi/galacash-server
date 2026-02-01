@@ -2,7 +2,11 @@ import { PrismaClient } from "@/prisma/generated/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { logger } from "./logger";
 
-const createPrismaClient = () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ExtendedPrismaClient = any;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createPrismaClient = (): any => {
   const datasourceUrl = process.env.PRISMA_DATABASE_URL || process.env.DATABASE_URL;
 
   if (!datasourceUrl) {
@@ -14,15 +18,22 @@ const createPrismaClient = () => {
     throw new Error("Database URL not configured");
   }
 
+  const isAccelerate = datasourceUrl.includes("accelerate");
   logger.info(
-    `[PRISMA] Initializing Prisma Client with datasource: ${datasourceUrl.includes("accelerate") ? "Prisma Accelerate" : "Direct Connection"}`
+    `[PRISMA] Initializing Prisma Client with datasource: ${isAccelerate ? "Prisma Accelerate" : "Direct Connection"}`
   );
 
   try {
-    const client = new PrismaClient({
-      accelerateUrl: datasourceUrl,
+    const clientConfig: any = {
       log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-    }).$extends(withAccelerate());
+    };
+
+    // Only use accelerateUrl if the URL is actually an Accelerate proxy URL
+    if (isAccelerate) {
+      clientConfig.accelerateUrl = datasourceUrl;
+    }
+
+    const client = new PrismaClient(clientConfig).$extends(withAccelerate());
 
     logger.info("[PRISMA] Prisma Client created successfully");
     return client;
@@ -31,8 +42,6 @@ const createPrismaClient = () => {
     throw error;
   }
 };
-
-export type ExtendedPrismaClient = ReturnType<typeof createPrismaClient>;
 
 /**
  * Prisma client singleton instance using Prisma Accelerate / Data Proxy

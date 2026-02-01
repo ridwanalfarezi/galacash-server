@@ -202,7 +202,8 @@ export class BendaharaService {
   ): Promise<FundApplication> {
     try {
       // Use database transaction to ensure atomicity
-      const updatedApplication = await prisma.$transaction(async (tx) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updatedApplication = await prisma.$transaction(async (tx: any) => {
         // Get the application within transaction
         const application = await tx.fundApplication.findUnique({
           where: { id: applicationId },
@@ -371,7 +372,8 @@ export class BendaharaService {
   async confirmPayment(billId: string, bendaharaId: string): Promise<CashBill> {
     try {
       // Use database transaction with optimistic locking
-      const updatedBill = await prisma.$transaction(async (tx) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updatedBill = await prisma.$transaction(async (tx: any) => {
         // Get the bill within transaction
         const bill = await tx.cashBill.findUnique({
           where: { id: billId },
