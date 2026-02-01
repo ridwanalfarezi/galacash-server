@@ -31,6 +31,7 @@ export const createTestUser = async (nim = "1313624000", role = "user") => {
       name: `Test Student ${nim}`,
       password: hashedPassword,
       classId: cls.id,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       role: role as any,
     },
   });

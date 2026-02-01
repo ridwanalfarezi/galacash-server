@@ -178,9 +178,6 @@ async function seedExpenseTransactions() {
 
     for (const expense of expenses) {
       try {
-        // Create unique transaction ID for upsert
-        const transactionKey = `${expense.date.toISOString().split("T")[0]}-${expense.description}`;
-
         // Check if this transaction already exists
         const existingTransaction = await prisma.transaction.findFirst({
           where: {
@@ -191,10 +188,12 @@ async function seedExpenseTransactions() {
         });
 
         if (!existingTransaction) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const transaction = await prisma.transaction.create({
             data: {
               classId: classA.id,
               type: "expense",
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               category: expense.category as any,
               description: expense.description,
               amount: expense.amount,

@@ -8,12 +8,14 @@ import { mock } from "bun:test";
 
 // Mock express-rate-limit to bypass Redis connection in tests
 mock.module("express-rate-limit", () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rateLimit: () => (req: any, res: any, next: any) => next(),
 }));
 
 // Mock Redis config to prevent undefined redisClient errors
 mock.module("@/config/redis.config", () => ({
   redisClient: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     call: (command: string, ...args: any[]) => {
       if (command === "SCRIPT" && args[0] === "LOAD") {
         return Promise.resolve("mock-script-sha");
@@ -25,6 +27,7 @@ mock.module("@/config/redis.config", () => ({
     set: () => Promise.resolve("OK"),
     del: () => Promise.resolve(1),
     scanStream: () => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       on: (event: string, callback: any) => {
         if (event === "end") callback();
         return this;

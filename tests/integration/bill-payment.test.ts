@@ -22,6 +22,7 @@ describe("Bill Payment Integration", () => {
         kasKelas: 15000,
         biayaAdmin: 0,
         totalAmount: 15000,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         status: status as any,
       },
     });

@@ -73,10 +73,6 @@ describe("Cash Bills Integration", () => {
     const { user } = await createTestUser();
     const cookie = await loginUser(user.nim);
 
-    const response = await request(app)
-      .get("/api/cash-bills/non-existent-id") // validator might reject if not uuid, let's use a random uuid
-      .set("Cookie", [cookie]);
-
     // If route validator checks UUID, pass a valid UUID that doesn't exist
     const randomUuid = "00000000-0000-0000-0000-000000000000";
     const response2 = await request(app)

@@ -528,6 +528,7 @@ async function seedPastCashBills() {
           const paymentAmount = getPaymentAmount(month.year, month.monthNumber);
 
           // Create or update CashBill
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const cashBill = await prisma.cashBill.upsert({
             where: { billId },
             create: {
@@ -619,6 +620,7 @@ async function seedPastCashBills() {
           const isPaid = payment[month.key] ? true : false;
           const paymentAmount = getPaymentAmount(month.year, month.monthNumber);
 
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const cashBill = await prisma.cashBill.upsert({
             where: { billId },
             create: {
@@ -717,6 +719,7 @@ async function seedPastCashBills() {
 
           const paymentAmount = getPaymentAmount(month.year, month.monthNumber);
 
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const cashBill = await prisma.cashBill.upsert({
             where: { billId },
             create: {
