@@ -29,7 +29,8 @@ yarn-error.log*
 # Database
 *.db
 *.sqlite
-prisma/migrations/
+# Keep migrations in version control for CI/CD
+# prisma/migrations/
 prisma/generated/
 src/prisma/generated/
 
