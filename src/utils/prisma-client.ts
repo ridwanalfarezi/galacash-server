@@ -1,5 +1,7 @@
 import { PrismaClient } from "@/prisma/generated/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { withAccelerate } from "@prisma/extension-accelerate";
+import { Pool } from "pg";
 import { logger } from "./logger";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,13 +32,18 @@ const createPrismaClient = (): any => {
     };
 
     // Only use Accelerate extension and accelerateUrl for Prisma Accelerate proxy URLs
-    // Direct database connections (postgresql://) should NOT use the extension
+    // Direct database connections (postgresql://) should use the adapter
     if (isAccelerate) {
       clientConfig.accelerateUrl = datasourceUrl;
       const client = new PrismaClient(clientConfig).$extends(withAccelerate());
       logger.info("[PRISMA] Prisma Client created successfully with Accelerate extension");
       return client;
     } else {
+      // For direct database connections, use the pg adapter with the Pool
+      const pool = new Pool({
+        connectionString: datasourceUrl,
+      });
+      clientConfig.adapter = new PrismaPg(pool);
       const client = new PrismaClient(clientConfig);
       logger.info("[PRISMA] Prisma Client created successfully with direct connection");
       return client;

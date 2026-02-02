@@ -42,12 +42,10 @@ export const createTestUser = async (nim = "1313624000", role = "user") => {
 export const loginUser = async (nim = "1313624000", role = "user") => {
   const { password } = await createTestUser(nim, role);
 
-  const response = await request(app)
-    .post("/api/auth/login")
-    .send({
-      nim,
-      password,
-    });
+  const response = await request(app).post("/api/auth/login").send({
+    nim,
+    password,
+  });
 
   const cookies = response.headers["set-cookie"];
   const accessTokenCookie = cookies.find((c: string) => c.startsWith("accessToken="));
