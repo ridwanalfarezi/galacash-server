@@ -73,14 +73,35 @@ jobs:
       - name: Generate Prisma Client
         run: bun run prisma:generate
 
+      - name: Check Migration Files
+        run: |
+          echo "=== Checking migration files ==="
+          ls -la prisma/migrations/
+          echo "=== Migration lock file ==="
+          cat prisma/migrations/migration_lock.toml || echo "No lock file"
+        shell: bash
+
       - name: Run Prisma Migrations
-        run: npm exec -- prisma migrate deploy
+        run: |
+          echo "=== Running Prisma Migrations ==="
+          echo "DATABASE_URL: postgresql://galacash:***@localhost:5432/galacash_test_db"
+          npm exec -- prisma migrate deploy --schema=./prisma/schema.prisma || {
+            echo "ERROR: Migration failed with exit code $?"
+            npm exec -- prisma migrate status --schema=./prisma/schema.prisma || true
+            exit 1
+          }
+          echo "=== Migration completed successfully ==="
         env:
           DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
+        shell: bash
 
       - name: Verify Database
         run: |
-          psql postgresql://galacash:galacash123@localhost:5432/galacash_test_db -c "SELECT tablename FROM pg_tables WHERE schemaname='public';" || true
+          echo "=== Verifying database tables ==="
+          psql postgresql://galacash:galacash123@localhost:5432/galacash_test_db -c "SELECT tablename FROM pg_tables WHERE schemaname='public';" || {
+            echo "ERROR: Failed to query tables"
+            exit 1
+          }
         shell: bash
 
       - name: Run Tests
