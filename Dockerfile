@@ -26,7 +26,7 @@ WORKDIR /app
 
 # Install production dependencies
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production
+RUN bun install --frozen-lockfile --production --ignore-scripts
 
 # Copy generated prisma client from builder
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
