@@ -1,15 +1,14 @@
 import { PrismaClient } from "@/prisma/generated/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { withAccelerate } from "@prisma/extension-accelerate";
-import "dotenv/config";
+import { Pool } from "pg";
 import { logger } from "./logger";
 
-/**
- * Prisma client singleton instance using Prisma Accelerate / Data Proxy
- * LAZY INITIALIZATION: Only creates client when first accessed, not at module load
- */
-let prismaInstance: ReturnType<typeof createPrismaClient> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ExtendedPrismaClient = any;
 
-const createPrismaClient = () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createPrismaClient = (): any => {
   const datasourceUrl = process.env.PRISMA_DATABASE_URL || process.env.DATABASE_URL;
 
   if (!datasourceUrl) {
@@ -21,18 +20,34 @@ const createPrismaClient = () => {
     throw new Error("Database URL not configured");
   }
 
+  const isAccelerate = datasourceUrl.includes("accelerate");
   logger.info(
-    `[PRISMA] Initializing Prisma Client with datasource: ${datasourceUrl.includes("accelerate") ? "Prisma Accelerate" : "Direct Connection"}`
+    `[PRISMA] Initializing Prisma Client with datasource: ${isAccelerate ? "Prisma Accelerate" : "Direct Connection"}`
   );
 
   try {
-    const client = new PrismaClient({
-      accelerateUrl: datasourceUrl,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clientConfig: any = {
       log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-    }).$extends(withAccelerate());
+    };
 
-    logger.info("[PRISMA] Prisma Client created successfully");
-    return client;
+    // Only use Accelerate extension and accelerateUrl for Prisma Accelerate proxy URLs
+    // Direct database connections (postgresql://) should use the adapter
+    if (isAccelerate) {
+      clientConfig.accelerateUrl = datasourceUrl;
+      const client = new PrismaClient(clientConfig).$extends(withAccelerate());
+      logger.info("[PRISMA] Prisma Client created successfully with Accelerate extension");
+      return client;
+    } else {
+      // For direct database connections, use the pg adapter with the Pool
+      const pool = new Pool({
+        connectionString: datasourceUrl,
+      });
+      clientConfig.adapter = new PrismaPg(pool);
+      const client = new PrismaClient(clientConfig);
+      logger.info("[PRISMA] Prisma Client created successfully with direct connection");
+      return client;
+    }
   } catch (error) {
     logger.error("[PRISMA] Failed to create Prisma Client:", error);
     throw error;
@@ -40,10 +55,16 @@ const createPrismaClient = () => {
 };
 
 /**
+ * Prisma client singleton instance using Prisma Accelerate / Data Proxy
+ * LAZY INITIALIZATION: Only creates client when first accessed, not at module load
+ */
+let prismaInstance: ExtendedPrismaClient | null = null;
+
+/**
  * Get Prisma Client instance (lazy initialization)
  * Only creates the client when first accessed, preventing blocking on module import
  */
-export const getPrisma = () => {
+export const getPrisma = (): ExtendedPrismaClient => {
   if (!prismaInstance) {
     prismaInstance = createPrismaClient();
   }
@@ -51,7 +72,7 @@ export const getPrisma = () => {
 };
 
 // Export a proxy that lazy-loads Prisma for backwards compatibility
-export const prisma = new Proxy({} as ReturnType<typeof createPrismaClient>, {
+export const prisma = new Proxy({} as ExtendedPrismaClient, {
   get: (_target, prop) => {
     const client = getPrisma();
     return client[prop as keyof typeof client];

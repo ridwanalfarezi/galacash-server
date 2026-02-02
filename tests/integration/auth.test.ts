@@ -1,6 +1,5 @@
 import app from "@/app";
 import { prisma } from "@/utils/prisma-client";
-import bcrypt from "bcrypt";
 import request from "supertest";
 import { describe, expect, it, beforeEach } from "vitest";
 import { resetDb } from "../helpers/reset-db";
@@ -17,7 +16,10 @@ describe("Auth Integration", () => {
       },
     });
 
-    const hashedPassword = await bcrypt.hash("password123", 10);
+    const hashedPassword = await Bun.password.hash("password123", {
+      algorithm: "bcrypt",
+      cost: 10,
+    });
 
     const user = await prisma.user.create({
       data: {

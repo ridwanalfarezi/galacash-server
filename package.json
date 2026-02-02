@@ -1,13 +1,15 @@
 {
   "name": "galacash-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "GalaCash - Financial management API for class treasurers",
-  "main": "dist/index.js",
+  "main": "src/index.ts",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "npm run prisma:generate && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
-    "start": "node dist/index.js",
-    "start:prod": "npm run prisma:deploy && npm run start",
+    "dev": "bun --watch src/index.ts",
+    "build": "bun run prisma:generate && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "build:binary": "bun build ./src/index.ts --compile --outfile galacash-server",
+    "start": "bun src/index.ts",
+    "start:prod": "bun run prisma:deploy && bun run start",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -15,12 +17,15 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "seed": "tsx prisma/seed.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "seed": "bun prisma/seed.ts",
+    "seed:past-bills": "bun scripts/seed-past-cash-bills.ts",
+    "seed:expenses": "bun scripts/seed-expense-transactions.ts",
+    "clean:data": "bun scripts/clean-data.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
     "test:up": "docker compose -f docker-compose.test.yml up -d",
     "test:down": "docker compose -f docker-compose.test.yml down",
-    "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
+    "test:migrate": "bun run prisma:deploy",
     "type-check": "tsc --noEmit",
     "commit": "git-cz",
     "lint-staged": "lint-staged",
@@ -40,24 +45,13 @@
       "path": "./node_modules/cz-conventional-changelog"
     }
   },
-  "packageManager": "pnpm@10.28.0",
-  "pnpm": {
-    "overrides": {
-      "glob@<8": ">=11.0.0",
-      "inflight": "npm:@humanfs/core@^0.19.0",
-      "rimraf@<3": ">=6.0.0",
-      "fstream": "npm:tar@^7.4.0",
-      "lodash.isequal": "npm:lodash@^4.17.21"
-    }
-  },
   "dependencies": {
     "@google-cloud/storage": "^7.18.0",
-    "@prisma/client": "^7.2.0",
+    "@prisma/adapter-pg": "^7.3.0",
+    "@prisma/client": "^7.3.0",
     "@prisma/extension-accelerate": "^3.0.1",
-    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
@@ -71,13 +65,12 @@
     "pg": "^8.17.1",
     "rate-limit-redis": "^4.3.1",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^13.0.0",
     "winston": "^3.19.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.3.1",
     "@commitlint/config-conventional": "^20.3.1",
-    "@types/bcrypt": "^6.0.0",
+    "@types/bun": "^1.3.8",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -94,18 +87,16 @@
     "@typescript-eslint/parser": "^8.53.0",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
-    "dotenv-cli": "^11.0.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.8.0",
-    "prisma": "^7.2.0",
+    "prisma": "^7.3.0",
     "supertest": "^7.2.2",
     "tsc-alias": "^1.8.10",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
-  }
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.28.0+sha512.05df71d1421f21399e053fde567cea34d446fa02c76571441bfc1c7956e98e363088982d940465fd34480d4d90a0668bc12362f8aa88000a64e83d0b0e47be48"
 }

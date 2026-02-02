@@ -3,7 +3,6 @@ import { connectRedis, disconnectRedis } from "@/config/redis.config";
 import { initializeBillGenerator } from "@/jobs/bill-generator.job";
 import { logger } from "@/utils/logger";
 import { disconnectPrisma } from "@/utils/prisma-client";
-import "dotenv/config";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const NODE_ENV = process.env.NODE_ENV || "development";

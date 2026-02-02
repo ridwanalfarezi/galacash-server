@@ -278,7 +278,8 @@ export class TransactionRepository {
       // Group by category and sum amounts
       const categoryMap: Map<string, number> = new Map();
 
-      transactions.forEach((tx) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      transactions.forEach((tx: any) => {
         const category = tx.category || "other";
         const current = categoryMap.get(category) || 0;
         categoryMap.set(category, current + Number(tx.amount));

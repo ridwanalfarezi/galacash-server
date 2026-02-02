@@ -1,0 +1,111 @@
+name: Galacash Server CI
+
+on:
+  push:
+    branches: ["main", "develop", "migrate-to-bun-9072459063361523470"]
+  pull_request:
+    branches: ["main", "develop", "migrate-to-bun-9072459063361523470"]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      # Redis service for integration tests
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      # Postgres service for integration tests
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: galacash
+          POSTGRES_PASSWORD: galacash123
+          POSTGRES_DB: galacash_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint Code
+        run: bun run lint
+
+      - name: Type Check & Build
+        run: bun run build
+        env:
+          DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U galacash; do
+            echo "Waiting for PostgreSQL..."
+            sleep 1
+          done
+          echo "PostgreSQL is ready!"
+        shell: bash
+
+      - name: Generate Prisma Client
+        run: bun run prisma:generate
+
+      - name: Check Migration Files
+        run: |
+          echo "=== Checking migration files ==="
+          ls -la prisma/migrations/
+          echo "=== Migration lock file ==="
+          cat prisma/migrations/migration_lock.toml || echo "No lock file"
+        shell: bash
+
+      - name: Run Prisma Migrations
+        run: |
+          echo "=== Running Prisma Migrations ==="
+          echo "DATABASE_URL: postgresql://galacash:***@localhost:5432/galacash_test_db"
+          npm exec -- prisma migrate deploy --schema=./prisma/schema.prisma || {
+            echo "ERROR: Migration failed with exit code $?"
+            npm exec -- prisma migrate status --schema=./prisma/schema.prisma || true
+            exit 1
+          }
+          echo "=== Migration completed successfully ==="
+        env:
+          DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
+        shell: bash
+
+      - name: Verify Database
+        run: |
+          echo "=== Verifying database tables ==="
+          psql postgresql://galacash:galacash123@localhost:5432/galacash_test_db -c "SELECT tablename FROM pg_tables WHERE schemaname='public';" || {
+            echo "ERROR: Failed to query tables"
+            exit 1
+          }
+        shell: bash
+
+      - name: Run Tests
+        run: bun test
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db

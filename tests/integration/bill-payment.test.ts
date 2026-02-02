@@ -1,8 +1,8 @@
 import app from "@/app";
 import { prisma } from "@/utils/prisma-client";
 import request from "supertest";
-import { describe, expect, it, beforeEach } from "vitest";
-import { loginUser, createTestUser } from "../helpers/auth";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createTestUser, loginUser } from "../helpers/auth";
 import { resetDb } from "../helpers/reset-db";
 
 describe("Bill Payment Integration", () => {
@@ -22,6 +22,7 @@ describe("Bill Payment Integration", () => {
         kasKelas: 15000,
         biayaAdmin: 0,
         totalAmount: 15000,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         status: status as any,
       },
     });
@@ -69,29 +70,29 @@ describe("Bill Payment Integration", () => {
   });
 
   it("should allow bendahara to reject a payment", async () => {
-     // User pays first
-     const { user, cls } = await createTestUser();
-     const userCookie = await loginUser(user.nim);
-     const bill = await createBill(user.id, cls.id);
+    // User pays first
+    const { user, cls } = await createTestUser();
+    const userCookie = await loginUser(user.nim);
+    const bill = await createBill(user.id, cls.id);
 
-     await request(app)
-       .post(`/api/cash-bills/${bill.id}/pay`)
-       .set("Cookie", [userCookie])
-       .field("paymentMethod", "bank")
-       .attach("paymentProof", Buffer.from("dummy"), "proof.png");
+    await request(app)
+      .post(`/api/cash-bills/${bill.id}/pay`)
+      .set("Cookie", [userCookie])
+      .field("paymentMethod", "bank")
+      .attach("paymentProof", Buffer.from("dummy"), "proof.png");
 
-     // Bendahara login
-     const bendaharaCookie = await loginUser("1313624999", "bendahara");
+    // Bendahara login
+    const bendaharaCookie = await loginUser("1313624999", "bendahara");
 
-     // Reject
-     const response = await request(app)
-       .post(`/api/bendahara/cash-bills/${bill.id}/reject-payment`)
-       .set("Cookie", [bendaharaCookie])
-       .send({ reason: "Bukti tidak jelas" });
+    // Reject
+    const response = await request(app)
+      .post(`/api/bendahara/cash-bills/${bill.id}/reject-payment`)
+      .set("Cookie", [bendaharaCookie])
+      .send({ reason: "Bukti tidak jelas" });
 
-     expect(response.status).toBe(200);
-     expect(response.body.success).toBe(true);
-     expect(response.body.data.status).toBe("belum_dibayar");
-     expect(response.body.data.paymentProofUrl).toBeNull();
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.status).toBe("belum_dibayar");
+    expect(response.body.data.paymentProofUrl).toBeNull();
   });
 });

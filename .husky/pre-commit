@@ -1,5 +1,5 @@
 # Run lint-staged
-pnpm run lint-staged
+bun run lint-staged
 
 # Run type checking
-pnpm run type-check
+bun run type-check

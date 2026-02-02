@@ -41,11 +41,18 @@ export function generateAccessToken(user: {
 
 /**
  * Generate JWT refresh token
+ * Include jti (JWT ID) to ensure uniqueness
  */
 export function generateRefreshToken(): string {
-  return jwt.sign({}, REFRESH_TOKEN_SECRET, {
-    expiresIn: REFRESH_TOKEN_EXPIRY,
-  });
+  return jwt.sign(
+    {
+      jti: `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
+    },
+    REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: REFRESH_TOKEN_EXPIRY,
+    }
+  );
 }
 
 /**

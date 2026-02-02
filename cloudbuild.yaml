@@ -1,0 +1,20 @@
+steps:
+  # 1. Build the binary using Bun
+  - name: "oven/bun:1"
+    entrypoint: "bun"
+    args: ["run", "build:binary"]
+    id: "build-binary"
+
+  # 2. Build the Docker image (using the binary from step 1)
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      ["build", "-f", "Dockerfile.binary", "-t", "gcr.io/$PROJECT_ID/galacash-server:latest", "."]
+    id: "docker-build"
+
+  # 3. Push the image to GCR (or Artifact Registry)
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/galacash-server:latest"]
+    id: "docker-push"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

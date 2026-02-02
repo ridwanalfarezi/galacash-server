@@ -16,6 +16,7 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+*.exe
 
 # Logs
 logs/
@@ -28,8 +29,10 @@ yarn-error.log*
 # Database
 *.db
 *.sqlite
-prisma/migrations/
+# Keep migrations in version control for CI/CD
+# prisma/migrations/
 prisma/generated/
+src/prisma/generated/
 
 # IDE
 .vscode/
@@ -46,9 +49,11 @@ coverage/
 # GCP
 *.json
 !tsconfig.json
+!tsconfig.eslint.json
 !package.json
 
 # Misc
 .cache/
 temp/
 tmp/
+bun.lockb
