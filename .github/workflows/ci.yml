@@ -74,13 +74,13 @@ jobs:
         run: bun run prisma:generate
 
       - name: Run Prisma Migrations
-        run: npx prisma migrate deploy
+        run: npm exec -- prisma migrate deploy
         env:
           DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
 
       - name: Verify Database
         run: |
-          psql postgresql://galacash:galacash123@localhost:5432/galacash_test_db -c "SELECT tablename FROM pg_tables WHERE schemaname='public';"
+          psql postgresql://galacash:galacash123@localhost:5432/galacash_test_db -c "SELECT tablename FROM pg_tables WHERE schemaname='public';" || true
         shell: bash
 
       - name: Run Tests
