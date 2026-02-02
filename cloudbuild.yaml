@@ -5,13 +5,19 @@ steps:
     args: ["install", "--frozen-lockfile"]
     id: "install-deps"
 
-  # 2. Build the binary using Bun
+  # 2. Generate Prisma client
+  - name: "oven/bun:1"
+    entrypoint: "bun"
+    args: ["run", "prisma:generate"]
+    id: "prisma-generate"
+
+  # 3. Build the binary using Bun
   - name: "oven/bun:1"
     entrypoint: "bun"
     args: ["run", "build:binary"]
     id: "build-binary"
 
-  # 3. Build the Docker image (using the binary from step 1)
+  # 4. Build the Docker image (using the binary from step 1)
   - name: "gcr.io/cloud-builders/docker"
     args:
       [
@@ -24,7 +30,7 @@ steps:
       ]
     id: "docker-build"
 
-  # 4. Push the image to Artifact Registry
+  # 5. Push the image to Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
     args:
       [
@@ -33,7 +39,7 @@ steps:
       ]
     id: "docker-push"
 
-  # 5. Deploy to Cloud Run
+  # 6. Deploy to Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
     entrypoint: gcloud
     args:
