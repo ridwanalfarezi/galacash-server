@@ -8,13 +8,25 @@ steps:
   # 2. Build the Docker image (using the binary from step 1)
   - name: "gcr.io/cloud-builders/docker"
     args:
-      ["build", "-f", "Dockerfile.binary", "-t", "gcr.io/$PROJECT_ID/galacash-server:latest", "."]
+      ["build", "-f", "Dockerfile.binary", "-t", "asia-southeast2-docker.pkg.dev/galacash-server/cloud-run-source-deploy/galacash-server/galacash-server-2:latest", "."]
     id: "docker-build"
 
-  # 3. Push the image to GCR (or Artifact Registry)
+  # 3. Push the image to Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/$PROJECT_ID/galacash-server:latest"]
+    args: ["push", "asia-southeast2-docker.pkg.dev/galacash-server/cloud-run-source-deploy/galacash-server/galacash-server-2:latest"]
     id: "docker-push"
+
+  # 4. Deploy to Cloud Run
+  - name: "gcr.io/cloud-builders/gke-deploy"
+    args:
+      - run
+      - --filename=.
+      - --image=asia-southeast2-docker.pkg.dev/galacash-server/cloud-run-source-deploy/galacash-server/galacash-server-2:latest
+      - --location=asia-southeast2
+      - --cluster=galacash-server-2
+
+images:
+  - "asia-southeast2-docker.pkg.dev/galacash-server/cloud-run-source-deploy/galacash-server/galacash-server-2:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY
