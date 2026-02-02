@@ -28,10 +28,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production --ignore-scripts
 
-# Copy generated prisma client from builder
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-# Copy source code and config
+# Copy source code and config (includes generated Prisma client)
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/openapi.yaml ./openapi.yaml
