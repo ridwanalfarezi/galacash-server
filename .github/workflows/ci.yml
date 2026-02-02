@@ -65,7 +65,7 @@ jobs:
         shell: bash
 
       - name: Prisma Migrate
-        run: bun run prisma:deploy
+        run: bunx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
 
