@@ -29,23 +29,27 @@ export const logger = winston.createLogger({
         })
       ),
     }),
+  ],
+});
 
-    // Error log file
+// Add file transports only in development environment
+if (process.env.NODE_ENV !== "production") {
+  logger.add(
     new winston.transports.File({
       filename: path.join(LOG_DIR, "error.log"),
       level: "error",
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-    }),
-
-    // Combined log file
+    })
+  );
+  logger.add(
     new winston.transports.File({
       filename: path.join(LOG_DIR, "combined.log"),
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-    }),
-  ],
-});
+    })
+  );
+}
 
 // Log unhandled rejections
 process.on("unhandledRejection", (reason: Error) => {
