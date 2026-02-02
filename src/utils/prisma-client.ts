@@ -27,15 +27,20 @@ const createPrismaClient = (): any => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clientConfig: any = {
       log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-      // When using withAccelerate() extension, accelerateUrl must always be provided
-      // even for direct database connections (Prisma v7+ requirement)
-      accelerateUrl: datasourceUrl,
     };
 
-    const client = new PrismaClient(clientConfig).$extends(withAccelerate());
-
-    logger.info("[PRISMA] Prisma Client created successfully");
-    return client;
+    // Only use Accelerate extension and accelerateUrl for Prisma Accelerate proxy URLs
+    // Direct database connections (postgresql://) should NOT use the extension
+    if (isAccelerate) {
+      clientConfig.accelerateUrl = datasourceUrl;
+      const client = new PrismaClient(clientConfig).$extends(withAccelerate());
+      logger.info("[PRISMA] Prisma Client created successfully with Accelerate extension");
+      return client;
+    } else {
+      const client = new PrismaClient(clientConfig);
+      logger.info("[PRISMA] Prisma Client created successfully with direct connection");
+      return client;
+    }
   } catch (error) {
     logger.error("[PRISMA] Failed to create Prisma Client:", error);
     throw error;
