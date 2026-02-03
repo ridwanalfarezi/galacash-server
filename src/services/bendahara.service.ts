@@ -1,6 +1,7 @@
 import {
   CashBill,
   FundApplication,
+  Prisma,
   Transaction,
   TransactionCategory,
   User,
@@ -60,12 +61,38 @@ export interface RekapKasData {
 /**
  * Bendahara (treasurer) service for managing class finances
  */
+type StudentWithBills = {
+  id: string;
+  name: string;
+  nim: string;
+  cashBills: Array<{
+    status: string;
+    totalAmount: { toNumber: () => number };
+    month: number;
+    year: number;
+  }>;
+};
+
 export class BendaharaService {
   private fundApplicationRepository = fundApplicationRepository;
   private cashBillRepository = cashBillRepository;
   private transactionRepository = transactionRepository;
   private userRepository = userRepository;
   private cacheService: CacheService;
+
+  private readonly CACHE_TTL = {
+    DASHBOARD: 60,
+    BILLS: 300,
+    REKAP_KAS: 300,
+    STUDENTS: 600,
+  };
+
+  private readonly PAGINATION = {
+    DASHBOARD_TRANSACTIONS: 5,
+    DASHBOARD_ITEMS: 5,
+    REKAP_TRANSACTIONS: 50,
+    STUDENTS_ALL: 10000,
+  };
 
   constructor() {
     this.cacheService = new CacheService();
@@ -87,16 +114,12 @@ export class BendaharaService {
     }
 
     try {
-      // Base filter for class (if provided)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const baseFilter: any = {};
+      const baseFilter: { classId?: string } = {};
       if (classId) {
         baseFilter.classId = classId;
       }
 
-      // Date filter logic
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const dateFilter: any = {};
+      const dateFilter: { date?: { gte?: Date; lte?: Date } } = {};
       if (startDate || endDate) {
         dateFilter.date = {};
         if (startDate) dateFilter.date.gte = startDate;
@@ -119,12 +142,9 @@ export class BendaharaService {
       const totalExpense = Number(expenseAgg._sum.amount || 0);
       const totalBalance = totalIncome - totalExpense;
 
-      // 2. Get Transactions (Recent or for the period)
-      // Limit to 5 items for the dashboard widget to prevent data overload
-      const transactionLimit = 5;
       const recentTransactions = await prisma.transaction.findMany({
         where: { ...baseFilter, ...dateFilter },
-        take: transactionLimit,
+        take: this.PAGINATION.DASHBOARD_TRANSACTIONS,
         orderBy: { date: "desc" },
       });
 
@@ -140,14 +160,14 @@ export class BendaharaService {
       // 4. Get recent lists (Fund Apps & Bills) - Unaffected by date filter usually
       const recentFundApplications = await prisma.fundApplication.findMany({
         where: { ...baseFilter, status: "pending" },
-        take: 5,
+        take: this.PAGINATION.DASHBOARD_ITEMS,
         orderBy: { createdAt: "desc" },
         include: { user: true },
       });
 
       const recentCashBills = await prisma.cashBill.findMany({
         where: { ...baseFilter, status: "menunggu_konfirmasi" },
-        take: 5,
+        take: this.PAGINATION.DASHBOARD_ITEMS,
         orderBy: { createdAt: "desc" },
         include: { user: true },
       });
@@ -165,25 +185,23 @@ export class BendaharaService {
         totalIncome,
         totalExpense,
         totalStudents: studentsCount,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recentTransactions: recentTransactions as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recentFundApplications: (recentFundApplications as any[]).map((app) => ({
-          ...app,
-          applicant: {
-            id: app.user.id,
-            name: app.user.name,
-          },
-        })) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recentCashBills: (recentCashBills as any[]).map((bill) => ({
+        recentTransactions: recentTransactions,
+        recentFundApplications: recentFundApplications.map(
+          (app: FundApplication & { user: User }) => ({
+            ...app,
+            applicant: {
+              id: app.user.id,
+              name: app.user.name,
+            },
+          })
+        ) as typeof recentFundApplications & { applicant: { id: string; name: string } },
+        recentCashBills: recentCashBills.map((bill: CashBill & { user: User }) => ({
           ...bill,
           name: bill.user.name,
-        })) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        })) as typeof recentCashBills & { name: string },
       };
 
-      // Cache the result for 1 minute
-      await this.cacheService.setCached(cacheKey, dashboardData, 60);
+      await this.cacheService.setCached(cacheKey, dashboardData, this.CACHE_TTL.DASHBOARD);
 
       return dashboardData;
     } catch (error) {
@@ -201,10 +219,7 @@ export class BendaharaService {
     bendaharaId: string
   ): Promise<FundApplication> {
     try {
-      // Use database transaction to ensure atomicity
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const updatedApplication = await prisma.$transaction(async (tx: any) => {
-        // Get the application within transaction
+      const updatedApplication = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const application = await tx.fundApplication.findUnique({
           where: { id: applicationId },
         });
@@ -355,8 +370,7 @@ export class BendaharaService {
     try {
       const result = await this.cashBillRepository.findAll(mergedFilters);
 
-      // Cache the result
-      await this.cacheService.setCached(cacheKey, result, 300); // 5 minutes cache
+      await this.cacheService.setCached(cacheKey, result, this.CACHE_TTL.BILLS);
 
       return result;
     } catch (error) {
@@ -371,10 +385,7 @@ export class BendaharaService {
    */
   async confirmPayment(billId: string, bendaharaId: string): Promise<CashBill> {
     try {
-      // Use database transaction with optimistic locking
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const updatedBill = await prisma.$transaction(async (tx: any) => {
-        // Get the bill within transaction
+      const updatedBill = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const bill = await tx.cashBill.findUnique({
           where: { id: billId },
           include: { user: true },
@@ -523,6 +534,41 @@ export class BendaharaService {
   }
 
   /**
+   * Calculate student billing summary
+   */
+  private calculateStudentSummary(student: StudentWithBills) {
+    let totalPaid = 0;
+    let totalUnpaid = 0;
+
+    const bills = student.cashBills.map((bill) => ({
+      month: bill.month,
+      year: bill.year,
+      status: bill.status,
+      amount: Number(bill.totalAmount),
+    }));
+
+    student.cashBills.forEach((bill) => {
+      if (bill.status === "sudah_dibayar") {
+        totalPaid += Number(bill.totalAmount);
+      } else {
+        totalUnpaid += Number(bill.totalAmount);
+      }
+    });
+
+    return {
+      userId: student.id,
+      name: student.name,
+      nim: student.nim,
+      totalPaid,
+      totalUnpaid,
+      paymentStatus: (totalUnpaid === 0 ? "up-to-date" : "has-arrears") as
+        | "up-to-date"
+        | "has-arrears",
+      bills,
+    };
+  }
+
+  /**
    * Get financial summary (rekap kas) for a class
    * Includes student billing summary and transaction history
    */
@@ -584,9 +630,7 @@ export class BendaharaService {
       const totalIncome = Number(incomeAgg._sum.amount || 0);
       const totalExpense = Number(expenseAgg._sum.amount || 0);
 
-      // 2. Build Student Filter
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const whereClause: any = {
+      const whereClause: Prisma.UserWhereInput = {
         classId,
         role: "user",
       };
@@ -638,46 +682,14 @@ export class BendaharaService {
         take: limit,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const studentSummaries = (students as any[]).map((s) => {
-        let totalPaid = 0;
-        let totalUnpaid = 0;
+      const studentSummaries = students.map((s: StudentWithBills) =>
+        this.calculateStudentSummary(s)
+      );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const bills = s.cashBills.map((bill: any) => ({
-          month: bill.month,
-          year: bill.year,
-          status: bill.status,
-          amount: Number(bill.totalAmount),
-        }));
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        s.cashBills.forEach((bill: any) => {
-          if (bill.status === "sudah_dibayar") {
-            totalPaid += Number(bill.totalAmount);
-          } else {
-            totalUnpaid += Number(bill.totalAmount);
-          }
-        });
-
-        return {
-          userId: s.id,
-          name: s.name,
-          nim: s.nim,
-          totalPaid,
-          totalUnpaid,
-          paymentStatus: (totalUnpaid === 0 ? "up-to-date" : "has-arrears") as
-            | "up-to-date"
-            | "has-arrears",
-          bills,
-        };
-      });
-
-      // 5. Get Recent Transactions
       const transactions = await prisma.transaction.findMany({
         where: { classId, date: { gte: start, lte: end } },
         orderBy: { date: "desc" },
-        take: 50,
+        take: this.PAGINATION.REKAP_TRANSACTIONS,
       });
 
       const rekapData = {
@@ -698,8 +710,7 @@ export class BendaharaService {
         totalPages: Math.ceil(totalStudents / limit),
       };
 
-      // Cache the result for 5 minutes
-      await this.cacheService.setCached(cacheKey, rekapData, 300);
+      await this.cacheService.setCached(cacheKey, rekapData, this.CACHE_TTL.REKAP_KAS);
 
       return rekapData;
     } catch (error) {
@@ -722,7 +733,7 @@ export class BendaharaService {
     try {
       const students = await this.userRepository.findAll({
         page: 1,
-        limit: 10000, // Get all students across all classes
+        limit: this.PAGINATION.STUDENTS_ALL,
       });
 
       const safeStudents = students.data.map((user) => {
@@ -731,8 +742,7 @@ export class BendaharaService {
         return safeUser;
       });
 
-      // Cache the result
-      await this.cacheService.setCached(cacheKey, safeStudents, 600); // 10 minutes cache
+      await this.cacheService.setCached(cacheKey, safeStudents, this.CACHE_TTL.STUDENTS);
 
       return safeStudents;
     } catch (error) {
