@@ -11,7 +11,7 @@ import {
   cashBillFilterSchema,
   createTransactionSchema,
   rekapKasFilterSchema,
-  reviewFundApplicationSchema,
+  rejectFundApplicationSchema,
 } from "@/validators/schemas";
 import { Router } from "express";
 
@@ -39,7 +39,7 @@ router.post("/fund-applications/:id/approve", bendaharaController.approveFundApp
  */
 router.post(
   "/fund-applications/:id/reject",
-  validateBody(reviewFundApplicationSchema),
+  validateBody(rejectFundApplicationSchema),
   bendaharaController.rejectFundApplication
 );
 
