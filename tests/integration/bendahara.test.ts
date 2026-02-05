@@ -66,22 +66,7 @@ describe("Bendahara Operations Integration", () => {
       .set("Cookie", [cookie])
       .send({}); // Missing rejectionReason
 
-    // Logic in controller allows undefined reason? Let's check validator.
-    // If validation fails, it should be 400.
-    // However, if the schema considers rejectionReason optional or handles it loosely, it might pass.
-    // The previous test failure showed it returned 200.
-    // Adjusting expectation to match behavior or fix code if it's a bug.
-    // Given the task is to write tests, if the backend allows it, we update the test or mark as bug.
-    // Ideally, rejection should have a reason.
-    // Checking schema: rejectionReason: Joi.string().when("$action", { is: "reject", ... })
-    // Maybe $action context is not passed correctly in validator middleware?
-    // For now, let's assume if it passes, we check if status is rejected.
-
-    if (response.status === 200) {
-        expect(response.body.success).toBe(true);
-        expect(response.body.data.status).toBe("rejected");
-    } else {
-        expect(response.status).toBe(400);
-    }
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
   });
 });
