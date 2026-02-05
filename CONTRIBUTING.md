@@ -20,7 +20,7 @@ Please be respectful and constructive in all interactions. We aim to maintain a 
 ### Prerequisites
 
 - Node.js v20 or higher
-- pnpm v10 or higher
+- Bun v1.x or higher
 - Docker Desktop (for backend development)
 - Git
 
@@ -45,7 +45,7 @@ src/
 1. **Install dependencies:**
 
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. **Start Docker services (PostgreSQL & Redis):**
@@ -57,13 +57,13 @@ src/
 3. **Initialize database:**
 
    ```bash
-   pnpm prisma:generate
-   pnpm prisma:migrate
+   bun prisma:generate
+   bun prisma:migrate
    ```
 
 4. **Start development server:**
    ```bash
-   pnpm dev
+   bun dev
    ```
 
 ## Making Contributions
@@ -138,16 +138,16 @@ chore:    Maintenance tasks
 
 ```bash
 # Run linting
-pnpm lint
+bun lint
 
 # Fix lint issues
-pnpm lint:fix
+bun lint:fix
 
 # Format code
-pnpm format
+bun run format
 
 # Type checking
-pnpm typecheck
+bun run type-check
 ```
 
 ## Questions?

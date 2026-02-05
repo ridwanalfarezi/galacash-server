@@ -1,8 +1,8 @@
 # GalaCash Server
 
 > **Financial management API for class treasurers**  
-> Built with Node.js, Express, TypeScript, PostgreSQL, Redis, and GCP Cloud Storage  
-> **Last Updated:** January 19, 2026
+> Built with Bun, Express, TypeScript, PostgreSQL, Redis, and GCP Cloud Storage  
+> **Last Updated:** February 5, 2026
 
 ---
 
@@ -45,7 +45,8 @@ GalaCash is a comprehensive backend API for managing class finances. It provides
 ✅ **Auto-transactions**: Bills and approvals auto-create transactions  
 ✅ **Data Transparency**: Aggregated views across all classes in a batch
 ✅ **Payment Accounts**: Manage bank accounts and e-wallets for treasury  
-✅ **Transaction Labels**: Organize transactions with custom labels
+✅ **Transaction Labels**: Organize transactions with custom labels  
+✅ **Export Reports**: Generate Excel reports for financial summaries
 
 ---
 
@@ -53,22 +54,22 @@ GalaCash is a comprehensive backend API for managing class finances. It provides
 
 | Technology             | Purpose                                          |
 | ---------------------- | ------------------------------------------------ |
-| **Node.js 20**         | Runtime environment                              |
-| **Express.js**         | Web framework                                    |
+| **Bun 1.x**            | Runtime environment (Node.js compatible)         |
+| **Express.js 5.x**     | Web framework                                    |
 | **TypeScript**         | Type safety                                      |
-| **PostgreSQL**         | Primary database                                 |
+| **PostgreSQL 16**      | Primary database                                 |
 | **Prisma v7**          | ORM and migrations (with prisma-client provider) |
 | **@prisma/adapter-pg** | PostgreSQL adapter for Prisma                    |
 | **Redis (ioredis)**    | Caching layer                                    |
 | **JWT**                | Authentication (HS256)                           |
-| **bcrypt**             | Password hashing                                 |
 | **GCP Cloud Storage**  | File uploads                                     |
 | **Winston**            | Logging                                          |
 | **Joi**                | Input validation                                 |
 | **node-cron**          | Scheduled jobs                                   |
 | **Helmet**             | Security headers                                 |
-| **Express Rate Limit** | Rate limiting                                    |
+| **Express Rate Limit** | Rate limiting (with Redis store)                 |
 | **Swagger UI**         | API documentation                                |
+| **ExcelJS**            | Export financial reports                         |
 | **Docker**             | Containerization                                 |
 
 ---
@@ -77,14 +78,15 @@ GalaCash is a comprehensive backend API for managing class finances. It provides
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** v20 or higher ([Download](https://nodejs.org/))
-- **pnpm** v10 or higher ([Install](https://pnpm.io/installation))
+- **Bun** v1.x or higher ([Install](https://bun.sh/))
 - **Docker Desktop** ([Download](https://www.docker.com/products/docker-desktop))
 - **Git** ([Download](https://git-scm.com/))
 
 Optional:
 
 - **GCP Account** (for file uploads - can be configured later)
+
+> **Note:** This project uses **Bun** as the runtime, which is a faster alternative to Node.js with full compatibility.
 
 ---
 
@@ -100,7 +102,9 @@ cd galacash-server
 ### 2. Install dependencies
 
 ```bash
-pnpm install
+bun install
+# or using bun directly
+bun install
 ```
 
 ### 3. Start Docker services
@@ -131,29 +135,50 @@ Run migrations and seed data:
 
 ```bash
 # Generate Prisma Client
-pnpm prisma:generate
+bun prisma:generate
 
 # Run database migrations
-pnpm prisma:migrate
+bun prisma:migrate
 
 # Seed database with test data (automatic via migrations)
-pnpm prisma:migrate
+bun prisma:migrate
 ```
 
 This will create:
 
 - 2 classes (A, B)
 - 83 students (40 in A, 43 in B)
-- 1 bendahara (treasurer): Fatya Khairani R
+- 1 bendahara (treasurer): NIM 1313624000
 - Default password for all users: `12345678`
+
+### Additional Seeding Scripts
+
+Optional scripts for testing and development:
+
+```bash
+# Seed past cash bills (historical data)
+bun run seed:past-bills
+
+# Seed expense transactions
+bun run seed:expenses
+
+# Clean all data (⚠️ destroys all data)
+bun run clean:data
+```
 
 ### 6. Start development server
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 The server will start on `http://localhost:3000`
+
+Access:
+
+- **API Base:** `http://localhost:3000/api`
+- **API Docs:** `http://localhost:3000/api/docs`
+- **Health Check:** `http://localhost:3000/health`
 
 🎉 **You're ready!**
 
@@ -169,44 +194,82 @@ galacash-server/
 │   │   ├── storage.config.ts
 │   │   └── multer.config.ts
 │   ├── controllers/         # HTTP request handlers
+│   │   ├── auth.controller.ts
+│   │   ├── bendahara.controller.ts
+│   │   ├── cash-bill.controller.ts
+│   │   ├── dashboard.controller.ts
+│   │   ├── fund-application.controller.ts
+│   │   ├── labels.controller.ts
+│   │   ├── payment-account.controller.ts
+│   │   ├── transaction.controller.ts
+│   │   └── user.controller.ts
 │   ├── routes/              # API route definitions
+│   │   ├── auth.routes.ts
+│   │   ├── bendahara.routes.ts
+│   │   ├── cash-bill.routes.ts
+│   │   ├── cron.routes.ts
+│   │   ├── dashboard.routes.ts
+│   │   ├── fund-application.routes.ts
+│   │   ├── labels.routes.ts
+│   │   ├── payment-account.routes.ts
+│   │   ├── transaction.routes.ts
+│   │   └── user.routes.ts
 │   ├── services/            # Business logic layer
+│   │   ├── auth.service.ts
+│   │   ├── bendahara.service.ts
+│   │   ├── cache.service.ts
+│   │   ├── cash-bill.service.ts
+│   │   ├── export.service.ts
+│   │   ├── fund-application.service.ts
+│   │   ├── payment-account.service.ts
+│   │   ├── refresh-token.service.ts
+│   │   ├── transaction.service.ts
+│   │   └── user.service.ts
 │   ├── repositories/        # Data access layer
+│   │   ├── cash-bill.repository.ts
+│   │   ├── fund-application.repository.ts
+│   │   ├── payment-account.repository.ts
+│   │   ├── refresh-token.repository.ts
+│   │   ├── transaction.repository.ts
+│   │   └── user.repository.ts
 │   ├── middlewares/         # Express middlewares
 │   │   ├── auth.middleware.ts
+│   │   ├── rate-limit.middleware.ts
 │   │   ├── upload.middleware.ts
-│   │   ├── validator.middleware.ts
-│   │   └── index.ts
+│   │   └── validator.middleware.ts
 │   ├── validators/          # Input validation schemas
+│   │   └── schemas.ts
 │   ├── utils/               # Utilities and helpers
 │   │   ├── errors/          # Error handling & codes
 │   │   ├── logger.ts        # Winston logger
-│   │   ├── generate-tokens.ts # JWT token generation
 │   │   └── prisma-client.ts # Prisma singleton with adapter
 │   ├── types/               # TypeScript type definitions
-│   │   ├── express.d.ts
-│   │   └── index.ts
 │   ├── jobs/                # Scheduled tasks
 │   │   └── bill-generator.job.ts
+│   ├── prisma/generated/    # Auto-generated Prisma Client
+│   ├── app.ts               # Express app configuration
 │   └── index.ts             # Application entry point
-├── src/generated/prisma/    # Auto-generated Prisma Client
-│   ├── client.ts
-│   ├── browser.ts
-│   ├── enums.ts
-│   ├── commonInputTypes.ts
-│   ├── models/
-│   └── internal/
 ├── prisma/
 │   ├── schema.prisma        # Database schema (Prisma v7 format)
 │   ├── seed.ts              # Database seeding
-│   ├── migrations/          # Database migrations
-│   │   └── migration_lock.toml
-│   └── config.ts            # Prisma v7 configuration
-├── package.json
+│   └── migrations/          # Database migrations
+├── scripts/                 # Utility scripts
+│   ├── seed-past-cash-bills.ts
+│   ├── seed-expense-transactions.ts
+│   └── clean-data.ts
+├── tests/                   # Test files
 ├── docs/                    # Documentation
 │   ├── API.md              # API documentation
 │   └── DATABASE.md         # Database schema documentation
-├── openapi.yaml
+├── package.json
+├── tsconfig.json
+├── bunfig.toml              # Bun configuration
+├── Dockerfile               # Production Docker image
+├── Dockerfile.binary        # Binary build Docker image
+├── cloudbuild.yaml          # GCP Cloud Build config
+├── docker-compose.yml       # Local development services
+├── openapi.yaml             # OpenAPI 3.0 specification
+├── .env.example             # Environment variables template
 └── README.md
 ```
 
@@ -216,21 +279,32 @@ galacash-server/
 
 Key environment variables (see `.env.example` for complete list):
 
-| Variable                   | Description                  | Default                                                        |
-| -------------------------- | ---------------------------- | -------------------------------------------------------------- |
-| `DATABASE_URL`             | PostgreSQL connection string | `postgresql://galacash:galacash123@localhost:5433/galacash_db` |
-| `REDIS_URL`                | Redis connection string      | `redis://localhost:6379`                                       |
-| `JWT_SECRET`               | JWT access token secret      | _Change in production_                                         |
-| `JWT_REFRESH_SECRET`       | JWT refresh token secret     | _Change in production_                                         |
-| `GCP_PROJECT_ID`           | Google Cloud project ID      | _(Optional)_                                                   |
-| `GCP_BUCKET_NAME`          | GCS bucket name              | `galacash-bucket`                                              |
-| `BILL_GENERATION_SCHEDULE` | Cron for monthly bills       | `0 0 1 * *` (1st of each month at midnight)                    |
-| `KAS_KELAS_AMOUNT`         | Monthly class dues (IDR)     | `15000`                                                        |
-| `USE_LOCAL_CRON`           | Use node-cron (local only)   | `true`                                                         |
-| `CRON_SECRET_KEY`          | Key for Cloud Scheduler      | _Required for production_                                      |
-| `CORS_ORIGIN`              | Allowed CORS origins         | `*` (dev)                                                      |
-| `PORT`                     | Server port                  | `3000`                                                         |
-| `NODE_ENV`                 | Environment                  | `development`                                                  |
+| Variable                         | Description                        | Default/Example                                                |
+| -------------------------------- | ---------------------------------- | -------------------------------------------------------------- |
+| `NODE_ENV`                       | Environment                        | `development`                                                  |
+| `PORT`                           | Server port                        | `3000`                                                         |
+| `LOG_LEVEL`                      | Winston log level                  | `info`                                                         |
+| **Database**                     |                                    |                                                                |
+| `DATABASE_URL`                   | PostgreSQL connection string       | `postgresql://galacash:galacash123@localhost:5433/galacash_db` |
+| `POSTGRES_URL`                   | Alternative PostgreSQL URL         | Same as DATABASE_URL                                           |
+| `PRISMA_DATABASE_URL`            | Prisma Accelerate URL (production) | `prisma+postgres://...`                                        |
+| `PRISMA_CLIENT_ENGINE_TYPE`      | Prisma engine type                 | `dataproxy` (for Prisma Accelerate)                            |
+| **Redis**                        |                                    |                                                                |
+| `REDIS_URL`                      | Redis connection string            | `redis://localhost:6379`                                       |
+| **Authentication**               |                                    |                                                                |
+| `JWT_SECRET`                     | JWT access token secret            | _Generate with `openssl rand -base64 64`_                      |
+| `JWT_REFRESH_SECRET`             | JWT refresh token secret           | _Generate with `openssl rand -base64 64`_                      |
+| **GCP Cloud Storage** (Optional) |                                    |                                                                |
+| `GCP_PROJECT_ID`                 | Google Cloud project ID            | `your-gcp-project-id`                                          |
+| `GCP_BUCKET_NAME`                | GCS bucket name                    | `galacash-bucket`                                              |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to GCP service account key    | `/path/to/key.json` or leave empty                             |
+| **Scheduled Jobs**               |                                    |                                                                |
+| `BILL_GENERATION_SCHEDULE`       | Cron expression for monthly bills  | `0 0 1 * *` (1st day of month at midnight)                     |
+| `USE_LOCAL_CRON`                 | Use node-cron (local only)         | `true` (dev), `false` (production)                             |
+| `CRON_SECRET_KEY`                | Secret key for cron endpoint       | _Required for production Cloud Scheduler_                      |
+| **App Configuration**            |                                    |                                                                |
+| `KAS_KELAS_AMOUNT`               | Monthly class dues amount (IDR)    | `10000`                                                        |
+| `CORS_ORIGIN`                    | Allowed CORS origins (comma-sep)   | `http://localhost:5173,https://your-frontend.com`              |
 
 ⚠️ **Important**: Generate secure JWT secrets for production:
 
@@ -280,34 +354,50 @@ Role: user
 
 | Command                | Description                              |
 | ---------------------- | ---------------------------------------- |
-| `pnpm dev`             | Start development server with hot reload |
-| `pnpm build`           | Build for production                     |
-| `pnpm start`           | Start production server                  |
-| `pnpm lint`            | Run ESLint (flat config)                 |
-| `pnpm lint:fix`        | Fix ESLint issues                        |
-| `pnpm format`          | Format code with Prettier                |
-| `pnpm prisma:generate` | Generate Prisma Client to src/generated/ |
-| `pnpm prisma:migrate`  | Run database migrations                  |
-| `pnpm prisma:studio`   | Open Prisma Studio (interactive DB GUI)  |
+| `bun dev`              | Start development server with hot reload |
+| `bun run build`        | Build for production                     |
+| `bun run build:binary` | Build standalone binary with Bun         |
+| `bun start`            | Start production server                  |
+| `bun start:prod`       | Deploy migrations and start server       |
+| `bun lint`             | Run ESLint                               |
+| `bun lint:fix`         | Fix ESLint issues                        |
+| `bun run format`       | Format code with Prettier                |
+| `bun run type-check`   | Run TypeScript type checking             |
+| `bun run commit`       | Interactive commit with Commitizen       |
+| **Database**           |                                          |
+| `bun prisma:generate`  | Generate Prisma Client to src/prisma/    |
+| `bun prisma:migrate`   | Run database migrations (dev)            |
+| `bun prisma:deploy`    | Deploy migrations (production)           |
+| `bun prisma:studio`    | Open Prisma Studio (interactive DB GUI)  |
+| `bun seed`             | Seed database with initial data          |
+| `bun seed:past-bills`  | Seed historical cash bills               |
+| `bun seed:expenses`    | Seed expense transactions                |
+| `bun run clean:data`   | ⚠️ Clean all data from database          |
+| **Testing**            |                                          |
+| `bun test`             | Run tests with Bun                       |
+| `bun test:watch`       | Run tests in watch mode                  |
+| `bun test:up`          | Start test database services             |
+| `bun test:down`        | Stop test database services              |
+| `bun test:migrate`     | Run migrations on test database          |
 
 ### Database Management
 
 **View database with Prisma Studio:**
 
 ```bash
-pnpm prisma:studio
+bun prisma:studio
 ```
 
 **Create new migration:**
 
 ```bash
-pnpm prisma migrate dev --name your_migration_name
+bun prisma migrate dev --name your_migration_name
 ```
 
 **Reset database (⚠️ destroys all data):**
 
 ```bash
-pnpm prisma migrate reset
+bun prisma migrate reset
 ```
 
 ## 🏗️ Architecture & Design
@@ -317,10 +407,31 @@ pnpm prisma migrate reset
 The project uses **Prisma v7** with modern best practices:
 
 - **Provider**: `prisma-client` (not `prisma-client-js`)
-- **Custom Output Path**: Generated client lives in `src/generated/prisma/`
-- **Configuration**: Database URL and seed config in `prisma.config.ts` (not schema.prisma)
-- **Adapter**: Uses `@prisma/adapter-pg` for direct PostgreSQL connection
-- **Seeding**: Automatic seeding via `seed: "tsx prisma/seed.ts"` in migrations config
+- **Custom Output Path**: Generated client lives in `src/prisma/generated/`
+- **Adapter**: Uses `@prisma/adapter-pg` with direct PostgreSQL connection
+- **Accelerate**: Uses `@prisma/extension-accelerate` for production (Prisma Accelerate)
+- **Seeding**: Automatic seeding via `seed: "bun prisma/seed.ts"` in migrations config
+
+### Runtime: Bun
+
+This project uses **Bun** as the JavaScript runtime:
+
+- **Fast Execution**: Significantly faster than Node.js
+- **Built-in TypeScript**: No need for ts-node or tsx
+- **Hot Reload**: Fast development with `bun --watch`
+- **Binary Compilation**: Create standalone executables with `bun build --compile`
+- **Node.js Compatible**: Works with existing Node.js packages
+
+### Layered Architecture
+
+The codebase follows a clean layered architecture:
+
+1. **Routes** (`src/routes/`) - API endpoint definitions
+2. **Controllers** (`src/controllers/`) - Request/response handling
+3. **Services** (`src/services/`) - Business logic
+4. **Repositories** (`src/repositories/`) - Data access
+5. **Middlewares** (`src/middlewares/`) - Request processing (auth, validation, etc.)
+6. **Validators** (`src/validators/`) - Joi schemas for input validation
 
 ### Authentication Flow
 
@@ -346,7 +457,9 @@ All endpoints use Joi schema validation via `validator.middleware.ts`:
 
 ---
 
-### Docker Build
+## 🚀 Deployment
+
+### Local Docker Build
 
 Build the production image:
 
@@ -357,47 +470,84 @@ docker build -t galacash-server .
 Run the container:
 
 ```bash
-docker run -p 8080:8080 \
+docker run -p 3000:3000 \
   -e DATABASE_URL="your_production_db_url" \
   -e JWT_SECRET="your_jwt_secret" \
+  -e JWT_REFRESH_SECRET="your_refresh_secret" \
   galacash-server
 ```
 
-### Google Cloud Run
+### Google Cloud Platform
+
+The project includes Cloud Build configuration for automated deployment:
+
+#### Using Cloud Build
+
+The `cloudbuild.yaml` file automates the deployment process:
+
+1. Installs dependencies
+2. Generates Prisma client
+3. Builds a standalone binary with Bun
+4. Creates a Docker image
+5. Pushes to Artifact Registry
+6. Deploys to Cloud Run
+
+To deploy:
+
+```bash
+gcloud builds submit --config cloudbuild.yaml
+```
+
+#### Manual Cloud Run Deployment
 
 1. **Build and push image:**
 
 ```bash
 # Authenticate
-gcloud auth configure-docker
+gcloud auth configure-docker asia-southeast2-docker.pkg.dev
 
 # Build image
-docker build -t gcr.io/YOUR_PROJECT_ID/galacash-server .
+docker build -t asia-southeast2-docker.pkg.dev/YOUR_PROJECT_ID/galacash-server/galacash-server .
 
-# Push to Container Registry
-docker push gcr.io/YOUR_PROJECT_ID/galacash-server
+# Push to Artifact Registry
+docker push asia-southeast2-docker.pkg.dev/YOUR_PROJECT_ID/galacash-server/galacash-server
 ```
 
 2. **Deploy to Cloud Run:**
 
 ```bash
 gcloud run deploy galacash-server \
-  --image gcr.io/YOUR_PROJECT_ID/galacash-server \
+  --image asia-southeast2-docker.pkg.dev/YOUR_PROJECT_ID/galacash-server/galacash-server \
   --platform managed \
-  --region asia-southeast1 \
+  --region asia-southeast2 \
   --allow-unauthenticated \
-  --set-env-vars "NODE_ENV=production" \
-  --set-env-vars "DATABASE_URL=your_cloud_sql_url" \
-  --add-cloudsql-instances your_cloud_sql_instance
+  --set-env-vars "NODE_ENV=production,USE_LOCAL_CRON=false" \
+  --set-env-vars "PRISMA_CLIENT_ENGINE_TYPE=dataproxy"
 ```
 
-3. **Set secrets:**
+3. **Configure secrets:**
 
 Use Cloud Run Secret Manager for sensitive variables:
 
 - `JWT_SECRET`
 - `JWT_REFRESH_SECRET`
-- `DATABASE_URL`
+- `PRISMA_DATABASE_URL` (Prisma Accelerate URL)
+- `REDIS_URL` (Upstash or Cloud Redis)
+- `CRON_SECRET_KEY`
+- `GCP_PROJECT_ID` and `GCP_BUCKET_NAME` (for file uploads)
+
+4. **Set up Cloud Scheduler:**
+
+Create a cron job to trigger bill generation:
+
+```bash
+gcloud scheduler jobs create http generate-monthly-bills \
+  --location=asia-southeast2 \
+  --schedule="0 0 1 * *" \
+  --uri="https://your-cloud-run-url/api/cron/generate-bills" \
+  --http-method=POST \
+  --headers="X-Cron-Secret=YOUR_CRON_SECRET_KEY"
+```
 
 ---
 
@@ -427,7 +577,7 @@ docker-compose ps
 docker exec -it galacash-postgres psql -U galacash -d galacash_db
 
 # Reset database
-pnpm prisma migrate reset
+bun prisma migrate reset
 ```
 
 ### Port conflicts
@@ -455,11 +605,16 @@ To use different ports, edit `docker-compose.yml` and update `.env`.
 
 ## ✨ Project Highlights
 
-- **Type-Safe**: Full TypeScript with strict mode
-- **Documented**: Swagger UI, OpenAPI spec, and detailed README
-- **Modern Stack**: Express 5.x, Prisma v7, PostgreSQL 16
-- **Production-Ready**: Docker support, proper error handling, structured logging
-- **Developer-Friendly**: Hot reload, Prisma Studio, formatted code
+- **⚡ Fast Runtime**: Uses Bun for blazing-fast performance
+- **🔒 Type-Safe**: Full TypeScript with strict mode enabled
+- **📚 Well-Documented**: Swagger UI, OpenAPI spec, and comprehensive README
+- **🏗️ Modern Stack**: Bun, Express 5.x, Prisma v7, PostgreSQL 16
+- **🛡️ Production-Ready**: Docker support, error handling, structured logging, rate limiting
+- **👨‍💻 Developer-Friendly**: Hot reload, Prisma Studio, formatted code, Git hooks
+- **🧪 Testing**: Bun test runner with test database setup
+- **📦 Binary Compilation**: Can be built as a standalone executable
+- **☁️ Cloud-Native**: Configured for Google Cloud Run deployment
+- **♻️ Clean Architecture**: Layered design with clear separation of concerns
 
 ---
 
@@ -467,15 +622,17 @@ To use different ports, edit `docker-compose.yml` and update `.env`.
 
 We follow **Conventional Commits** and ensure code quality via Husky hooks.
 
-### Commit Workflow
+### Development Workflow
 
-Instead of `git commit`, use the following command to start an interactive commit prompt:
-
-```bash
-pnpm run commit
-```
-
-This ensures your commit messages follow the standard: `<type>(<scope>): <subject>`.
+1. **Fork and clone** the repository
+2. **Create a feature branch**: `git checkout -b feature/your-feature`
+3. **Make your changes** and test thoroughly
+4. **Commit using Commitizen**:
+   ```bash
+   bun run commit
+   ```
+   This ensures your commit messages follow the standard: `<type>(<scope>): <subject>`.
+5. **Push and create a Pull Request**
 
 ### Pre-commit Checks
 
@@ -484,13 +641,13 @@ Before committing, the following checks run automatically:
 1.  **Lint-staged**: Runs `eslint` and `prettier` on staged files.
 2.  **Type-check**: Runs `tsc --noEmit` to ensure type safety.
 
-Please see our [Contributing Guide](../CONTRIBUTING.md) for more details.
+Please see our [Contributing Guide](./CONTRIBUTING.md) for more details.
 
 ---
 
 ## 📝 License
 
-MIT License - see [LICENSE](../LICENSE)
+ISC License - see [LICENSE](./LICENSE)
 
 ---
 
