@@ -66,7 +66,8 @@ export const createFundApplicationSchema = Joi.object({
 });
 
 export const rejectFundApplicationSchema = Joi.object({
-  rejectionReason: Joi.string().required().messages({
+  rejectionReason: Joi.string().trim().min(1).required().messages({
+    "string.min": "Alasan penolakan tidak boleh kosong",
     "any.required": "Alasan penolakan wajib diisi",
   }),
 });
