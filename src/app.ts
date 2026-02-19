@@ -44,6 +44,11 @@ app.use(
 
 /**
  * CORS configuration
+ *
+ * Since frontend uses proxy/rewrite for /api endpoints:
+ * - Browser sees requests as same-origin
+ * - CORS is primarily needed for direct API access (mobile apps, external tools)
+ * - In production, only explicitly allowed origins should be permitted
  */
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:3000")
   .split(",")
@@ -52,10 +57,12 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http:/
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+      // Allow requests with no origin (like mobile apps, curl, or same-origin via proxy)
+      if (!origin) {
+        return callback(null, true);
+      }
 
-      if (allowedOrigins.includes(origin) || process.env.NODE_ENV === "development") {
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error("CORS not allowed"));

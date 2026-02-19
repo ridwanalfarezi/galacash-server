@@ -19,6 +19,7 @@ export interface LoginResponse {
 
 export interface RefreshTokenResponse {
   accessToken: string;
+  refreshToken: string;
 }
 
 /**
@@ -80,7 +81,11 @@ export class AuthService {
 
   /**
    * Refresh access token using refresh token
-   * Verifies refresh token and generates new access token
+   * Implements refresh token rotation for enhanced security
+   * - Verifies the refresh token
+   * - Deletes the old refresh token (rotation)
+   * - Generates new access token and refresh token
+   * - Stores the new refresh token
    */
   async refresh(refreshToken: string): Promise<RefreshTokenResponse> {
     // Verify refresh token signature
@@ -98,7 +103,10 @@ export class AuthService {
 
     const user = storedToken.user;
 
-    // Generate new access token
+    // Delete the old refresh token (rotation)
+    await deleteRefreshToken(refreshToken);
+
+    // Generate new tokens
     const accessToken = generateAccessToken({
       id: user.id,
       nim: user.nim,
@@ -107,7 +115,12 @@ export class AuthService {
       classId: user.classId,
     });
 
-    return { accessToken };
+    const newRefreshToken = generateRefreshToken();
+
+    // Store new refresh token in database
+    await storeRefreshToken(user.id, newRefreshToken);
+
+    return { accessToken, refreshToken: newRefreshToken };
   }
 
   /**

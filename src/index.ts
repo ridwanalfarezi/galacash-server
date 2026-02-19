@@ -1,5 +1,6 @@
 import app from "@/app";
 import { connectRedis, disconnectRedis } from "@/config/redis.config";
+import { validateEnvironment } from "@/config/env.validation";
 import { initializeBillGenerator } from "@/jobs/bill-generator.job";
 import { logger } from "@/utils/logger";
 import { disconnectPrisma } from "@/utils/prisma-client";
@@ -13,6 +14,10 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 async function startServer() {
   try {
     logger.info("⏳ [STARTUP] Initializing GalaCash server...");
+
+    // Validate critical environment variables first
+    validateEnvironment();
+
     logger.info(`[STARTUP] Node version: ${process.version}`);
     logger.info(`[STARTUP] Environment: ${NODE_ENV}`);
     logger.info(`[STARTUP] Port: ${PORT}`);

@@ -43,6 +43,7 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
 /**
  * Refresh access token
  * POST /api/auth/refresh
+ * Implements refresh token rotation - returns new access and refresh tokens
  */
 export const refresh = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   // Read refresh token from cookie instead of body
@@ -61,12 +62,17 @@ export const refresh = asyncHandler(async (req: Request, res: Response): Promise
 
   const result = await authService.refresh(refreshToken);
 
-  // Set new access token cookie with environment-aware options
+  // Set new tokens in cookies with environment-aware options
   const cookieOptions = getCookieOptions();
 
   res.cookie("accessToken", result.accessToken, {
     ...cookieOptions,
     maxAge: 60 * 60 * 1000, // 1 hour
+  });
+
+  res.cookie("refreshToken", result.refreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   res.status(200).json({
