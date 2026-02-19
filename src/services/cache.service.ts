@@ -1,4 +1,4 @@
-import { safeRedisDel, safeRedisGet, safeRedisSet } from "@/config/redis.config";
+import { safeRedisDel, safeRedisExists, safeRedisGet, safeRedisSet } from "@/config/redis.config";
 import { logger } from "@/utils/logger";
 
 const DEFAULT_TTL = 3600; // 1 hour
@@ -47,6 +47,10 @@ export class CacheService {
 
   dashboardKey(userId: string, filters: string): string {
     return `dashboard:${userId}:${filters}`;
+  }
+
+  tokenBlacklistKey(token: string): string {
+    return `token:blacklist:${token}`;
   }
 
   // ============ CACHE OPERATIONS ============
@@ -117,6 +121,18 @@ export class CacheService {
 
   async invalidateDashboard(userId: string): Promise<void> {
     await this.invalidateCache(`dashboard:${userId}*`);
+  }
+
+  // ============ TOKEN BLACKLIST OPERATIONS ============
+
+  async addToTokenBlacklist(token: string, ttlSeconds: number): Promise<void> {
+    const key = this.tokenBlacklistKey(token);
+    await this.setCached(key, "1", ttlSeconds);
+  }
+
+  async isTokenBlacklisted(token: string): Promise<boolean> {
+    const key = this.tokenBlacklistKey(token);
+    return safeRedisExists(key);
   }
 }
 

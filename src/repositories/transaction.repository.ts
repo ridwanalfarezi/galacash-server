@@ -39,6 +39,16 @@ export interface ChartDataPoint {
   amount: number;
 }
 
+interface ChartDataQueryResult {
+  date: Date;
+  total: bigint;
+}
+
+interface BreakdownQueryResult {
+  category: string | null;
+  total: bigint;
+}
+
 export class TransactionRepository {
   /**
    * Find transaction by ID
@@ -189,6 +199,7 @@ export class TransactionRepository {
 
   /**
    * Get chart data for transactions (across all classes)
+   * Uses SQL aggregation for efficient grouping
    */
   async getChartData(
     type: "income" | "expense",
@@ -196,44 +207,19 @@ export class TransactionRepository {
     endDate?: Date
   ): Promise<ChartDataPoint[]> {
     try {
-      const where: Prisma.TransactionWhereInput = {
-        type,
-      };
+      const results = await prisma.$queryRaw<ChartDataQueryResult[]>`
+        SELECT DATE(date) as date, SUM(amount) as total
+        FROM "Transaction"
+        WHERE type = ${type}
+        ${startDate ? Prisma.sql`AND date >= ${startDate}` : Prisma.empty}
+        ${endDate ? Prisma.sql`AND date <= ${endDate}` : Prisma.empty}
+        GROUP BY DATE(date)
+        ORDER BY date ASC
+      `;
 
-      if (startDate || endDate) {
-        where.date = {};
-        if (startDate) {
-          where.date.gte = startDate;
-        }
-        if (endDate) {
-          where.date.lte = endDate;
-        }
-      }
-
-      const transactions = await prisma.transaction.findMany({
-        where,
-        select: {
-          date: true,
-          amount: true,
-        },
-        orderBy: { date: "asc" },
-      });
-
-      // Group by date and sum amounts
-      const groupedData: Map<string, number> = new Map();
-
-      transactions.forEach((tx: Transaction) => {
-        // Use Jakarta timezone for grouping
-        const dateStr = new Date(tx.date).toLocaleDateString("en-CA", {
-          timeZone: "Asia/Jakarta",
-        });
-        const current = groupedData.get(dateStr) || 0;
-        groupedData.set(dateStr, current + Number(tx.amount));
-      });
-
-      return Array.from(groupedData.entries()).map(([date, amount]) => ({
-        date,
-        amount,
+      return results.map((row: ChartDataQueryResult) => ({
+        date: row.date.toISOString().split("T")[0],
+        amount: Number(row.total),
       }));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -245,6 +231,7 @@ export class TransactionRepository {
 
   /**
    * Get transaction breakdown by category (across all classes)
+   * Uses SQL aggregation for efficient grouping
    * Returns data formatted for pie charts: { name, value, fill }
    */
   async getBreakdown(
@@ -253,37 +240,14 @@ export class TransactionRepository {
     endDate?: Date
   ): Promise<Array<{ name: string; value: number; fill: string }>> {
     try {
-      const where: Prisma.TransactionWhereInput = {
-        type,
-      };
-
-      if (startDate || endDate) {
-        where.date = {};
-        if (startDate) {
-          where.date.gte = startDate;
-        }
-        if (endDate) {
-          where.date.lte = endDate;
-        }
-      }
-
-      const transactions = await prisma.transaction.findMany({
-        where,
-        select: {
-          category: true,
-          amount: true,
-        },
-      });
-
-      // Group by category and sum amounts
-      const categoryMap: Map<string, number> = new Map();
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      transactions.forEach((tx: any) => {
-        const category = tx.category || "other";
-        const current = categoryMap.get(category) || 0;
-        categoryMap.set(category, current + Number(tx.amount));
-      });
+      const results = await prisma.$queryRaw<BreakdownQueryResult[]>`
+        SELECT category, SUM(amount) as total
+        FROM "Transaction"
+        WHERE type = ${type}
+        ${startDate ? Prisma.sql`AND date >= ${startDate}` : Prisma.empty}
+        ${endDate ? Prisma.sql`AND date <= ${endDate}` : Prisma.empty}
+        GROUP BY category
+      `;
 
       // Color palettes
       const incomeColors = [
@@ -310,9 +274,9 @@ export class TransactionRepository {
       const colors = type === "income" ? incomeColors : expenseColors;
 
       // Convert to array and add colors
-      const breakdown = Array.from(categoryMap.entries()).map(([category, value], index) => ({
-        name: this.formatCategoryName(category),
-        value,
+      const breakdown = results.map((row: BreakdownQueryResult, index: number) => ({
+        name: this.formatCategoryName(row.category || "other"),
+        value: Number(row.total),
         fill: colors[index % colors.length],
       }));
 

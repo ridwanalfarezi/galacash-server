@@ -1,9 +1,11 @@
+import { CacheService } from "@/services/cache.service";
 import { AuthenticationError, AuthorizationError } from "@/utils/errors";
 import { AccessTokenPayload } from "@/utils/generate-tokens";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET!;
+const cacheService = new CacheService();
 
 /**
  * Authenticate middleware - verifies JWT access token from cookie or Authorization header
@@ -27,6 +29,11 @@ export const authenticate = async (
     if (!token) {
       const error = new AuthenticationError("No token provided", "UNAUTHORIZED");
       throw error;
+    }
+
+    const isBlacklisted = await cacheService.isTokenBlacklisted(token);
+    if (isBlacklisted) {
+      throw new AuthenticationError("Token has been invalidated", "TOKEN_INVALIDATED");
     }
 
     // Verify token

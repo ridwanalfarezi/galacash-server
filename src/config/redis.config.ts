@@ -101,6 +101,24 @@ export async function safeRedisSet(key: string, value: string, ttl: number = 360
 }
 
 /**
+ * Safe Redis EXISTS with fallback
+ * Returns true if key exists, false otherwise
+ */
+export async function safeRedisExists(key: string): Promise<boolean> {
+  if (!isRedisAvailable || !redisClient) {
+    return false;
+  }
+
+  try {
+    const result = await redisClient.exists(key);
+    return result === 1;
+  } catch (error) {
+    logger.error("Redis EXISTS error:", error);
+    return false;
+  }
+}
+
+/**
  * Safe Redis DEL with pattern support
  */
 export async function safeRedisDel(pattern: string): Promise<void> {

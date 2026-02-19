@@ -1,7 +1,11 @@
 import { authService, refreshTokenService } from "@/services";
+import { CacheService } from "@/services/cache.service";
 import { getCookieOptions } from "@/utils/cookie-options";
 import { asyncHandler } from "@/utils/errors";
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
+
+const cacheService = new CacheService();
 
 /**
  * Login user
@@ -77,6 +81,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response): Promise
  */
 export const logout = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.sub;
+  const accessToken = req.cookies?.accessToken;
 
   if (!userId) {
     res.status(401).json({
@@ -90,6 +95,21 @@ export const logout = asyncHandler(async (req: Request, res: Response): Promise<
   }
 
   await refreshTokenService.deleteAllByUserId(userId);
+
+  if (accessToken) {
+    try {
+      const decoded = jwt.decode(accessToken) as jwt.JwtPayload;
+      if (decoded?.exp) {
+        const now = Math.floor(Date.now() / 1000);
+        const remainingTtl = decoded.exp - now;
+        if (remainingTtl > 0) {
+          await cacheService.addToTokenBlacklist(accessToken, remainingTtl);
+        }
+      }
+    } catch {
+      // Silently fail - token may already be invalid
+    }
+  }
 
   // Clear cookies with environment-aware options
   const cookieOptions = getCookieOptions();
