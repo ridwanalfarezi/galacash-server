@@ -1,7 +1,7 @@
-import { User } from "@/prisma/generated/client";
-import { userRepository } from "@/repositories/user.repository";
-import { AuthenticationError, NotFoundError } from "@/utils/errors";
-import { CacheService } from "./cache.service";
+import { User } from '@/prisma/generated/client';
+import { userRepository } from '@/repositories/user.repository';
+import { AuthenticationError, NotFoundError } from '@/utils/errors';
+import { CacheService } from './cache.service';
 
 export interface UpdateProfileData {
   name?: string;
@@ -16,7 +16,7 @@ export interface GetStudentsFilters {
 }
 
 // Type for sanitized user response (without password)
-export type SafeUser = Omit<User, "password">;
+export type SafeUser = Omit<User, 'password'>;
 
 /**
  * User service for handling user profile operations
@@ -32,8 +32,7 @@ export class UserService {
    * Remove sensitive fields from user object
    */
   private sanitizeUser(user: User): SafeUser {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...safeUser } = user;
+    const { password: _password, ...safeUser } = user;
     return safeUser;
   }
 
@@ -43,7 +42,7 @@ export class UserService {
   async getProfile(userId: string): Promise<SafeUser> {
     const user = await userRepository.findById(userId);
     if (!user) {
-      throw new NotFoundError("User not found", "User");
+      throw new NotFoundError('User not found', 'User');
     }
 
     // Map class name to className field
@@ -70,7 +69,7 @@ export class UserService {
   async updateProfile(userId: string, data: UpdateProfileData): Promise<SafeUser> {
     const user = await userRepository.findById(userId);
     if (!user) {
-      throw new NotFoundError("User not found", "User");
+      throw new NotFoundError('User not found', 'User');
     }
 
     // Update user profile
@@ -97,18 +96,18 @@ export class UserService {
   async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
     const user = await userRepository.findById(userId);
     if (!user) {
-      throw new NotFoundError("User not found", "User");
+      throw new NotFoundError('User not found', 'User');
     }
 
     // Verify old password
     const isOldPasswordValid = await Bun.password.verify(oldPassword, user.password);
     if (!isOldPasswordValid) {
-      throw new AuthenticationError("Old password is incorrect");
+      throw new AuthenticationError('Old password is incorrect');
     }
 
     // Hash new password
     const hashedPassword = await Bun.password.hash(newPassword, {
-      algorithm: "bcrypt",
+      algorithm: 'bcrypt',
       cost: 10,
     });
 
@@ -128,7 +127,7 @@ export class UserService {
   async uploadAvatar(userId: string, fileUrl: string): Promise<SafeUser> {
     const user = await userRepository.findById(userId);
     if (!user) {
-      throw new NotFoundError("User not found", "User");
+      throw new NotFoundError('User not found', 'User');
     }
 
     const updatedUser = await userRepository.update(userId, {
@@ -143,7 +142,7 @@ export class UserService {
 
   async getStudents(filters: GetStudentsFilters) {
     const studentsResponse = await userRepository.findAll({
-      role: "user",
+      role: 'user',
       classId: filters.classId,
       page: filters.page,
       limit: filters.limit,
@@ -162,7 +161,7 @@ export class UserService {
    */
   async getClassmates(classId: string): Promise<Array<{ id: string; name: string; nim: string }>> {
     const students = await userRepository.findAll({
-      role: "user",
+      role: 'user',
       classId,
       page: 1,
       limit: 1000, // Get all students

@@ -1,15 +1,15 @@
-import { User } from "@/prisma/generated/client";
-import { RefreshTokenRepository } from "@/repositories/refresh-token.repository";
-import { userRepository } from "@/repositories/user.repository";
-import { AuthenticationError, NotFoundError } from "@/utils/errors";
+import { User } from '@/prisma/generated/client';
+import { RefreshTokenRepository } from '@/repositories/refresh-token.repository';
+import { userRepository } from '@/repositories/user.repository';
+import { AuthenticationError, NotFoundError } from '@/utils/errors';
 import {
   deleteRefreshToken,
   generateAccessToken,
   generateRefreshToken,
   storeRefreshToken,
   verifyRefreshToken,
-} from "@/utils/generate-tokens";
-import { CacheService } from "./cache.service";
+} from '@/utils/generate-tokens';
+import { CacheService } from './cache.service';
 
 export interface LoginResponse {
   user: User;
@@ -42,13 +42,13 @@ export class AuthService {
     // Find user by NIM
     const user = await userRepository.findByNim(nim);
     if (!user) {
-      throw new AuthenticationError("Invalid NIM or password");
+      throw new AuthenticationError('Invalid NIM or password');
     }
 
     // Verify password
     const isPasswordValid = await Bun.password.verify(password, user.password);
     if (!isPasswordValid) {
-      throw new AuthenticationError("Invalid NIM or password");
+      throw new AuthenticationError('Invalid NIM or password');
     }
 
     // Generate tokens
@@ -56,7 +56,7 @@ export class AuthService {
       id: user.id,
       nim: user.nim,
       name: user.name,
-      role: user.role as "user" | "bendahara",
+      role: user.role as 'user' | 'bendahara',
       classId: user.classId,
     });
 
@@ -69,8 +69,7 @@ export class AuthService {
     await this.cacheService.setCached(this.cacheService.userKey(user.id), user);
 
     // Remove password from response
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
 
     return {
       user: userWithoutPassword as User,
@@ -92,13 +91,13 @@ export class AuthService {
     try {
       verifyRefreshToken(refreshToken);
     } catch {
-      throw new AuthenticationError("Invalid or expired refresh token");
+      throw new AuthenticationError('Invalid or expired refresh token');
     }
 
     // Find refresh token in database
     const storedToken = await this.refreshTokenRepository.findByToken(refreshToken);
     if (!storedToken) {
-      throw new AuthenticationError("Refresh token not found or expired");
+      throw new AuthenticationError('Refresh token not found or expired');
     }
 
     const user = storedToken.user;
@@ -111,7 +110,7 @@ export class AuthService {
       id: user.id,
       nim: user.nim,
       name: user.name,
-      role: user.role as "user" | "bendahara",
+      role: user.role as 'user' | 'bendahara',
       classId: user.classId,
     });
 
@@ -145,7 +144,7 @@ export class AuthService {
     // Get from database
     const user = await userRepository.findById(userId);
     if (!user) {
-      throw new NotFoundError("User not found", "User");
+      throw new NotFoundError('User not found', 'User');
     }
 
     // Cache for future requests

@@ -156,4 +156,48 @@ Feel free to open an issue for any questions or concerns.
 
 ---
 
+## 🔒 Security Architecture
+
+Understanding the security decisions made in this project is important for contributors.
+
+### Authentication & Tokens
+
+| Mechanism          | Details                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| **Access Token**   | JWT (HS256), 1-hour expiry, contains `id`, `nim`, `name`, `role`, `classId`        |
+| **Refresh Token**  | Opaque JWT, 7-day expiry, stored in DB (`RefreshToken` table)                      |
+| **Token Rotation** | On every `/auth/refresh`, the old refresh token is deleted and a new one is issued |
+| **Logout**         | Deletes the refresh token from the database, immediately invalidating the session  |
+
+### Cookie & CORS Policy
+
+- **SameSite**: `lax` — prevents CSRF while allowing top-level navigation
+- **CORS Origins**: Configured via `CORS_ORIGIN` env variable (comma-separated). Only explicitly listed origins are allowed
+- **Credentials**: Enabled for cookie-based auth (`credentials: true`)
+
+### Rate Limiting
+
+- Global rate limit applied via `express-rate-limit` with Redis store
+- Prevents brute-force login attempts and API abuse
+- Configurable via environment variables
+
+### Password Handling
+
+- Passwords hashed with **bcrypt** (cost factor 10) via `Bun.password.hash`
+- Raw passwords are never stored, logged, or returned in API responses
+- Password fields are always destructured out before sending user objects
+
+### Input Validation
+
+- All endpoints validated with **Joi** schemas via `validator.middleware.ts`
+- Validates body, params, and query parameters
+- Returns structured 400 errors with field-level detail
+
+### Security Headers
+
+- **Helmet.js** configured for security-related HTTP headers
+- Includes Content-Security-Policy, X-Frame-Options, etc.
+
+---
+
 Thank you for contributing! 🎉

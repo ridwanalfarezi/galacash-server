@@ -1,38 +1,41 @@
-import tsPlugin from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
 
 export default [
   {
     ignores: [
-      "node_modules/",
-      "dist/",
-      ".pnpm-store/",
-      "**/*.d.ts",
-      "logs/",
-      "prisma/",
-      "src/generated/",
+      'node_modules/',
+      'dist/',
+      '.pnpm-store/',
+      '**/*.d.ts',
+      'logs/',
+      'prisma/',
+      'src/generated/',
     ],
   },
   {
-    files: ["src/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts"],
+    files: ['src/**/*.ts', 'tests/**/*.ts', 'scripts/**/*.ts'],
     languageOptions: {
       ecmaVersion: 2022,
-      sourceType: "module",
+      sourceType: 'module',
       parser: tsParser,
       parserOptions: {
         ecmaFeatures: {
           jsx: false,
         },
-        project: "./tsconfig.eslint.json",
+        project: './tsconfig.eslint.json',
       },
     },
     plugins: {
-      "@typescript-eslint": tsPlugin,
+      '@typescript-eslint': tsPlugin,
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' },
+      ],
     },
   },
 ];

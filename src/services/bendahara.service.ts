@@ -5,19 +5,19 @@ import {
   Transaction,
   TransactionCategory,
   User,
-} from "@/prisma/generated/client";
+} from '@/prisma/generated/client';
 import {
   PaginatedResponse as BillPaginatedResponse,
   CashBillFilters,
   cashBillRepository,
-} from "@/repositories/cash-bill.repository";
-import { fundApplicationRepository } from "@/repositories/fund-application.repository";
-import { transactionRepository } from "@/repositories/transaction.repository";
-import { userRepository } from "@/repositories/user.repository";
-import { BusinessLogicError, NotFoundError } from "@/utils/errors";
-import { logger } from "@/utils/logger";
-import { prisma } from "@/utils/prisma-client";
-import { CacheService } from "./cache.service";
+} from '@/repositories/cash-bill.repository';
+import { fundApplicationRepository } from '@/repositories/fund-application.repository';
+import { transactionRepository } from '@/repositories/transaction.repository';
+import { userRepository } from '@/repositories/user.repository';
+import { BusinessLogicError, NotFoundError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { prisma } from '@/utils/prisma-client';
+import { CacheService } from './cache.service';
 
 export interface DashboardData {
   pendingFundApplications: number;
@@ -43,7 +43,7 @@ export interface RekapKasData {
     nim: string;
     totalPaid: number;
     totalUnpaid: number;
-    paymentStatus: "up-to-date" | "has-arrears";
+    paymentStatus: 'up-to-date' | 'has-arrears';
     bills: Array<{
       month: number;
       year: number;
@@ -106,8 +106,8 @@ export class BendaharaService {
    */
   async getDashboard(classId?: string, startDate?: Date, endDate?: Date): Promise<DashboardData> {
     // Generate cache key
-    const classKey = classId || "all";
-    const cacheKey = `bendahara-dashboard:${classKey}:${startDate?.toISOString() || "all"}:${endDate?.toISOString() || "all"}`;
+    const classKey = classId || 'all';
+    const cacheKey = `bendahara-dashboard:${classKey}:${startDate?.toISOString() || 'all'}:${endDate?.toISOString() || 'all'}`;
     const cached = await this.cacheService.getCached<DashboardData>(cacheKey);
     if (cached) {
       return cached;
@@ -129,11 +129,11 @@ export class BendaharaService {
       // 1. Get Financial Summary (Income/Expense/Balance) for the period
       const [incomeAgg, expenseAgg] = await Promise.all([
         prisma.transaction.aggregate({
-          where: { ...baseFilter, type: "income", ...dateFilter },
+          where: { ...baseFilter, type: 'income', ...dateFilter },
           _sum: { amount: true },
         }),
         prisma.transaction.aggregate({
-          where: { ...baseFilter, type: "expense", ...dateFilter },
+          where: { ...baseFilter, type: 'expense', ...dateFilter },
           _sum: { amount: true },
         }),
       ]);
@@ -145,37 +145,37 @@ export class BendaharaService {
       const recentTransactions = await prisma.transaction.findMany({
         where: { ...baseFilter, ...dateFilter },
         take: this.PAGINATION.DASHBOARD_TRANSACTIONS,
-        orderBy: { date: "desc" },
+        orderBy: { date: 'desc' },
       });
 
       // 3. Get Pending Counts (Always current, not filtered by date)
       const pendingApplicationsCount = await prisma.fundApplication.count({
-        where: { ...baseFilter, status: "pending" },
+        where: { ...baseFilter, status: 'pending' },
       });
 
       const pendingPaymentsCount = await prisma.cashBill.count({
-        where: { ...baseFilter, status: "menunggu_konfirmasi" },
+        where: { ...baseFilter, status: 'menunggu_konfirmasi' },
       });
 
       // 4. Get recent lists (Fund Apps & Bills) - Unaffected by date filter usually
       const recentFundApplications = await prisma.fundApplication.findMany({
-        where: { ...baseFilter, status: "pending" },
+        where: { ...baseFilter, status: 'pending' },
         take: this.PAGINATION.DASHBOARD_ITEMS,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: { user: true },
       });
 
       const recentCashBills = await prisma.cashBill.findMany({
-        where: { ...baseFilter, status: "menunggu_konfirmasi" },
+        where: { ...baseFilter, status: 'menunggu_konfirmasi' },
         take: this.PAGINATION.DASHBOARD_ITEMS,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: { user: true },
       });
 
       // 5. Students count
       // For global view, we count 'user' role across the board
       const studentsCount = await prisma.user.count({
-        where: { ...baseFilter, role: "user" },
+        where: { ...baseFilter, role: 'user' },
       });
 
       const dashboardData: DashboardData = {
@@ -205,7 +205,7 @@ export class BendaharaService {
 
       return dashboardData;
     } catch (error) {
-      logger.error("Failed to fetch bendahara dashboard:", error);
+      logger.error('Failed to fetch bendahara dashboard:', error);
       throw error;
     }
   }
@@ -225,11 +225,11 @@ export class BendaharaService {
         });
 
         if (!application) {
-          throw new NotFoundError("Fund application not found", "FundApplication");
+          throw new NotFoundError('Fund application not found', 'FundApplication');
         }
 
         // Check if already reviewed
-        if (application.status !== "pending") {
+        if (application.status !== 'pending') {
           throw new BusinessLogicError(
             `Cannot approve application with status '${application.status}'. Only pending applications can be approved.`
           );
@@ -239,7 +239,7 @@ export class BendaharaService {
         const updated = await tx.fundApplication.update({
           where: { id: applicationId },
           data: {
-            status: "approved",
+            status: 'approved',
             reviewer: {
               connect: { id: bendaharaId },
             },
@@ -257,7 +257,7 @@ export class BendaharaService {
             class: {
               connect: { id: application.classId },
             },
-            type: "expense",
+            type: 'expense',
             category: this.mapFundCategoryToTransactionCategory(application.category),
             description: `Fund approval: ${application.purpose}`,
             amount: application.amount,
@@ -278,7 +278,7 @@ export class BendaharaService {
       if (error instanceof NotFoundError || error instanceof BusinessLogicError) {
         throw error;
       }
-      logger.error("Failed to approve fund application:", error);
+      logger.error('Failed to approve fund application:', error);
       throw error;
     }
   }
@@ -296,11 +296,11 @@ export class BendaharaService {
       const application = await this.fundApplicationRepository.findById(applicationId);
 
       if (!application) {
-        throw new NotFoundError("Fund application not found", "FundApplication");
+        throw new NotFoundError('Fund application not found', 'FundApplication');
       }
 
       // Check if already reviewed
-      if (application.status !== "pending") {
+      if (application.status !== 'pending') {
         throw new BusinessLogicError(
           `Cannot reject application with status '${application.status}'. Only pending applications can be rejected.`
         );
@@ -308,7 +308,7 @@ export class BendaharaService {
 
       // Update application status
       const updatedApplication = await this.fundApplicationRepository.update(applicationId, {
-        status: "rejected",
+        status: 'rejected',
         reviewer: {
           connect: { id: bendaharaId },
         },
@@ -328,7 +328,7 @@ export class BendaharaService {
       if (error instanceof NotFoundError || error instanceof BusinessLogicError) {
         throw error;
       }
-      logger.error("Failed to reject fund application:", error);
+      logger.error('Failed to reject fund application:', error);
       throw error;
     }
   }
@@ -374,7 +374,7 @@ export class BendaharaService {
 
       return result;
     } catch (error) {
-      logger.error("Failed to fetch cash bills for bendahara:", error);
+      logger.error('Failed to fetch cash bills for bendahara:', error);
       throw error;
     }
   }
@@ -392,11 +392,11 @@ export class BendaharaService {
         });
 
         if (!bill) {
-          throw new NotFoundError("Cash bill not found", "CashBill");
+          throw new NotFoundError('Cash bill not found', 'CashBill');
         }
 
         // Check if payment is waiting for confirmation
-        if (bill.status !== "menunggu_konfirmasi") {
+        if (bill.status !== 'menunggu_konfirmasi') {
           throw new BusinessLogicError(
             `Cannot confirm bill with status '${bill.status}'. Only bills waiting for confirmation can be confirmed.`
           );
@@ -406,10 +406,10 @@ export class BendaharaService {
         const updateResult = await tx.cashBill.updateMany({
           where: {
             id: billId,
-            status: "menunggu_konfirmasi", // Ensure status is still pending
+            status: 'menunggu_konfirmasi', // Ensure status is still pending
           },
           data: {
-            status: "sudah_dibayar",
+            status: 'sudah_dibayar',
             confirmedBy: bendaharaId,
             confirmedAt: new Date(),
           },
@@ -418,7 +418,7 @@ export class BendaharaService {
         // Check if update actually happened (race condition check)
         if (updateResult.count === 0) {
           throw new BusinessLogicError(
-            "Bill status changed during confirmation. Please try again."
+            'Bill status changed during confirmation. Please try again.'
           );
         }
 
@@ -429,20 +429,20 @@ export class BendaharaService {
         }
 
         const monthNames = [
-          "Januari",
-          "Februari",
-          "Maret",
-          "April",
-          "Mei",
-          "Juni",
-          "Juli",
-          "Agustus",
-          "September",
-          "Oktober",
-          "November",
-          "Desember",
+          'Januari',
+          'Februari',
+          'Maret',
+          'April',
+          'Mei',
+          'Juni',
+          'Juli',
+          'Agustus',
+          'September',
+          'Oktober',
+          'November',
+          'Desember',
         ];
-        const monthName = monthNames[bill.month - 1] || "Unknown";
+        const monthName = monthNames[bill.month - 1] || 'Unknown';
 
         const description = bill.user
           ? `Kas-${monthName} ${bill.year}: ${bill.user.name}`
@@ -454,8 +454,8 @@ export class BendaharaService {
             class: {
               connect: { id: bill.classId },
             },
-            type: "income",
-            category: "kas_kelas" as TransactionCategory,
+            type: 'income',
+            category: 'kas_kelas' as TransactionCategory,
             description: description,
             amount: bill.totalAmount,
             date: new Date(),
@@ -486,7 +486,7 @@ export class BendaharaService {
       if (error instanceof NotFoundError || error instanceof BusinessLogicError) {
         throw error;
       }
-      logger.error("Failed to confirm bill payment:", error);
+      logger.error('Failed to confirm bill payment:', error);
       throw error;
     }
   }
@@ -500,11 +500,11 @@ export class BendaharaService {
       const bill = await this.cashBillRepository.findById(billId);
 
       if (!bill) {
-        throw new NotFoundError("Cash bill not found", "CashBill");
+        throw new NotFoundError('Cash bill not found', 'CashBill');
       }
 
       // Check if payment is waiting for confirmation
-      if (bill.status !== "menunggu_konfirmasi") {
+      if (bill.status !== 'menunggu_konfirmasi') {
         throw new BusinessLogicError(
           `Cannot reject bill with status '${bill.status}'. Only bills waiting for confirmation can be rejected.`
         );
@@ -512,7 +512,7 @@ export class BendaharaService {
 
       // Revert to belum_dibayar and clear payment info
       const updatedBill = await this.cashBillRepository.update(billId, {
-        status: "belum_dibayar",
+        status: 'belum_dibayar',
         paymentMethod: null,
         paymentProofUrl: null,
         paidAt: null,
@@ -521,14 +521,14 @@ export class BendaharaService {
       // Invalidate caches
       await this.invalidateBendaharaCaches();
 
-      logger.info(`Bill payment rejected: ${billId}${reason ? ` with reason: ${reason}` : ""}`);
+      logger.info(`Bill payment rejected: ${billId}${reason ? ` with reason: ${reason}` : ''}`);
 
       return updatedBill;
     } catch (error) {
       if (error instanceof NotFoundError || error instanceof BusinessLogicError) {
         throw error;
       }
-      logger.error("Failed to reject bill payment:", error);
+      logger.error('Failed to reject bill payment:', error);
       throw error;
     }
   }
@@ -548,7 +548,7 @@ export class BendaharaService {
     }));
 
     student.cashBills.forEach((bill) => {
-      if (bill.status === "sudah_dibayar") {
+      if (bill.status === 'sudah_dibayar') {
         totalPaid += Number(bill.totalAmount);
       } else {
         totalUnpaid += Number(bill.totalAmount);
@@ -561,9 +561,9 @@ export class BendaharaService {
       nim: student.nim,
       totalPaid,
       totalUnpaid,
-      paymentStatus: (totalUnpaid === 0 ? "up-to-date" : "has-arrears") as
-        | "up-to-date"
-        | "has-arrears",
+      paymentStatus: (totalUnpaid === 0 ? 'up-to-date' : 'has-arrears') as
+        | 'up-to-date'
+        | 'has-arrears',
       bills,
     };
   }
@@ -580,7 +580,7 @@ export class BendaharaService {
       search?: string;
       page?: number;
       limit?: number;
-      paymentStatus?: "up-to-date" | "has-arrears";
+      paymentStatus?: 'up-to-date' | 'has-arrears';
     }
   ): Promise<
     RekapKasData & {
@@ -598,7 +598,7 @@ export class BendaharaService {
     const end = endDate || new Date(now.getFullYear(), 11, 31); // Default to end of year
 
     // Generate cache key
-    const cacheKey = `rekap-kas:${classId || "all"}:${start.toISOString()}:${end.toISOString()}:${search || ""}:${page}:${limit}:${paymentStatus || ""}`;
+    const cacheKey = `rekap-kas:${classId || 'all'}:${start.toISOString()}:${end.toISOString()}:${search || ''}:${page}:${limit}:${paymentStatus || ''}`;
 
     // Try to get from cache
     const cached = await this.cacheService.getCached<
@@ -618,11 +618,11 @@ export class BendaharaService {
       // 1. Get Financial Summary for the class
       const [incomeAgg, expenseAgg] = await Promise.all([
         prisma.transaction.aggregate({
-          where: { classId, type: "income", date: { gte: start, lte: end } },
+          where: { classId, type: 'income', date: { gte: start, lte: end } },
           _sum: { amount: true },
         }),
         prisma.transaction.aggregate({
-          where: { classId, type: "expense", date: { gte: start, lte: end } },
+          where: { classId, type: 'expense', date: { gte: start, lte: end } },
           _sum: { amount: true },
         }),
       ]);
@@ -632,27 +632,27 @@ export class BendaharaService {
 
       const whereClause: Prisma.UserWhereInput = {
         classId,
-        role: "user",
+        role: 'user',
       };
 
       if (search) {
         whereClause.OR = [
-          { name: { contains: search, mode: "insensitive" } },
-          { nim: { contains: search, mode: "insensitive" } },
+          { name: { contains: search, mode: 'insensitive' } },
+          { nim: { contains: search, mode: 'insensitive' } },
         ];
       }
 
-      if (paymentStatus === "has-arrears") {
+      if (paymentStatus === 'has-arrears') {
         whereClause.cashBills = {
           some: {
-            status: { not: "sudah_dibayar" },
+            status: { not: 'sudah_dibayar' },
           },
         };
-      } else if (paymentStatus === "up-to-date") {
+      } else if (paymentStatus === 'up-to-date') {
         whereClause.NOT = {
           cashBills: {
             some: {
-              status: { not: "sudah_dibayar" },
+              status: { not: 'sudah_dibayar' },
             },
           },
         };
@@ -677,7 +677,7 @@ export class BendaharaService {
             },
           },
         },
-        orderBy: { nim: "asc" },
+        orderBy: { nim: 'asc' },
         skip: (page - 1) * limit,
         take: limit,
       });
@@ -688,7 +688,7 @@ export class BendaharaService {
 
       const transactions = await prisma.transaction.findMany({
         where: { classId, date: { gte: start, lte: end } },
-        orderBy: { date: "desc" },
+        orderBy: { date: 'desc' },
         take: this.PAGINATION.REKAP_TRANSACTIONS,
       });
 
@@ -714,7 +714,7 @@ export class BendaharaService {
 
       return rekapData;
     } catch (error) {
-      logger.error("Failed to fetch rekap kas:", error);
+      logger.error('Failed to fetch rekap kas:', error);
       throw error;
     }
   }
@@ -722,10 +722,10 @@ export class BendaharaService {
   /**
    * Get all students in all classes
    */
-  async getStudents(): Promise<Omit<User, "password">[]> {
+  async getStudents(): Promise<Omit<User, 'password'>[]> {
     // Try to get from cache
     const cacheKey = `all-students`;
-    const cached = await this.cacheService.getCached<Omit<User, "password">[]>(cacheKey);
+    const cached = await this.cacheService.getCached<Omit<User, 'password'>[]>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -737,8 +737,7 @@ export class BendaharaService {
       });
 
       const safeStudents = students.data.map((user) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...safeUser } = user;
+        const { password: _password, ...safeUser } = user;
         return safeUser;
       });
 
@@ -746,7 +745,7 @@ export class BendaharaService {
 
       return safeStudents;
     } catch (error) {
-      logger.error("Failed to fetch students:", error);
+      logger.error('Failed to fetch students:', error);
       throw error;
     }
   }
@@ -759,9 +758,9 @@ export class BendaharaService {
     await this.cacheService.invalidateCache(`bendahara-bills:all*`);
     await this.cacheService.invalidateCache(`rekap-kas:all*`);
     await this.cacheService.invalidateCache(`all-students*`);
-    await this.cacheService.invalidateTransactions("all");
-    await this.cacheService.invalidateCache("chart-data*");
-    await this.cacheService.invalidateCache("breakdown*");
+    await this.cacheService.invalidateTransactions('all');
+    await this.cacheService.invalidateCache('chart-data*');
+    await this.cacheService.invalidateCache('breakdown*');
   }
 
   /**
@@ -770,7 +769,7 @@ export class BendaharaService {
   async createManualTransaction(data: {
     date: Date;
     description: string;
-    type: "income" | "expense";
+    type: 'income' | 'expense';
     amount: number;
     category?: string;
     attachment?: string;
@@ -781,7 +780,7 @@ export class BendaharaService {
       // Map category to TransactionCategory enum
       const transactionCategory: TransactionCategory = data.category
         ? this.mapCategoryStringToEnum(data.category)
-        : "other";
+        : 'other';
 
       // Create transaction
       const transaction = await this.transactionRepository.create({
@@ -803,7 +802,7 @@ export class BendaharaService {
 
       return transaction;
     } catch (error) {
-      logger.error("Failed to create manual transaction:", error);
+      logger.error('Failed to create manual transaction:', error);
       throw error;
     }
   }
@@ -813,25 +812,25 @@ export class BendaharaService {
    */
   private mapCategoryStringToEnum(category: string): TransactionCategory {
     const categoryMap: Record<string, TransactionCategory> = {
-      kas_kelas: "kas_kelas",
-      donation: "donation",
-      fundraising: "fundraising",
-      office_supplies: "office_supplies",
-      consumption: "consumption",
-      event: "event",
-      maintenance: "maintenance",
-      education: "education",
-      health: "health",
-      emergency: "emergency",
-      equipment: "equipment",
-      fine: "fine",
-      printing: "printing",
-      transport: "transport",
-      social: "social",
-      other: "other",
+      kas_kelas: 'kas_kelas',
+      donation: 'donation',
+      fundraising: 'fundraising',
+      office_supplies: 'office_supplies',
+      consumption: 'consumption',
+      event: 'event',
+      maintenance: 'maintenance',
+      education: 'education',
+      health: 'health',
+      emergency: 'emergency',
+      equipment: 'equipment',
+      fine: 'fine',
+      printing: 'printing',
+      transport: 'transport',
+      social: 'social',
+      other: 'other',
     };
 
-    return categoryMap[category.toLowerCase()] || "other";
+    return categoryMap[category.toLowerCase()] || 'other';
   }
 
   /**
@@ -839,13 +838,13 @@ export class BendaharaService {
    */
   private mapFundCategoryToTransactionCategory(fundCategory: string): TransactionCategory {
     const categoryMap: Record<string, TransactionCategory> = {
-      education: "education",
-      health: "health",
-      emergency: "emergency",
-      equipment: "equipment",
+      education: 'education',
+      health: 'health',
+      emergency: 'emergency',
+      equipment: 'equipment',
     };
 
-    return categoryMap[fundCategory] || "other";
+    return categoryMap[fundCategory] || 'other';
   }
 }
 
