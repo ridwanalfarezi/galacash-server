@@ -75,6 +75,7 @@ Controllers → Services → Repositories → Prisma → PostgreSQL
 - Synchronous file operations in request handlers
 - Console.log (use Winston logger)
 - Process.exit without graceful shutdown
+- `eslint-disable` comments for unused variables (use `_` prefix instead)
 
 ## Decision Principles
 
@@ -101,6 +102,7 @@ Controllers → Services → Repositories → Prisma → PostgreSQL
 - Use English for code comments and internal documentation
 - Include JSDoc for public methods and complex logic
 - Follow existing code style (Prettier config enforced)
+- Use `_prefix` for intentionally unused variables (e.g., `_password`, `_next`)
 
 **Error Messages:**
 

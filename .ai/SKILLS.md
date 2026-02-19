@@ -26,6 +26,7 @@ Procedural skills for working with the GalaCash financial management system.
 5. Invalidate cache keys: `transactions:${classId}*`, `balance:${classId}`, `bendahara-dashboard:all*`
 6. Log operation with `logger.info()` including user context and amounts
 7. Handle Prisma errors: map `P2002` to 409, `P2025` to 404
+8. **If using raw SQL**: use `@@map` table names (e.g., `"transactions"`), NOT Prisma model names (e.g., `"Transaction"`)
 
 ---
 
@@ -35,8 +36,8 @@ Procedural skills for working with the GalaCash financial management system.
 2. Locate bill status update in `src/services/cash-bill.service.ts` or `src/services/bendahara.service.ts`
 3. Add state validation before transition:
    ```typescript
-   if (bill.status !== "current_status") {
-     throw new BusinessLogicError("INVALID_STATUS_TRANSITION");
+   if (bill.status !== 'current_status') {
+     throw new BusinessLogicError('INVALID_STATUS_TRANSITION');
    }
    ```
 4. For payment confirmations, use `updateMany` with WHERE clause for optimistic locking
@@ -118,6 +119,7 @@ Procedural skills for working with the GalaCash financial management system.
 5. Compare test data setup with actual schema (NIM format, required fields)
 6. Check for cookie handling in supertest requests
 7. Review error responses match expected format: `{ success: false, error: { code, message } }`
+8. For unused destructured variables, use `_` prefix (e.g., `_password`) — do NOT use `eslint-disable` comments
 
 ---
 
@@ -175,8 +177,8 @@ Procedural skills for working with the GalaCash financial management system.
 2. Run parallel queries via `Promise.all([incomeAgg, expenseAgg])`:
    ```typescript
    const [incomeAgg, expenseAgg] = await Promise.all([
-     prisma.transaction.aggregate({ where: { type: "income" }, _sum: { amount: true } }),
-     prisma.transaction.aggregate({ where: { type: "expense" }, _sum: { amount: true } }),
+     prisma.transaction.aggregate({ where: { type: 'income' }, _sum: { amount: true } }),
+     prisma.transaction.aggregate({ where: { type: 'expense' }, _sum: { amount: true } }),
    ]);
    ```
 3. Convert Decimal to Number: `Number(incomeAgg._sum.amount || 0)`

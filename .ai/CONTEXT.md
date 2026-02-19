@@ -154,6 +154,49 @@ belum_dibayar (Unpaid)
 
 ---
 
+## Code Conventions
+
+### Raw SQL Table Names
+
+**Use `@@map` table names in raw SQL, NOT Prisma model names.**
+
+The Prisma schema uses `@@map` to define actual PostgreSQL table names (e.g., `@@map("transactions")`). When writing `prisma.$queryRaw`, always use the mapped name:
+
+```sql
+-- ✅ Correct: uses @@map table name
+SELECT * FROM "transactions" WHERE type = 'income'
+
+-- ❌ Wrong: uses Prisma model name (fails with Prisma Accelerate)
+SELECT * FROM "Transaction" WHERE type = 'income'
+```
+
+| Model             | `@@map` Table Name  |
+| ----------------- | ------------------- |
+| `User`            | `users`             |
+| `Class`           | `classes`           |
+| `RefreshToken`    | `refresh_tokens`    |
+| `Transaction`     | `transactions`      |
+| `FundApplication` | `fund_applications` |
+| `CashBill`        | `cash_bills`        |
+| `PaymentAccount`  | `payment_accounts`  |
+
+### Unused Variable Convention
+
+Prefix intentionally unused destructured variables with `_` instead of using `eslint-disable` comments:
+
+```typescript
+// ✅ Correct
+const { password: _password, ...userWithoutPassword } = user;
+
+// ❌ Wrong
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const { password, ...userWithoutPassword } = user;
+```
+
+ESLint is configured with `argsIgnorePattern: "^_"`, `varsIgnorePattern: "^_"`, and `destructuredArrayIgnorePattern: "^_"` to support this pattern.
+
+---
+
 ## Security-Sensitive Logic
 
 ### Authentication
@@ -210,6 +253,11 @@ private checkOwnership(bill: CashBill, userId: string): void {
 | General API              | 1 min  | 1000         |
 | Upload                   | 15 min | 50           |
 | Strict (password change) | 15 min | 30           |
+
+### ESLint Configuration
+
+- `@typescript-eslint/no-unused-vars`: `"warn"` with `argsIgnorePattern`, `varsIgnorePattern`, and `destructuredArrayIgnorePattern` all set to `"^_"`
+- This allows `_password`, `_next`, etc. as intentionally unused variables
 
 ---
 
