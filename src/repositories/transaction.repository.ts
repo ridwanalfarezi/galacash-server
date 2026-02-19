@@ -3,9 +3,9 @@ import {
   Transaction,
   TransactionCategory,
   TransactionType,
-} from "@/prisma/generated/client";
-import { DatabaseError } from "@/utils/errors";
-import { prisma } from "@/utils/prisma-client";
+} from '@/prisma/generated/client';
+import { DatabaseError } from '@/utils/errors';
+import { prisma } from '@/utils/prisma-client';
 
 export interface TransactionFilters {
   classId?: string;
@@ -15,8 +15,8 @@ export interface TransactionFilters {
   endDate?: Date;
   page?: number;
   limit?: number;
-  sortBy?: "date" | "amount" | "createdAt";
-  sortOrder?: "asc" | "desc";
+  sortBy?: 'date' | 'amount' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
   search?: string;
 }
 
@@ -60,7 +60,7 @@ export class TransactionRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch transaction");
+        throw new DatabaseError('Failed to fetch transaction');
       }
       throw error;
     }
@@ -78,8 +78,8 @@ export class TransactionRepository {
       endDate,
       page = 1,
       limit = 20,
-      sortBy = "date",
-      sortOrder = "desc",
+      sortBy = 'date',
+      sortOrder = 'desc',
       search,
     } = filters;
 
@@ -110,7 +110,7 @@ export class TransactionRepository {
       if (search) {
         where.description = {
           contains: search,
-          mode: "insensitive",
+          mode: 'insensitive',
         };
       }
 
@@ -135,7 +135,7 @@ export class TransactionRepository {
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch transactions");
+        throw new DatabaseError('Failed to fetch transactions');
       }
       throw error;
     }
@@ -151,7 +151,7 @@ export class TransactionRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to create transaction");
+        throw new DatabaseError('Failed to create transaction');
       }
       throw error;
     }
@@ -165,7 +165,7 @@ export class TransactionRepository {
       const [incomeResult, expenseResult] = await Promise.all([
         prisma.transaction.aggregate({
           where: {
-            type: "income",
+            type: 'income',
           },
           _sum: {
             amount: true,
@@ -173,7 +173,7 @@ export class TransactionRepository {
         }),
         prisma.transaction.aggregate({
           where: {
-            type: "expense",
+            type: 'expense',
           },
           _sum: {
             amount: true,
@@ -191,7 +191,7 @@ export class TransactionRepository {
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch balance");
+        throw new DatabaseError('Failed to fetch balance');
       }
       throw error;
     }
@@ -202,14 +202,14 @@ export class TransactionRepository {
    * Uses SQL aggregation for efficient grouping
    */
   async getChartData(
-    type: "income" | "expense",
+    type: 'income' | 'expense',
     startDate?: Date,
     endDate?: Date
   ): Promise<ChartDataPoint[]> {
     try {
       const results = await prisma.$queryRaw<ChartDataQueryResult[]>`
         SELECT DATE(date) as date, SUM(amount) as total
-        FROM "Transaction"
+        FROM "transactions"
         WHERE type = ${type}
         ${startDate ? Prisma.sql`AND date >= ${startDate}` : Prisma.empty}
         ${endDate ? Prisma.sql`AND date <= ${endDate}` : Prisma.empty}
@@ -218,12 +218,12 @@ export class TransactionRepository {
       `;
 
       return results.map((row: ChartDataQueryResult) => ({
-        date: row.date.toISOString().split("T")[0],
+        date: row.date.toISOString().split('T')[0],
         amount: Number(row.total),
       }));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch chart data");
+        throw new DatabaseError('Failed to fetch chart data');
       }
       throw error;
     }
@@ -235,14 +235,14 @@ export class TransactionRepository {
    * Returns data formatted for pie charts: { name, value, fill }
    */
   async getBreakdown(
-    type: "income" | "expense",
+    type: 'income' | 'expense',
     startDate?: Date,
     endDate?: Date
   ): Promise<Array<{ name: string; value: number; fill: string }>> {
     try {
       const results = await prisma.$queryRaw<BreakdownQueryResult[]>`
         SELECT category, SUM(amount) as total
-        FROM "Transaction"
+        FROM "transactions"
         WHERE type = ${type}
         ${startDate ? Prisma.sql`AND date >= ${startDate}` : Prisma.empty}
         ${endDate ? Prisma.sql`AND date <= ${endDate}` : Prisma.empty}
@@ -251,31 +251,31 @@ export class TransactionRepository {
 
       // Color palettes
       const incomeColors = [
-        "#50b89a",
-        "#8cd9a7",
-        "#34a0a4",
-        "#52b788",
-        "#74c69d",
-        "#95d5b2",
-        "#b7e4c7",
-        "#d8f3dc",
+        '#50b89a',
+        '#8cd9a7',
+        '#34a0a4',
+        '#52b788',
+        '#74c69d',
+        '#95d5b2',
+        '#b7e4c7',
+        '#d8f3dc',
       ];
       const expenseColors = [
-        "#920c22",
-        "#af2038",
-        "#800016",
-        "#c9184a",
-        "#ff4d6d",
-        "#c9184a",
-        "#a4133c",
-        "#800f2f",
+        '#920c22',
+        '#af2038',
+        '#800016',
+        '#c9184a',
+        '#ff4d6d',
+        '#c9184a',
+        '#a4133c',
+        '#800f2f',
       ];
 
-      const colors = type === "income" ? incomeColors : expenseColors;
+      const colors = type === 'income' ? incomeColors : expenseColors;
 
       // Convert to array and add colors
       const breakdown = results.map((row: BreakdownQueryResult, index: number) => ({
-        name: this.formatCategoryName(row.category || "other"),
+        name: this.formatCategoryName(row.category || 'other'),
         value: Number(row.total),
         fill: colors[index % colors.length],
       }));
@@ -283,7 +283,7 @@ export class TransactionRepository {
       return breakdown;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch transaction breakdown");
+        throw new DatabaseError('Failed to fetch transaction breakdown');
       }
       throw error;
     }
@@ -294,14 +294,14 @@ export class TransactionRepository {
    */
   private formatCategoryName(category: string): string {
     const nameMap: Record<string, string> = {
-      kas_kelas: "Kas Kelas",
-      donation: "Donasi",
-      fundraising: "Penggalangan Dana",
-      office_supplies: "Alat Tulis Kantor",
-      consumption: "Konsumsi",
-      event: "Acara",
-      maintenance: "Pemeliharaan",
-      other: "Lainnya",
+      kas_kelas: 'Kas Kelas',
+      donation: 'Donasi',
+      fundraising: 'Penggalangan Dana',
+      office_supplies: 'Alat Tulis Kantor',
+      consumption: 'Konsumsi',
+      event: 'Acara',
+      maintenance: 'Pemeliharaan',
+      other: 'Lainnya',
     };
 
     return nameMap[category] || category;
