@@ -1,6 +1,6 @@
-import { Prisma, User, UserRole } from "@/prisma/generated/client";
-import { AppError, ConflictError, DatabaseError, NotFoundError } from "@/utils/errors";
-import { prisma } from "@/utils/prisma-client";
+import { Prisma, User, UserRole } from '@/prisma/generated/client';
+import { ConflictError, DatabaseError, NotFoundError } from '@/utils/errors';
+import { prisma } from '@/utils/prisma-client';
 
 export interface UserFilters {
   role?: string;
@@ -30,7 +30,7 @@ export class UserRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch user");
+        throw new DatabaseError('Failed to fetch user');
       }
       throw error;
     }
@@ -46,7 +46,7 @@ export class UserRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch user by NIM");
+        throw new DatabaseError('Failed to fetch user by NIM');
       }
       throw error;
     }
@@ -62,7 +62,7 @@ export class UserRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch user by email");
+        throw new DatabaseError('Failed to fetch user by email');
       }
       throw error;
     }
@@ -78,16 +78,16 @@ export class UserRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
+        if (error.code === 'P2002') {
           const target = (error.meta?.target as string[])?.[0];
-          if (target === "nim") {
-            throw new ConflictError("NIM already exists", "nim");
+          if (target === 'nim') {
+            throw new ConflictError('NIM already exists', 'nim');
           }
-          if (target === "email") {
-            throw new ConflictError("Email already exists", "email");
+          if (target === 'email') {
+            throw new ConflictError('Email already exists', 'email');
           }
         }
-        throw new DatabaseError("Failed to create user");
+        throw new DatabaseError('Failed to create user');
       }
       throw error;
     }
@@ -98,30 +98,26 @@ export class UserRepository {
    */
   async update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
     try {
-      const user = await prisma.user.findUnique({ where: { id } });
-      if (!user) {
-        throw new NotFoundError("User not found", "User");
-      }
-
       return await prisma.user.update({
         where: { id },
         data,
+        include: { class: true },
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
+        if (error.code === 'P2025') {
+          throw new NotFoundError('User not found', 'User');
+        }
+        if (error.code === 'P2002') {
           const target = (error.meta?.target as string[])?.[0];
-          if (target === "nim") {
-            throw new ConflictError("NIM already exists", "nim");
+          if (target === 'nim') {
+            throw new ConflictError('NIM already exists', 'nim');
           }
-          if (target === "email") {
-            throw new ConflictError("Email already exists", "email");
+          if (target === 'email') {
+            throw new ConflictError('Email already exists', 'email');
           }
         }
-        throw new DatabaseError("Failed to update user");
+        throw new DatabaseError('Failed to update user');
       }
       throw error;
     }
@@ -137,7 +133,7 @@ export class UserRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch users");
+        throw new DatabaseError('Failed to fetch users');
       }
       throw error;
     }
@@ -162,9 +158,9 @@ export class UserRepository {
 
       if (search) {
         where.OR = [
-          { name: { contains: search, mode: "insensitive" } },
-          { nim: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
+          { name: { contains: search, mode: 'insensitive' } },
+          { nim: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
         ];
       }
 
@@ -175,7 +171,7 @@ export class UserRepository {
           where,
           skip,
           take: limit,
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
         }),
         prisma.user.count({ where }),
       ]);
@@ -189,7 +185,7 @@ export class UserRepository {
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch users");
+        throw new DatabaseError('Failed to fetch users');
       }
       throw error;
     }

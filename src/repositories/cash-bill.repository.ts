@@ -1,6 +1,6 @@
-import { BillStatus, CashBill, PaymentMethod, Prisma } from "@/prisma/generated/client";
-import { AppError, DatabaseError, NotFoundError } from "@/utils/errors";
-import { prisma } from "@/utils/prisma-client";
+import { BillStatus, CashBill, PaymentMethod, Prisma } from '@/prisma/generated/client';
+import { DatabaseError, NotFoundError } from '@/utils/errors';
+import { prisma } from '@/utils/prisma-client';
 
 export interface CashBillFilters {
   classId?: string;
@@ -12,7 +12,7 @@ export interface CashBillFilters {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortOrder?: 'asc' | 'desc';
   search?: string; // Search by billId
 }
 
@@ -40,7 +40,7 @@ export class CashBillRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch cash bill");
+        throw new DatabaseError('Failed to fetch cash bill');
       }
       throw error;
     }
@@ -53,23 +53,23 @@ export class CashBillRepository {
     const conditions: Prisma.CashBillWhereInput[] = [];
 
     // 1. Always search by billId
-    conditions.push({ billId: { contains: search, mode: "insensitive" } });
+    conditions.push({ billId: { contains: search, mode: 'insensitive' } });
 
     // 2. Search by Month Name (Indonesian)
     const lowerSearch = search.toLowerCase();
     const monthNames = [
-      "januari",
-      "februari",
-      "maret",
-      "april",
-      "mei",
-      "juni",
-      "juli",
-      "agustus",
-      "september",
-      "oktober",
-      "november",
-      "desember",
+      'januari',
+      'februari',
+      'maret',
+      'april',
+      'mei',
+      'juni',
+      'juli',
+      'agustus',
+      'september',
+      'oktober',
+      'november',
+      'desember',
     ];
 
     const matchedMonthIndex = monthNames.findIndex((m) => m.includes(lowerSearch));
@@ -102,8 +102,8 @@ export class CashBillRepository {
       year,
       page = 1,
       limit = 20,
-      sortBy = "createdAt",
-      sortOrder = "desc",
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
       search,
     } = filters;
 
@@ -141,7 +141,7 @@ export class CashBillRepository {
 
       // Map sortBy to valid field names
       const orderByField =
-        sortBy === "dueDate" ? "dueDate" : sortBy === "month" ? "month" : "createdAt";
+        sortBy === 'dueDate' ? 'dueDate' : sortBy === 'month' ? 'month' : 'createdAt';
 
       const [data, total] = await Promise.all([
         prisma.cashBill.findMany({
@@ -183,7 +183,7 @@ export class CashBillRepository {
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch cash bills");
+        throw new DatabaseError('Failed to fetch cash bills');
       }
       throw error;
     }
@@ -203,8 +203,8 @@ export class CashBillRepository {
       year,
       page = 1,
       limit = 20,
-      sortBy = "createdAt",
-      sortOrder = "desc",
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
       search,
     } = filters || {};
 
@@ -237,7 +237,7 @@ export class CashBillRepository {
 
       // Map sortBy to valid field names
       const orderByField =
-        sortBy === "dueDate" ? "dueDate" : sortBy === "month" ? "month" : "createdAt";
+        sortBy === 'dueDate' ? 'dueDate' : sortBy === 'month' ? 'month' : 'createdAt';
 
       const [data, total] = await Promise.all([
         prisma.cashBill.findMany({
@@ -279,7 +279,7 @@ export class CashBillRepository {
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch user cash bills");
+        throw new DatabaseError('Failed to fetch user cash bills');
       }
       throw error;
     }
@@ -300,7 +300,7 @@ export class CashBillRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to create cash bill");
+        throw new DatabaseError('Failed to create cash bill');
       }
       throw error;
     }
@@ -311,14 +311,6 @@ export class CashBillRepository {
    */
   async update(id: string, data: Prisma.CashBillUpdateInput): Promise<CashBill> {
     try {
-      const bill = await prisma.cashBill.findUnique({
-        where: { id },
-      });
-
-      if (!bill) {
-        throw new NotFoundError("Cash bill not found", "CashBill");
-      }
-
       return await prisma.cashBill.update({
         where: { id },
         data,
@@ -329,11 +321,11 @@ export class CashBillRepository {
         },
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to update cash bill");
+        if (error.code === 'P2025') {
+          throw new NotFoundError('Cash bill not found', 'CashBill');
+        }
+        throw new DatabaseError('Failed to update cash bill');
       }
       throw error;
     }
@@ -352,14 +344,6 @@ export class CashBillRepository {
     }>
   ): Promise<CashBill> {
     try {
-      const bill = await prisma.cashBill.findUnique({
-        where: { id },
-      });
-
-      if (!bill) {
-        throw new NotFoundError("Cash bill not found", "CashBill");
-      }
-
       const updateData: Prisma.CashBillUpdateInput = {
         status: status as BillStatus,
       };
@@ -372,7 +356,7 @@ export class CashBillRepository {
         updateData.paymentProofUrl = data.paymentProofUrl;
       }
 
-      if (status === "sudah_dibayar") {
+      if (status === 'sudah_dibayar') {
         updateData.paidAt = new Date();
       }
 
@@ -393,11 +377,11 @@ export class CashBillRepository {
         },
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to update payment status");
+        if (error.code === 'P2025') {
+          throw new NotFoundError('Cash bill not found', 'CashBill');
+        }
+        throw new DatabaseError('Failed to update payment status');
       }
       throw error;
     }
@@ -424,7 +408,7 @@ export class CashBillRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch cash bill");
+        throw new DatabaseError('Failed to fetch cash bill');
       }
       throw error;
     }
@@ -440,7 +424,7 @@ export class CashBillRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to count cash bills");
+        throw new DatabaseError('Failed to count cash bills');
       }
       throw error;
     }

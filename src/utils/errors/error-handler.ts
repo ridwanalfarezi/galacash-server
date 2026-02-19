@@ -1,6 +1,6 @@
-import { NextFunction, Request, Response } from "express";
-import { logger } from "../logger";
-import { AppError } from "./app-error";
+import { NextFunction, Request, Response } from 'express';
+import { logger } from '../logger';
+import { AppError } from './app-error';
 
 /**
  * Error response interface
@@ -28,7 +28,7 @@ export const globalErrorHandler = (
   _next: NextFunction
 ): void => {
   // Log error
-  logger.error("Error occurred:", {
+  logger.error('Error occurred:', {
     error: error.message,
     stack: error.stack,
     path: req.path,
@@ -41,14 +41,14 @@ export const globalErrorHandler = (
     const response: ErrorResponse = {
       success: false,
       error: {
-        code: error.code || "INTERNAL_SERVER_ERROR",
+        code: error.code || 'INTERNAL_SERVER_ERROR',
         message: error.message,
-        ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
+        ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
       },
     };
 
     // Add field info for validation errors
-    if ("field" in error && error.field) {
+    if ('field' in error && error.field) {
       response.error.field = error.field as string;
     }
 
@@ -57,16 +57,16 @@ export const globalErrorHandler = (
   }
 
   // Handle Prisma errors
-  if (error.name === "PrismaClientKnownRequestError") {
+  if (error.name === 'PrismaClientKnownRequestError') {
     const prismaError = error as unknown as { code?: string; meta?: { target?: string[] } };
 
-    if (prismaError.code === "P2002") {
+    if (prismaError.code === 'P2002') {
       // Unique constraint violation
-      const field = prismaError.meta?.target?.[0] || "field";
+      const field = prismaError.meta?.target?.[0] || 'field';
       res.status(409).json({
         success: false,
         error: {
-          code: "CONFLICT_ERROR",
+          code: 'CONFLICT_ERROR',
           message: `${field} sudah terdaftar`,
           field,
         },
@@ -74,13 +74,13 @@ export const globalErrorHandler = (
       return;
     }
 
-    if (prismaError.code === "P2025") {
+    if (prismaError.code === 'P2025') {
       // Record not found
       res.status(404).json({
         success: false,
         error: {
-          code: "NOT_FOUND",
-          message: "Data tidak ditemukan",
+          code: 'NOT_FOUND',
+          message: 'Data tidak ditemukan',
         },
       });
       return;
@@ -88,38 +88,38 @@ export const globalErrorHandler = (
   }
 
   // Handle JWT errors
-  if (error.name === "JsonWebTokenError") {
+  if (error.name === 'JsonWebTokenError') {
     res.status(401).json({
       success: false,
       error: {
-        code: "TOKEN_INVALID",
-        message: "Token tidak valid",
+        code: 'TOKEN_INVALID',
+        message: 'Token tidak valid',
       },
     });
     return;
   }
 
-  if (error.name === "TokenExpiredError") {
+  if (error.name === 'TokenExpiredError') {
     res.status(401).json({
       success: false,
       error: {
-        code: "TOKEN_EXPIRED",
-        message: "Sesi telah berakhir",
+        code: 'TOKEN_EXPIRED',
+        message: 'Sesi telah berakhir',
       },
     });
     return;
   }
 
   // Handle Multer errors
-  if (error.name === "MulterError") {
+  if (error.name === 'MulterError') {
     const multerError = error as unknown as { code?: string };
 
-    if (multerError.code === "LIMIT_FILE_SIZE") {
+    if (multerError.code === 'LIMIT_FILE_SIZE') {
       res.status(400).json({
         success: false,
         error: {
-          code: "FILE_TOO_LARGE",
-          message: "Ukuran file melebihi batas yang diizinkan",
+          code: 'FILE_TOO_LARGE',
+          message: 'Ukuran file melebihi batas yang diizinkan',
         },
       });
       return;
@@ -128,8 +128,8 @@ export const globalErrorHandler = (
     res.status(400).json({
       success: false,
       error: {
-        code: "FILE_UPLOAD_FAILED",
-        message: "Gagal mengupload file: " + error.message,
+        code: 'FILE_UPLOAD_FAILED',
+        message: 'Gagal mengupload file: ' + error.message,
       },
     });
     return;
@@ -139,9 +139,9 @@ export const globalErrorHandler = (
   res.status(500).json({
     success: false,
     error: {
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Terjadi kesalahan internal server",
-      ...(process.env.NODE_ENV === "development" && {
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Terjadi kesalahan internal server',
+      ...(process.env.NODE_ENV === 'development' && {
         details: error.message,
         stack: error.stack,
       }),
@@ -153,10 +153,10 @@ export const globalErrorHandler = (
  * Async handler wrapper
  * Catches async errors and passes to global error handler
  */
-export const asyncHandler = (
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void | Response>
+export const asyncHandler = <T extends Request = Request>(
+  fn: (req: T, res: Response, next: NextFunction) => Promise<void | Response>
 ) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: T, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 };

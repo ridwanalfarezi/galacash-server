@@ -1,6 +1,6 @@
-import { FundApplication, FundCategory, FundStatus, Prisma } from "@/prisma/generated/client";
-import { AppError, DatabaseError, NotFoundError } from "@/utils/errors";
-import { prisma } from "@/utils/prisma-client";
+import { FundApplication, FundCategory, FundStatus, Prisma } from '@/prisma/generated/client';
+import { DatabaseError, NotFoundError } from '@/utils/errors';
+import { prisma } from '@/utils/prisma-client';
 
 export interface FundApplicationFilters {
   classId?: string;
@@ -9,8 +9,8 @@ export interface FundApplicationFilters {
   category?: string;
   page?: number;
   limit?: number;
-  sortBy?: "createdAt" | "amount" | "status";
-  sortOrder?: "asc" | "desc";
+  sortBy?: 'createdAt' | 'amount' | 'status';
+  sortOrder?: 'asc' | 'desc';
   search?: string;
 }
 
@@ -37,7 +37,7 @@ export class FundApplicationRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch fund application");
+        throw new DatabaseError('Failed to fetch fund application');
       }
       throw error;
     }
@@ -56,8 +56,8 @@ export class FundApplicationRepository {
       category,
       page = 1,
       limit = 20,
-      sortBy = "createdAt",
-      sortOrder = "desc",
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
       search,
     } = filters;
 
@@ -81,8 +81,8 @@ export class FundApplicationRepository {
       }
       if (search) {
         where.OR = [
-          { purpose: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
+          { purpose: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
         ];
       }
 
@@ -111,7 +111,7 @@ export class FundApplicationRepository {
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch fund applications");
+        throw new DatabaseError('Failed to fetch fund applications');
       }
       throw error;
     }
@@ -127,8 +127,8 @@ export class FundApplicationRepository {
     const {
       page = 1,
       limit = 20,
-      sortBy = "createdAt",
-      sortOrder = "desc",
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
       status,
       category,
       search,
@@ -148,8 +148,8 @@ export class FundApplicationRepository {
       }
       if (search) {
         where.OR = [
-          { purpose: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
+          { purpose: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
         ];
       }
 
@@ -178,7 +178,7 @@ export class FundApplicationRepository {
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch user fund applications");
+        throw new DatabaseError('Failed to fetch user fund applications');
       }
       throw error;
     }
@@ -198,7 +198,7 @@ export class FundApplicationRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to create fund application");
+        throw new DatabaseError('Failed to create fund application');
       }
       throw error;
     }
@@ -209,14 +209,6 @@ export class FundApplicationRepository {
    */
   async update(id: string, data: Prisma.FundApplicationUpdateInput): Promise<FundApplication> {
     try {
-      const application = await prisma.fundApplication.findUnique({
-        where: { id },
-      });
-
-      if (!application) {
-        throw new NotFoundError("Fund application not found", "FundApplication");
-      }
-
       return await prisma.fundApplication.update({
         where: { id },
         data,
@@ -226,11 +218,11 @@ export class FundApplicationRepository {
         },
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to update fund application");
+        if (error.code === 'P2025') {
+          throw new NotFoundError('Fund application not found', 'FundApplication');
+        }
+        throw new DatabaseError('Failed to update fund application');
       }
       throw error;
     }
@@ -246,14 +238,6 @@ export class FundApplicationRepository {
     rejectionReason?: string
   ): Promise<FundApplication> {
     try {
-      const application = await prisma.fundApplication.findUnique({
-        where: { id },
-      });
-
-      if (!application) {
-        throw new NotFoundError("Fund application not found", "FundApplication");
-      }
-
       const updateData: Prisma.FundApplicationUpdateInput = {
         status: status as FundStatus,
         reviewer: {
@@ -275,11 +259,11 @@ export class FundApplicationRepository {
         },
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to update fund application status");
+        if (error.code === 'P2025') {
+          throw new NotFoundError('Fund application not found', 'FundApplication');
+        }
+        throw new DatabaseError('Failed to update fund application status');
       }
       throw error;
     }
@@ -295,7 +279,7 @@ export class FundApplicationRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to count fund applications");
+        throw new DatabaseError('Failed to count fund applications');
       }
       throw error;
     }

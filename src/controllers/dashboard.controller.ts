@@ -1,11 +1,7 @@
-import { cashBillService, fundApplicationService, transactionService } from "@/services";
-import { asyncHandler } from "@/utils/errors";
-import { Request, Response } from "express";
+import { cashBillService, fundApplicationService, transactionService } from '@/services';
+import { asyncHandler } from '@/utils/errors';
+import { Request, Response } from 'express';
 
-/**
- * Get dashboard summary
- * GET /api/dashboard/summary
- */
 export const getSummary = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const { startDate, endDate } = req.query;
 
@@ -17,62 +13,32 @@ export const getSummary = asyncHandler(async (req: Request, res: Response): Prom
   res.status(200).json({
     success: true,
     data: summary,
-    message: "Ringkasan berhasil diambil",
+    message: 'Ringkasan berhasil diambil',
   });
 });
 
-/**
- * Get pending cash bills (unpaid and awaiting confirmation)
- * GET /api/dashboard/pending-bills
- */
 export const getPendingBills = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const userId = req.user?.sub;
-
-  if (!userId) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User belum terautentikasi",
-      },
-    });
-    return;
-  }
+  const userId = req.user!.sub;
 
   const bills = await cashBillService.getPendingByUser(userId);
 
   res.status(200).json({
     success: true,
     data: bills,
-    message: "Tagihan tertunda berhasil diambil",
+    message: 'Tagihan tertunda berhasil diambil',
   });
 });
 
-/**
- * Get pending fund applications
- * GET /api/dashboard/pending-applications
- */
 export const getPendingApplications = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const userId = req.user?.sub;
-
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "User belum terautentikasi",
-        },
-      });
-      return;
-    }
+    const userId = req.user!.sub;
 
     const applications = await fundApplicationService.getPendingByUser(userId);
 
     res.status(200).json({
       success: true,
       data: applications,
-      message: "Pengajuan tertunda berhasil diambil",
+      message: 'Pengajuan tertunda berhasil diambil',
     });
   }
 );

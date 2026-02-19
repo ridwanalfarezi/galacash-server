@@ -1,98 +1,45 @@
-import { bendaharaService, userService } from "@/services";
-import { asyncHandler } from "@/utils/errors";
-import { Request, Response } from "express";
+import { bendaharaService, userService } from '@/services';
+import { asyncHandler } from '@/utils/errors';
+import { Request, Response } from 'express';
 
-/**
- * Get bendahara dashboard
- * GET /api/bendahara/dashboard
- */
 export const getDashboard = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const user = req.user;
-
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User belum terautentikasi",
-      },
-    });
-    return;
-  }
-
   const { startDate, endDate, classId } = req.query;
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;
 
-  // Use query classId filter if provided, otherwise default to undefined (global)
-  // Note: We intentionally don't default to user.classId for transparency
-  const targetClassId = typeof classId === "string" ? classId : undefined;
+  const targetClassId = typeof classId === 'string' ? classId : undefined;
 
   const dashboard = await bendaharaService.getDashboard(targetClassId, start, end);
 
   res.status(200).json({
     success: true,
     data: dashboard,
-    message: "Dashboard berhasil diambil",
+    message: 'Dashboard berhasil diambil',
   });
 });
 
-/**
- * Get all fund applications
- * GET /api/bendahara/fund-applications
- */
-/**
- * Approve fund application
- * POST /api/bendahara/fund-applications/:id/approve
- */
 export const approveFundApplication = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const bendaharaId = req.user?.sub;
+    const bendaharaId = req.user!.sub;
     const { id } = req.params;
     const applicationId = Array.isArray(id) ? id[0] : id;
-
-    if (!bendaharaId) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "User belum terautentikasi",
-        },
-      });
-      return;
-    }
 
     const application = await bendaharaService.approveFundApplication(applicationId, bendaharaId);
 
     res.status(200).json({
       success: true,
       data: application,
-      message: "Pengajuan dana disetujui",
+      message: 'Pengajuan dana disetujui',
     });
   }
 );
 
-/**
- * Reject fund application
- * POST /api/bendahara/fund-applications/:id/reject
- */
 export const rejectFundApplication = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const bendaharaId = req.user?.sub;
+    const bendaharaId = req.user!.sub;
     const { id } = req.params;
     const { rejectionReason } = req.body;
     const applicationId = Array.isArray(id) ? id[0] : id;
-
-    if (!bendaharaId) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "User belum terautentikasi",
-        },
-      });
-      return;
-    }
 
     const application = await bendaharaService.rejectFundApplication(
       applicationId,
@@ -103,32 +50,19 @@ export const rejectFundApplication = asyncHandler(
     res.status(200).json({
       success: true,
       data: application,
-      message: "Pengajuan dana ditolak",
+      message: 'Pengajuan dana ditolak',
     });
   }
 );
 
-/**
- * Get all cash bills
- * GET /api/bendahara/cash-bills
- */
 export const getAllCashBills = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const user = req.user;
   const { page = 1, limit = 10, status, classId, userId, search } = req.query;
 
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "User not authenticated" },
-    });
-    return;
-  }
-
   const statusFilter =
-    typeof status === "string" ? status : Array.isArray(status) ? String(status[0]) : undefined;
-  const targetClassId = typeof classId === "string" ? classId : undefined;
-  const targetUserId = typeof userId === "string" ? userId : undefined;
-  const searchQuery = typeof search === "string" ? search : undefined;
+    typeof status === 'string' ? status : Array.isArray(status) ? String(status[0]) : undefined;
+  const targetClassId = typeof classId === 'string' ? classId : undefined;
+  const targetUserId = typeof userId === 'string' ? userId : undefined;
+  const searchQuery = typeof search === 'string' ? search : undefined;
 
   const bills = await bendaharaService.getAllCashBills({
     page: Number(page),
@@ -142,174 +76,96 @@ export const getAllCashBills = asyncHandler(async (req: Request, res: Response):
   res.status(200).json({
     success: true,
     data: bills,
-    message: "Semua tagihan kas berhasil diambil",
+    message: 'Semua tagihan kas berhasil diambil',
   });
 });
 
-/**
- * Confirm payment for cash bill
- * POST /api/bendahara/cash-bills/:id/confirm-payment
- */
 export const confirmPayment = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const bendaharaId = req.user?.sub;
+  const bendaharaId = req.user!.sub;
   const { id } = req.params;
   const billId = Array.isArray(id) ? id[0] : id;
-
-  if (!bendaharaId) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User belum terautentikasi",
-      },
-    });
-    return;
-  }
 
   const bill = await bendaharaService.confirmPayment(billId, bendaharaId);
 
   res.status(200).json({
     success: true,
     data: bill,
-    message: "Pembayaran dikonfirmasi",
+    message: 'Pembayaran dikonfirmasi',
   });
 });
 
-/**
- * Reject payment for cash bill
- * POST /api/bendahara/cash-bills/:id/reject-payment
- */
 export const rejectPayment = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const bendaharaId = req.user?.sub;
   const { id } = req.params;
   const { reason } = req.body;
   const billId = Array.isArray(id) ? id[0] : id;
-
-  if (!bendaharaId) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User belum terautentikasi",
-      },
-    });
-    return;
-  }
 
   const bill = await bendaharaService.rejectPayment(billId, reason);
 
   res.status(200).json({
     success: true,
     data: bill,
-    message: "Pembayaran ditolak",
+    message: 'Pembayaran ditolak',
   });
 });
 
-/**
- * Get rekap kas (cash report)
- * GET /api/bendahara/rekap-kas
- */
 export const getRekapKas = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const user = req.user;
   const { startDate, endDate, search, page = 1, limit = 10, paymentStatus, classId } = req.query;
-
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User belum terautentikasi",
-      },
-    });
-    return;
-  }
 
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;
-  const targetClassId = typeof classId === "string" ? classId : undefined;
+  const targetClassId = typeof classId === 'string' ? classId : undefined;
 
-  // Pass classId to filter by class, or undefined for global
   const rekapKas = await bendaharaService.getRekapKas(targetClassId, {
     startDate: start,
     endDate: end,
     search: search as string | undefined,
     page: Number(page),
     limit: Number(limit),
-    paymentStatus: paymentStatus as "up-to-date" | "has-arrears" | undefined,
+    paymentStatus: paymentStatus as 'up-to-date' | 'has-arrears' | undefined,
   });
 
   res.status(200).json({
     success: true,
     data: rekapKas,
-    message: "Rekap kas berhasil diambil",
+    message: 'Rekap kas berhasil diambil',
   });
 });
 
-/**
- * Export rekap kas
- * GET /api/bendahara/rekap-kas/export
- */
 export const exportRekapKas = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const user = req.user;
   const { startDate, endDate, search, paymentStatus, classId } = req.query;
 
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: "UNAUTHORIZED",
-        message: "User belum terautentikasi",
-      },
-    });
-    return;
-  }
-
-  const { exportService } = await import("@/services/export.service");
+  const { exportService } = await import('@/services/export.service');
 
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;
-  const targetClassId = typeof classId === "string" ? classId : undefined;
+  const targetClassId = typeof classId === 'string' ? classId : undefined;
 
-  // Get data for export (using large limit to get all)
   const rekapKas = await bendaharaService.getRekapKas(targetClassId, {
     startDate: start,
     endDate: end,
     search: search as string | undefined,
     page: 1,
-    limit: 10000, // Export all
-    paymentStatus: paymentStatus as "up-to-date" | "has-arrears" | undefined,
+    limit: 10000,
+    paymentStatus: paymentStatus as 'up-to-date' | 'has-arrears' | undefined,
   });
 
   const buffer = await exportService.exportRekapKasToExcel(rekapKas);
 
   res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   );
   res.setHeader(
-    "Content-Disposition",
-    `attachment; filename="rekap-kas-${new Date().toISOString().split("T")[0]}.xlsx"`
+    'Content-Disposition',
+    `attachment; filename="rekap-kas-${new Date().toISOString().split('T')[0]}.xlsx"`
   );
   res.send(buffer);
 });
 
-/**
- * Get all students
- * GET /api/bendahara/students
- */
 export const getStudents = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const user = req.user;
   const { page = 1, limit = 10, search, classId } = req.query;
 
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "User not authenticated" },
-    });
-    return;
-  }
-
-  const targetClassId = typeof classId === "string" ? classId : undefined;
+  const targetClassId = typeof classId === 'string' ? classId : undefined;
 
   const students = await userService.getStudents({
     page: Number(page),
@@ -321,68 +177,38 @@ export const getStudents = asyncHandler(async (req: Request, res: Response): Pro
   res.status(200).json({
     success: true,
     data: students,
-    message: "Data siswa berhasil diambil",
+    message: 'Data siswa berhasil diambil',
   });
 });
 
-/**
- * Get student detail
- * GET /api/bendahara/students/:id
- */
 export const getStudentDetail = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const user = req.user;
   const { id } = req.params;
   const studentId = Array.isArray(id) ? id[0] : id;
-
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "User not authenticated" },
-    });
-    return;
-  }
 
   const student = await bendaharaService.getStudentDetail(studentId);
 
   if (!student) {
     res.status(404).json({
       success: false,
-      error: { code: "NOT_FOUND", message: "Siswa tidak ditemukan" },
+      error: { code: 'NOT_FOUND', message: 'Siswa tidak ditemukan' },
     });
     return;
   }
 
-  // Sanitize password
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...safeStudent } = student;
+  const { password: _password, ...safeStudent } = student;
 
   res.status(200).json({
     success: true,
     data: safeStudent,
-    message: "Detail siswa berhasil diambil",
+    message: 'Detail siswa berhasil diambil',
   });
 });
 
-/**
- * Create manual transaction
- * POST /api/bendahara/transactions
- */
 export const createTransaction = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const user = req.user;
+    const user = req.user!;
     const { date, description, type, amount, category } = req.body;
-    const attachment = req.fileUrl; // Set by upload middleware
-
-    if (!user) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "User belum terautentikasi",
-        },
-      });
-      return;
-    }
+    const attachment = req.fileUrl;
 
     const transaction = await bendaharaService.createManualTransaction({
       date: new Date(date),
@@ -398,7 +224,7 @@ export const createTransaction = asyncHandler(
     res.status(201).json({
       success: true,
       data: transaction,
-      message: "Transaksi berhasil dibuat",
+      message: 'Transaksi berhasil dibuat',
     });
   }
 );
