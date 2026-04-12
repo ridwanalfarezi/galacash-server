@@ -1,10 +1,10 @@
-import { logger } from "@/utils/logger";
-import { prisma } from "@/utils/prisma-client";
-import cron from "node-cron";
+import { logger } from '@/utils/logger';
+import { prisma } from '@/utils/prisma-client';
+import cron from 'node-cron';
 
-const BILL_GENERATION_SCHEDULE = process.env.BILL_GENERATION_SCHEDULE || "0 0 1 * *";
+const BILL_GENERATION_SCHEDULE = process.env.BILL_GENERATION_SCHEDULE || '0 0 1 * *';
 
-const KAS_KELAS_AMOUNT = parseInt(process.env.KAS_KELAS_AMOUNT || "15000", 10);
+const KAS_KELAS_AMOUNT = parseInt(process.env.KAS_KELAS_AMOUNT || '10000', 10);
 const BIAYA_ADMIN = 0;
 const BATCH_SIZE = 100;
 const SEMESTER_BREAK_MONTHS = [1, 2, 7, 8];
@@ -14,7 +14,7 @@ const SEMESTER_BREAK_MONTHS = [1, 2, 7, 8];
  */
 async function generateMonthlyBills(): Promise<void> {
   try {
-    logger.info("🔄 Starting monthly bill generation...");
+    logger.info('🔄 Starting monthly bill generation...');
 
     const now = new Date();
     const month = now.getMonth() + 1;
@@ -38,7 +38,7 @@ async function generateMonthlyBills(): Promise<void> {
     do {
       const users = await prisma.user.findMany({
         where: {
-          role: "user",
+          role: 'user',
         },
         select: {
           id: true,
@@ -74,14 +74,14 @@ async function generateMonthlyBills(): Promise<void> {
         .map((user: { id: string; classId: string }) => ({
           userId: user.id,
           classId: user.classId,
-          billId: `BILL-${year}-${month.toString().padStart(2, "0")}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+          billId: `BILL-${year}-${month.toString().padStart(2, '0')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
           month,
           year,
           dueDate,
           kasKelas: KAS_KELAS_AMOUNT,
           biayaAdmin: BIAYA_ADMIN,
           totalAmount,
-          status: "belum_dibayar" as const,
+          status: 'belum_dibayar' as const,
         }));
 
       if (billsToCreate.length > 0) {
@@ -107,7 +107,7 @@ async function generateMonthlyBills(): Promise<void> {
       `🎉 Monthly bill generation complete! Created: ${createdCount}, Skipped: ${skippedCount}`
     );
   } catch (error) {
-    logger.error("❌ Monthly bill generation failed:", error);
+    logger.error('❌ Monthly bill generation failed:', error);
   }
 }
 
@@ -125,11 +125,11 @@ export function initializeBillGenerator(): void {
 
   // Schedule the cron job
   cron.schedule(BILL_GENERATION_SCHEDULE, async () => {
-    logger.info("⏰ Bill generation cron triggered");
+    logger.info('⏰ Bill generation cron triggered');
     await generateMonthlyBills();
   });
 
-  logger.info("✅ Bill generator cron job started successfully");
+  logger.info('✅ Bill generator cron job started successfully');
 }
 
 // Export for manual testing
