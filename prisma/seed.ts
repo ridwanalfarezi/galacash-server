@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import "dotenv/config";
+import "../scripts/load-env";
 import { prisma } from "../src/utils/prisma-client";
 
 const BCRYPT_ROUNDS = 10;
@@ -80,7 +80,7 @@ const classBStudents = [
   { name: "IR KURNIA", nim: "1313624070" },
   { name: "TRYSTAN PRASTANOV GABRIEL", nim: "1313624071" },
   { name: "RAFI RUZAIN RABA", nim: "1313624072" },
-  { name: "GENOVERRE ABRAHAM ESTHEREDITH WOWOR", nim: "1313624073" },
+  // REMOVED: GENOVERRE ABRAHAM ESTHEREDITH WOWOR (1313624073)
   { name: "ALI URAIDY", nim: "1313624074" },
   { name: "NAYLA ZAHRA", nim: "1313624075" },
   { name: "MUHAMMAD DHEKI AKBAR", nim: "1313624076" },
@@ -89,8 +89,8 @@ const classBStudents = [
   { name: "CAREAL ALIF MAFAZI", nim: "1313624079" },
   { name: "ILHAM DWIKY ARDIANSYAH", nim: "1313624080" },
   { name: "GIDEON MIRACLE SIHOMBING", nim: "1313624081" },
-  { name: "SYAUQI RAFLY RAMADHAN", nim: "1313624082" },
-  { name: "AGUNG AGRO PRAWIRO", nim: "1313624083" },
+  // REMOVED: SYAUQI RAFLY RAMADHAN (1313624082)
+  // REMOVED: AGUNG AGRO PRAWIRO (1313624083)
   { name: "FATAH ADILIANSYAH", nim: "1313624084" },
   { name: "AYUB TRI SUBIYANTO", nim: "1313624085" },
 ];

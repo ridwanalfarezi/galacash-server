@@ -429,6 +429,73 @@ export class CashBillRepository {
       throw error;
     }
   }
+
+  /**
+   * Find multiple cash bills by IDs
+   */
+  async findByIds(ids: string[]): Promise<CashBill[]> {
+    try {
+      return await prisma.cashBill.findMany({
+        where: { id: { in: ids } },
+        include: {
+          user: true,
+          class: true,
+          confirmer: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError('Failed to fetch cash bills by IDs');
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Atomically update multiple bills for batch payment
+   * Uses a Prisma interactive transaction to ensure all-or-nothing semantics
+   */
+  async updateManyBatchPay(
+    ids: string[],
+    data: {
+      status: BillStatus;
+      paymentMethod: PaymentMethod;
+      paymentProofUrl: string;
+      paidAt: Date;
+    }
+  ): Promise<CashBill[]> {
+    try {
+      return await prisma.$transaction(async (tx: { cashBill: typeof prisma.cashBill }) => {
+        const results: CashBill[] = [];
+        for (const id of ids) {
+          const updated = await tx.cashBill.update({
+            where: { id },
+            data: {
+              status: data.status,
+              paymentMethod: data.paymentMethod,
+              paymentProofUrl: data.paymentProofUrl,
+              paidAt: data.paidAt,
+            },
+            include: {
+              user: true,
+              class: true,
+              confirmer: true,
+            },
+          });
+          results.push(updated);
+        }
+        return results;
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundError('One or more cash bills not found', 'CashBill');
+        }
+        throw new DatabaseError('Failed to batch update cash bills');
+      }
+      throw error;
+    }
+  }
 }
 
 export const cashBillRepository = new CashBillRepository();

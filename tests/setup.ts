@@ -1,7 +1,37 @@
 import { mock } from 'bun:test';
+import fs from 'fs';
+import path from 'path';
 
-// Load test environment variables is handled by Bun automatic loading or run config
-// dotenv.config({ path: path.resolve(__dirname, "../.env.test") });
+const testEnvPath = path.resolve(__dirname, '../.env.test');
+
+if (fs.existsSync(testEnvPath)) {
+  const envFile = fs.readFileSync(testEnvPath, 'utf8');
+  for (const line of envFile.split(/\r?\n/)) {
+    const trimmedLine = line.trim();
+    if (!trimmedLine || trimmedLine.startsWith('#')) {
+      continue;
+    }
+
+    const equalsIndex = trimmedLine.indexOf('=');
+    if (equalsIndex === -1) {
+      continue;
+    }
+
+    const key = trimmedLine.slice(0, equalsIndex).trim();
+    let value = trimmedLine.slice(equalsIndex + 1).trim();
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] = value;
+  }
+}
+
+delete process.env.PRISMA_DATABASE_URL;
 
 // Mock console.log to keep test output clean, if desired.
 // console.log = mock(() => {});

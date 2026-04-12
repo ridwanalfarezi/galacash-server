@@ -6,7 +6,7 @@
  *   bun scripts/clean-data.ts
  */
 
-import "dotenv/config";
+import "./load-env";
 
 // Use dynamic import to avoid module resolution issues
 const { prisma } = await import("../src/utils/prisma-client.ts");

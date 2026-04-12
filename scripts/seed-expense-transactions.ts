@@ -6,10 +6,11 @@
  *   bun run seed:expenses
  */
 
-import "dotenv/config";
+import "./load-env";
 
 // Use dynamic import to avoid module resolution issues
 const { prisma } = await import("../src/utils/prisma-client.ts");
+import type { TransactionCategory } from "../src/prisma/generated/client";
 
 // Expense data structure
 interface ExpenseData {
@@ -18,6 +19,23 @@ interface ExpenseData {
   amount: number;
   category: string;
 }
+
+const normalizeExpenseCategory = (category: string): TransactionCategory => {
+  switch (category) {
+    case "printing":
+      return "office_supplies";
+    case "competition":
+      return "event";
+    case "social":
+      return "consumption";
+    case "education":
+      return "other";
+    case "subscription":
+      return "other";
+    default:
+      return "other";
+  }
+};
 
 const expenses: ExpenseData[] = [
   {
@@ -193,8 +211,7 @@ async function seedExpenseTransactions() {
             data: {
               classId: classA.id,
               type: "expense",
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              category: expense.category as any,
+              category: normalizeExpenseCategory(expense.category),
               description: expense.description,
               amount: expense.amount,
               date: expense.date,

@@ -87,3 +87,44 @@ export const cancelPayment = asyncHandler(async (req: Request, res: Response): P
     message: 'Pembayaran berhasil dibatalkan',
   });
 });
+
+export const batchPay = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user!.sub;
+  const { billIds, paymentMethod } = req.body;
+  const paymentProofUrl = req.fileUrl;
+
+  if (!paymentProofUrl) {
+    res.status(400).json({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'Bukti pembayaran wajib diupload',
+      },
+    });
+    return;
+  }
+
+  if (!Array.isArray(billIds) || billIds.length === 0) {
+    res.status(400).json({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'billIds harus berupa array dan tidak boleh kosong',
+      },
+    });
+    return;
+  }
+
+  const result = await cashBillService.payBillsBatch(
+    billIds,
+    userId,
+    paymentMethod,
+    paymentProofUrl
+  );
+
+  res.status(200).json({
+    success: true,
+    data: result,
+    message: `${result.length} tagihan berhasil dibayar`,
+  });
+});

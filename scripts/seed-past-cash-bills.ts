@@ -13,10 +13,11 @@
  *   bun run seed:past-bills
  */
 
-import "dotenv/config";
+import "./load-env";
 
 // Use dynamic import to avoid module resolution issues
 const { prisma } = await import("../src/utils/prisma-client.ts");
+import type { Prisma } from "../src/prisma/generated/client";
 
 // Map student names to NIMs
 const nameToNimMap: Record<string, string> = {
@@ -91,7 +92,6 @@ const nameToNimMap: Record<string, string> = {
   "IR KURNIA": "1313624070",
   "TRYSTAN PRASTANOV GABRIEL": "1313624071",
   "RAFI RUZAIN RABA": "1313624072",
-  "GENOVERRE ABRAHAM ESTHEREDITH WOWOR": "1313624073",
   "ALI URAIDY": "1313624074",
   "NAYLA ZAHRA": "1313624075",
   "MUHAMMAD DHEKI AKBAR": "1313624076",
@@ -100,8 +100,6 @@ const nameToNimMap: Record<string, string> = {
   "CAREAL ALIF MAFAZI": "1313624079",
   "ILHAM DWIKY ARDIANSYAH": "1313624080",
   "GIDEON MIRACLE SIHOMBING": "1313624081",
-  "SYAUQI RAFLY RAMADHAN": "1313624082",
-  "AGUNG AGRO PRAWIRO": "1313624083",
   "AYUB TRI SUBIYANTO": "1313624085",
   "FATAH ADILIANSYAH": "1313624084",
 };
@@ -230,21 +228,8 @@ const data2024: PaymentRecord[] = [
   { name: "DAYU AJI PRIAWAN", sept2024: true, okt2024: true, nov2024: true, des2024: true },
   { name: "ANDRA ALDOVIAN SYARIEF", sept2024: true, okt2024: true, nov2024: true, des2024: true },
   { name: "IR KURNIA", sept2024: true, okt2024: true, nov2024: true, des2024: true },
-  {
-    name: "TRYSTAN PRASTANOV GABRIEL",
-    sept2024: true,
-    okt2024: true,
-    nov2024: true,
-    des2024: true,
-  },
+  { name: "TRYSTAN PRASTANOV GABRIEL", sept2024: true, okt2024: true, nov2024: true, des2024: true },
   { name: "RAFI RUZAIN RABA", sept2024: true, okt2024: true, nov2024: true, des2024: true },
-  {
-    name: "GENOVERRE ABRAHAM ESTHEREDITH WOWOR",
-    sept2024: true,
-    okt2024: true,
-    nov2024: true,
-    des2024: true,
-  },
   { name: "ALI URAIDY", sept2024: true, okt2024: true, nov2024: true, des2024: true },
   { name: "NAYLA ZAHRA", sept2024: true, okt2024: true, nov2024: true, des2024: true },
   { name: "MUHAMMAD DHEKI AKBAR", sept2024: true, okt2024: true, nov2024: true, des2024: true },
@@ -253,8 +238,6 @@ const data2024: PaymentRecord[] = [
   { name: "CAREAL ALIF MAFAZI", sept2024: true, okt2024: true, nov2024: true, des2024: true },
   { name: "ILHAM DWIKY ARDIANSYAH", sept2024: true, okt2024: true, nov2024: true, des2024: true },
   { name: "GIDEON MIRACLE SIHOMBING", sept2024: true, okt2024: true, nov2024: true, des2024: true },
-  { name: "SYAUQI RAFLY RAMADHAN", sept2024: true, okt2024: true, nov2024: true, des2024: true },
-  { name: "AGUNG AGRO PRAWIRO", sept2024: true, okt2024: true, nov2024: true, des2024: true },
   { name: "AYUB TRI SUBIYANTO", sept2024: true, okt2024: true, nov2024: true, des2024: true },
   { name: "FATAH ADILIANSYAH", sept2024: true, okt2024: true, nov2024: true, des2024: true },
 ];
@@ -367,13 +350,26 @@ const data2025Q1Q2: PaymentRecord[] = [
 // Sep - Dec 2025 data
 const data2025Q3Q4: PaymentRecord[] = [
   { name: "DEVIA ARITONDI NATALSYA", sept2025: true, okt2025: true, nov2025: true, des2025: true },
+  { name: "NADINE ALYSHA MAHESWARI", sept2025: true, okt2025: true, nov2025: true, des2025: true },
   { name: "MUHAMMAD DAFFA RAMDHANI", sept2025: true, okt2025: true, nov2025: true, des2025: true },
   { name: "DHIMAS EKA PUTRA", sept2025: true },
+  { name: "DANIEL TADEO EVANTIYASA", sept2025: true, okt2025: true, nov2025: true, des2025: true },
+  { name: "AUFA LEVINA HAPSARI", sept2025: true, okt2025: true, nov2025: true, des2025: true },
   { name: "DIAJENG KARIMA SADIDA", sept2025: true, okt2025: true, nov2025: true, des2025: true },
+  {
+    name: "MICHAEL RENATTO ZITHA SETIAWAN",
+    sept2025: true,
+    okt2025: true,
+    nov2025: true,
+    des2025: true,
+  },
+  { name: "FATHYA KHAIRANI R", sept2025: true, okt2025: true, nov2025: true, des2025: true },
   { name: "ANINDYA KAILA PREMONO", sept2025: true, okt2025: true, nov2025: true, des2025: true },
   { name: "HAVIZ FACHRIAN ALBAR", sept2025: true },
   { name: "NASYWA ZAHRA ZETTIRA", sept2025: true, okt2025: true, nov2025: true, des2025: true },
+  { name: "MUHAMMAD RINGAN PRAYOGA", sept2025: true, okt2025: true, nov2025: true, des2025: true },
   { name: "DAMAR RAYYAN PRAMONO", sept2025: true },
+  { name: "RIZA ARYADWITO", sept2025: true, okt2025: true, nov2025: true, des2025: true },
   { name: "KEMAL DERMAWAN", sept2025: true, okt2025: true, nov2025: true, des2025: true },
   { name: "BAHTIAR RIFAI KHUMAIDI", sept2025: true },
   { name: "RAFIANDRA DIRGA MEAZZA", sept2025: true },
@@ -783,6 +779,126 @@ async function seedPastCashBills() {
             `❌ Error creating records for ${payment.name} (${nim}) in ${month.label}:`,
             error
           );
+        }
+      }
+    }
+
+    // ======================================================================
+    // Generate Cash Bills for March 2026 & April 2026
+    // ======================================================================
+    console.log("\n💰 Creating Cash Bills for March & April 2026...");
+
+    const marchBillStatus: Record<string, "sudah_dibayar" | "menunggu_konfirmasi" | "belum_dibayar"> = {
+      "1313624009": "sudah_dibayar",     // NADINE ALYSHA MAHESWARI
+      "1313624028": "sudah_dibayar",     // DANIEL TADEO EVANTIYASA
+      "1313624032": "sudah_dibayar",     // AUFA LEVINA HAPSARI
+      "1313624036": "sudah_dibayar",     // MICHAEL RENATTO ZITHA SETIAWAN
+      "1313624062": "sudah_dibayar",     // ANINDYA KAILA PREMONO
+      "1313624044": "sudah_dibayar",     // RIZA ARYADWITO
+    };
+
+    const aprilBillStatus: Record<string, "sudah_dibayar" | "menunggu_konfirmasi" | "belum_dibayar"> = {
+      "1313624009": "sudah_dibayar",     // NADINE ALYSHA MAHESWARI
+      "1313624028": "sudah_dibayar",     // DANIEL TADEO EVANTIYASA
+      "1313624062": "sudah_dibayar",     // ANINDYA KAILA PREMONO
+      "1313624044": "sudah_dibayar",     // RIZA ARYADWITO
+    };
+
+    const latestDate = new Date();
+
+    const monthsToSeed2026 = [
+      { month: 3, year: 2026, dueDate: new Date(2026, 3, 1), statusMap: marchBillStatus },
+      { month: 4, year: 2026, dueDate: new Date(2026, 4, 1), statusMap: aprilBillStatus },
+    ];
+
+    const currentBendahara = await prisma.user.findFirst({ where: { role: "bendahara" } });
+    if (!currentBendahara) {
+      console.warn("⚠️ Bendahara not found, skipping 2026 confirmations");
+    }
+
+    const allUsers = await prisma.user.findMany({ where: { role: "user" } });
+
+    for (const { month, year, dueDate, statusMap } of monthsToSeed2026) {
+      const monthStr = month.toString().padStart(2, "0");
+      console.log(`  📋 Month ${monthStr}/${year}...`);
+
+      for (const user of allUsers) {
+        const nim = user.nim;
+        const status = statusMap[nim] || "belum_dibayar";
+        const monthNames = ["", "januari", "februari", "maret", "april", "mei", "juni", "juli", "agustus", "september", "oktober", "november", "desember"];
+        const monthName = monthNames[month];
+        const billId = `BILL-${nim}-${monthName.toUpperCase()}-${year}`;
+        const paymentAmount = 10000;
+
+        const billData: Record<string, unknown> = {
+          userId: user.id,
+          classId: user.classId,
+          billId,
+          month,
+          year,
+          dueDate,
+          kasKelas: paymentAmount,
+          biayaAdmin: 0,
+          totalAmount: paymentAmount,
+          status,
+          createdAt: latestDate,
+          updatedAt: latestDate,
+        };
+
+        if (status === "sudah_dibayar" || status === "menunggu_konfirmasi") {
+          billData.paymentMethod = "bank";
+          billData.paymentProofUrl = `https://storage.googleapis.com/galacash-payments/seed/${billId}.jpg`;
+          billData.paidAt = new Date(year, month - 1, 15);
+        }
+
+        if (status === "sudah_dibayar" && currentBendahara) {
+          billData.confirmedBy = currentBendahara.id;
+          billData.confirmedAt = new Date(year, month - 1, 16);
+        }
+
+        try {
+          await prisma.cashBill.upsert({
+            where: {
+              userId_month_year: {
+                userId: user.id,
+                month,
+                year,
+              },
+            },
+            update: billData,
+            create: billData as Prisma.CashBillUncheckedCreateInput,
+          });
+
+          if (status === "sudah_dibayar") {
+            const existingTx = await prisma.transaction.findFirst({
+              where: {
+                description: `Penerimaan iuran kas dari ${user.name} - ${monthStr}/${year}`,
+                classId: user.classId,
+                date: new Date(year, month - 1, 15),
+              },
+            });
+
+            if (!existingTx) {
+              await prisma.transaction.create({
+                data: {
+                  classId: user.classId,
+                  type: "income",
+                  category: "kas_kelas",
+                  description: `Penerimaan iuran kas dari ${user.name} - ${monthStr}/${year}`,
+                  amount: paymentAmount,
+                  date: new Date(year, month - 1, 15),
+                },
+              });
+              totalTransactionsCreated++;
+              totalIncomeAmount += paymentAmount;
+            }
+            totalPaidBills++;
+          } else {
+            totalUnpaidBills++;
+          }
+          totalBillsCreated++;
+        } catch (error) {
+          console.error(`❌ Error creating 2026 record for ${user.name} (${nim}):`, error);
         }
       }
     }

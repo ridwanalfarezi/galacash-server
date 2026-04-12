@@ -1,15 +1,15 @@
-import { CashBill, PaymentMethod } from "@/prisma/generated/client";
+import { CashBill, PaymentMethod } from '@/prisma/generated/client';
 import {
   CashBillFilters,
   cashBillRepository,
   PaginatedResponse,
-} from "@/repositories/cash-bill.repository";
-import { AuthorizationError, BusinessLogicError, NotFoundError } from "@/utils/errors";
-import { logger } from "@/utils/logger";
-import { CacheService } from "./cache.service";
+} from '@/repositories/cash-bill.repository';
+import { AuthorizationError, BusinessLogicError, NotFoundError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { CacheService } from './cache.service';
 
 export interface PayBillData {
-  paymentMethod: "bank" | "ewallet" | "cash";
+  paymentMethod: 'bank' | 'ewallet' | 'cash';
   paymentProofUrl: string;
 }
 
@@ -60,7 +60,7 @@ export class CashBillService {
 
       return result;
     } catch (error) {
-      logger.error("Failed to fetch user bills:", error);
+      logger.error('Failed to fetch user bills:', error);
       throw error;
     }
   }
@@ -77,7 +77,7 @@ export class CashBillService {
     }
     const bill = await this.cashBillRepository.findById(id);
     if (!bill) {
-      throw new NotFoundError("Cash bill not found", "CashBill");
+      throw new NotFoundError('Cash bill not found', 'CashBill');
     }
     return bill;
   }
@@ -99,7 +99,7 @@ export class CashBillService {
       const bill = await this.cashBillRepository.findById(id);
 
       if (!bill) {
-        throw new NotFoundError("Cash bill not found", "CashBill");
+        throw new NotFoundError('Cash bill not found', 'CashBill');
       }
 
       // Authorization check - bill must belong to user
@@ -113,7 +113,7 @@ export class CashBillService {
       if (error instanceof NotFoundError || error instanceof AuthorizationError) {
         throw error;
       }
-      logger.error("Failed to fetch bill:", error);
+      logger.error('Failed to fetch bill:', error);
       throw error;
     }
   }
@@ -124,7 +124,7 @@ export class CashBillService {
   async payBill(
     billId: string,
     userId: string,
-    paymentMethod: "bank" | "ewallet" | "cash",
+    paymentMethod: 'bank' | 'ewallet' | 'cash',
     paymentProofUrl: string,
     paymentAccountId?: string
   ): Promise<CashBill> {
@@ -133,16 +133,16 @@ export class CashBillService {
       const bill = await this.cashBillRepository.findById(billId);
 
       if (!bill) {
-        throw new NotFoundError("Cash bill not found", "CashBill");
+        throw new NotFoundError('Cash bill not found', 'CashBill');
       }
 
       // Check ownership
       if (bill.userId !== userId) {
-        throw new AuthorizationError("This bill does not belong to you");
+        throw new AuthorizationError('This bill does not belong to you');
       }
 
       // Check if bill is already paid or already submitted for payment
-      if (bill.status !== "belum_dibayar") {
+      if (bill.status !== 'belum_dibayar') {
         throw new BusinessLogicError(
           `Cannot pay bill with status '${bill.status}'. Only bills with 'belum_dibayar' status can be paid.`
         );
@@ -150,23 +150,23 @@ export class CashBillService {
 
       // Validate payment account if provided
       if (paymentAccountId) {
-        const { paymentAccountService } = await import("./payment-account.service");
+        const { paymentAccountService } = await import('./payment-account.service');
         const account = await paymentAccountService.getById(paymentAccountId);
 
-        if (account.status !== "active") {
-          throw new BusinessLogicError("Selected payment account is not active");
+        if (account.status !== 'active') {
+          throw new BusinessLogicError('Selected payment account is not active');
         }
       }
 
       // Update bill status to menunggu_konfirmasi and store payment proof
       const updateInput: {
-        status: "menunggu_konfirmasi";
+        status: 'menunggu_konfirmasi';
         paymentMethod: PaymentMethod;
         paymentProofUrl: string;
         paymentAccountId?: string | null;
         paidAt: Date;
       } = {
-        status: "menunggu_konfirmasi",
+        status: 'menunggu_konfirmasi',
         paymentMethod: paymentMethod as PaymentMethod,
         paymentProofUrl,
         paidAt: new Date(),
@@ -194,7 +194,7 @@ export class CashBillService {
       ) {
         throw error;
       }
-      logger.error("Failed to submit bill payment:", error);
+      logger.error('Failed to submit bill payment:', error);
       throw error;
     }
   }
@@ -203,7 +203,7 @@ export class CashBillService {
   async pay(
     billId: string,
     userId: string,
-    data: { paymentMethod: "bank" | "ewallet" | "cash"; paymentProofUrl: string }
+    data: { paymentMethod: 'bank' | 'ewallet' | 'cash'; paymentProofUrl: string }
   ) {
     return this.payBill(billId, userId, data.paymentMethod, data.paymentProofUrl);
   }
@@ -217,16 +217,16 @@ export class CashBillService {
       const bill = await this.cashBillRepository.findById(billId);
 
       if (!bill) {
-        throw new NotFoundError("Cash bill not found", "CashBill");
+        throw new NotFoundError('Cash bill not found', 'CashBill');
       }
 
       // Check ownership
       if (bill.userId !== userId) {
-        throw new AuthorizationError("This bill does not belong to you");
+        throw new AuthorizationError('This bill does not belong to you');
       }
 
       // Check if payment is pending (menunggu_konfirmasi)
-      if (bill.status !== "menunggu_konfirmasi") {
+      if (bill.status !== 'menunggu_konfirmasi') {
         throw new BusinessLogicError(
           `Cannot cancel payment for bill with status '${bill.status}'. Only payments waiting for confirmation can be cancelled.`
         );
@@ -234,7 +234,7 @@ export class CashBillService {
 
       // Revert bill to belum_dibayar and clear payment info
       const updatedBill = await this.cashBillRepository.update(billId, {
-        status: "belum_dibayar",
+        status: 'belum_dibayar',
         paymentMethod: null,
         paymentProofUrl: null,
         paidAt: null,
@@ -254,7 +254,7 @@ export class CashBillService {
       ) {
         throw error;
       }
-      logger.error("Failed to cancel bill payment:", error);
+      logger.error('Failed to cancel bill payment:', error);
       throw error;
     }
   }
@@ -262,11 +262,11 @@ export class CashBillService {
   async getPendingByUser(userId: string) {
     // FIXED: Use single query with statuses array instead of two queries
     const result = await this.cashBillRepository.findByUserId(userId, {
-      statuses: ["belum_dibayar", "menunggu_konfirmasi"],
+      statuses: ['belum_dibayar', 'menunggu_konfirmasi'],
       page: 1,
       limit: 100,
-      sortBy: "dueDate",
-      sortOrder: "asc",
+      sortBy: 'dueDate',
+      sortOrder: 'asc',
     });
 
     return {
@@ -276,11 +276,80 @@ export class CashBillService {
   }
 
   /**
+   * Submit batch payment for multiple bills (atomic)
+   * All selected bills are updated in a single transaction.
+   */
+  async payBillsBatch(
+    billIds: string[],
+    userId: string,
+    paymentMethod: 'bank' | 'ewallet' | 'cash',
+    paymentProofUrl: string
+  ): Promise<CashBill[]> {
+    try {
+      if (!billIds.length) {
+        throw new BusinessLogicError('No bill IDs provided for batch payment.');
+      }
+
+      // Fetch all bills
+      const bills = await this.cashBillRepository.findByIds(billIds);
+
+      // Validate: all IDs were found
+      if (bills.length !== billIds.length) {
+        const foundIds = new Set(bills.map((b) => b.id));
+        const missingIds = billIds.filter((id) => !foundIds.has(id));
+        throw new NotFoundError(`Cash bills not found: ${missingIds.join(', ')}`, 'CashBill');
+      }
+
+      // Validate: ownership & status for every bill
+      for (const bill of bills) {
+        if (bill.userId !== userId) {
+          throw new AuthorizationError(`Bill ${bill.billId} does not belong to you`);
+        }
+        if (bill.status !== 'belum_dibayar') {
+          throw new BusinessLogicError(
+            `Bill ${bill.billId} has status '${bill.status}' and cannot be paid. Only 'belum_dibayar' bills are allowed.`
+          );
+        }
+      }
+
+      // Atomic batch update
+      const updatedBills = await this.cashBillRepository.updateManyBatchPay(billIds, {
+        status: 'menunggu_konfirmasi' as import('@/prisma/generated/client').BillStatus,
+        paymentMethod: paymentMethod as import('@/prisma/generated/client').PaymentMethod,
+        paymentProofUrl,
+        paidAt: new Date(),
+      });
+
+      // Invalidate caches — gather unique classIds
+      const classIds = [...new Set(bills.map((b) => b.classId))];
+      for (const classId of classIds) {
+        await this.invalidateBillCache(userId, classId);
+      }
+
+      logger.info(
+        `Batch payment submitted: ${billIds.length} bills by user ${userId} with method ${paymentMethod}`
+      );
+
+      return updatedBills;
+    } catch (error) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof AuthorizationError ||
+        error instanceof BusinessLogicError
+      ) {
+        throw error;
+      }
+      logger.error('Failed to submit batch bill payment:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Check if bill belongs to user
    */
   private checkOwnership(bill: CashBill, userId: string): void {
     if (bill.userId !== userId) {
-      throw new AuthorizationError("This bill does not belong to you");
+      throw new AuthorizationError('This bill does not belong to you');
     }
   }
 
