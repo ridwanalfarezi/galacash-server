@@ -40,6 +40,9 @@ async function generateMonthlyBills(): Promise<void> {
         where: {
           role: 'user',
         },
+        orderBy: {
+          id: 'asc',
+        },
         select: {
           id: true,
           nim: true,
@@ -48,6 +51,7 @@ async function generateMonthlyBills(): Promise<void> {
         },
         take: BATCH_SIZE,
         cursor: cursor ? { id: cursor.id } : undefined,
+        skip: cursor ? 1 : 0,
       });
 
       if (users.length === 0) {
