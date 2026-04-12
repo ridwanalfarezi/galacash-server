@@ -90,10 +90,27 @@ export const cancelPayment = asyncHandler(async (req: Request, res: Response): P
 
 export const batchPay = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const userId = req.user!.sub;
-  const { billIds, paymentMethod } = req.body;
+  const { paymentMethod } = req.body;
   const paymentProofUrl = req.fileUrl;
 
-  if (!paymentProofUrl) {
+  // billIds can arrive as JSON string (multipart/form-data) or as array (application/json)
+  let billIds: unknown = req.body.billIds;
+  if (typeof billIds === 'string') {
+    try {
+      billIds = JSON.parse(billIds);
+    } catch {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'BAD_REQUEST',
+          message: 'billIds harus berupa JSON array yang valid',
+        },
+      });
+      return;
+    }
+  }
+
+  if (!paymentProofUrl && paymentMethod !== 'cash') {
     res.status(400).json({
       success: false,
       error: {
@@ -104,12 +121,16 @@ export const batchPay = asyncHandler(async (req: Request, res: Response): Promis
     return;
   }
 
-  if (!Array.isArray(billIds) || billIds.length === 0) {
+  if (
+    !Array.isArray(billIds) ||
+    billIds.length === 0 ||
+    !billIds.every((billId) => typeof billId === 'string' && billId.trim().length > 0)
+  ) {
     res.status(400).json({
       success: false,
       error: {
         code: 'BAD_REQUEST',
-        message: 'billIds harus berupa array dan tidak boleh kosong',
+        message: 'billIds harus berupa array string valid dan tidak boleh kosong',
       },
     });
     return;
@@ -119,7 +140,7 @@ export const batchPay = asyncHandler(async (req: Request, res: Response): Promis
     billIds,
     userId,
     paymentMethod,
-    paymentProofUrl
+    paymentProofUrl || null
   );
 
   res.status(200).json({

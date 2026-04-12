@@ -460,7 +460,7 @@ export class CashBillRepository {
     data: {
       status: BillStatus;
       paymentMethod: PaymentMethod;
-      paymentProofUrl: string;
+      paymentProofUrl?: string | null;
       paidAt: Date;
     }
   ): Promise<CashBill[]> {

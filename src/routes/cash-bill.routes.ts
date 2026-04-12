@@ -35,30 +35,18 @@ router.post(
   handleFileUpload('payments'),
   validateBody(
     Joi.object({
-      billIds: Joi.string().required().messages({
-        'any.required': 'Bill IDs are required',
-      }),
+      billIds: Joi.alternatives()
+        .try(Joi.string(), Joi.array().items(Joi.string()))
+        .required()
+        .messages({
+          'any.required': 'Bill IDs are required',
+        }),
       paymentMethod: Joi.string().valid('bank', 'ewallet', 'cash').required().messages({
         'any.required': 'Payment method is required',
         'any.only': "Payment method must be 'bank', 'ewallet', or 'cash'",
       }),
     })
   ),
-  // Parse billIds from JSON string (multipart/form-data sends everything as strings)
-  (
-    req: import('express').Request,
-    _res: import('express').Response,
-    next: import('express').NextFunction
-  ) => {
-    if (typeof req.body.billIds === 'string') {
-      try {
-        req.body.billIds = JSON.parse(req.body.billIds);
-      } catch {
-        // Leave as-is, controller will validate
-      }
-    }
-    next();
-  },
   cashBillController.batchPay
 );
 

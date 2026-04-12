@@ -283,7 +283,7 @@ export class CashBillService {
     billIds: string[],
     userId: string,
     paymentMethod: 'bank' | 'ewallet' | 'cash',
-    paymentProofUrl: string
+    paymentProofUrl?: string | null
   ): Promise<CashBill[]> {
     try {
       if (!billIds.length) {
@@ -312,11 +312,15 @@ export class CashBillService {
         }
       }
 
+      if (paymentMethod !== 'cash' && !paymentProofUrl) {
+        throw new BusinessLogicError('Payment proof is required for non-cash batch payments.');
+      }
+
       // Atomic batch update
       const updatedBills = await this.cashBillRepository.updateManyBatchPay(billIds, {
         status: 'menunggu_konfirmasi' as import('@/prisma/generated/client').BillStatus,
         paymentMethod: paymentMethod as import('@/prisma/generated/client').PaymentMethod,
-        paymentProofUrl,
+        paymentProofUrl: paymentMethod === 'cash' ? null : paymentProofUrl,
         paidAt: new Date(),
       });
 
