@@ -465,27 +465,27 @@ export class CashBillRepository {
     }
   ): Promise<CashBill[]> {
     try {
-      return await prisma.$transaction(async (tx: { cashBill: typeof prisma.cashBill }) => {
-        const results: CashBill[] = [];
-        for (const id of ids) {
-          const updated = await tx.cashBill.update({
-            where: { id },
-            data: {
-              status: data.status,
-              paymentMethod: data.paymentMethod,
-              paymentProofUrl: data.paymentProofUrl,
-              paidAt: data.paidAt,
-            },
-            include: {
-              user: true,
-              class: true,
-              confirmer: true,
-            },
-          });
-          results.push(updated);
-        }
-        return results;
-      });
+      // Build all update operations first and execute them together in a single
+      // transaction. This avoids N+1 sequential updates and lets Prisma run
+      // the updates in parallel where supported.
+      const ops = ids.map((id) =>
+        prisma.cashBill.update({
+          where: { id },
+          data: {
+            status: data.status,
+            paymentMethod: data.paymentMethod,
+            paymentProofUrl: data.paymentProofUrl,
+            paidAt: data.paidAt,
+          },
+          include: {
+            user: true,
+            class: true,
+            confirmer: true,
+          },
+        })
+      );
+
+      return await prisma.$transaction(ops);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {

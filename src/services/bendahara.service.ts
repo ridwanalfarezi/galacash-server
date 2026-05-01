@@ -658,29 +658,29 @@ export class BendaharaService {
         };
       }
 
-      // 3. Get total count for pagination
-      const totalStudents = await prisma.user.count({ where: whereClause });
-
-      // 4. Get Students with their billing status
-      const students = await prisma.user.findMany({
-        where: whereClause,
-        select: {
-          id: true,
-          name: true,
-          nim: true,
-          cashBills: {
-            select: {
-              status: true,
-              totalAmount: true,
-              month: true,
-              year: true,
+      // 3 & 4. Get total count and Students concurrently for pagination
+      const [totalStudents, students] = await Promise.all([
+        prisma.user.count({ where: whereClause }),
+        prisma.user.findMany({
+          where: whereClause,
+          select: {
+            id: true,
+            name: true,
+            nim: true,
+            cashBills: {
+              select: {
+                status: true,
+                totalAmount: true,
+                month: true,
+                year: true,
+              },
             },
           },
-        },
-        orderBy: { nim: 'asc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      });
+          orderBy: { nim: 'asc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ]);
 
       const studentSummaries = students.map((s: StudentWithBills) =>
         this.calculateStudentSummary(s)
