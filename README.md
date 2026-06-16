@@ -2,7 +2,7 @@
 
 > **Financial management API for class treasurers**  
 > Built with Bun, Express, TypeScript, PostgreSQL, Redis, and GCP Cloud Storage  
-> **Last Updated:** February 5, 2026
+> **Last Updated:** June 16, 2026
 
 ---
 
@@ -40,10 +40,12 @@ GalaCash is a comprehensive backend API for managing class finances. It provides
 ✅ **Cash Bills (Tagihan Kas)**: Automated monthly bill generation  
 ✅ **Transactions**: Track income and expenses across all classes  
 ✅ **Financial Reports (Rekap Kas)**: Comprehensive batch-level financial summaries  
-✅ **File Uploads**: GCP Cloud Storage integration for payment proofs  
-✅ **Caching**: Redis for improved performance  
+✅ **File Uploads**: GCP Cloud Storage with magic-byte validation — file content verified against binary signatures, not attacker-supplied headers  
+✅ **Caching**: Redis with full cache invalidation strategy — mutations evict all derived views  
+✅ **ACID Transactions**: Prisma Interactive Transactions wrap every multi-step financial mutation  
+✅ **Idempotent Cron**: Redis distributed lock prevents duplicate bill generation under GCP at-least-once delivery  
 ✅ **Auto-transactions**: Bills and approvals auto-create transactions  
-✅ **Data Transparency**: Aggregated views across all classes in a batch
+✅ **Data Transparency**: Aggregated views across all classes in a batch  
 ✅ **Payment Accounts**: Manage bank accounts and e-wallets for treasury  
 ✅ **Transaction Labels**: Organize transactions with custom labels  
 ✅ **Export Reports**: Generate Excel reports for financial summaries
@@ -433,6 +435,73 @@ The codebase follows a clean layered architecture:
 5. **Middlewares** (`src/middlewares/`) - Request processing (auth, validation, etc.)
 6. **Validators** (`src/validators/`) - Joi schemas for input validation
 
+### Cache Invalidation Strategy
+
+Redis is used as a **Cache-Aside** layer. Every write path invalidates its own derived views immediately after the database commit:
+
+| Mutation                       | Evicted cache keys                                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `confirmPayment`               | `bendahara-dashboard*`, `bendahara-bills*`, `rekap-kas*`, `transactions:all*`, `balance:all`, `chart-data*`, `breakdown*` |
+| `approveFundApplication`       | Same as above                                                                                                             |
+| `createManualTransaction`      | Same as above                                                                                                             |
+| `invalidateTransactionCache()` | `transactions:all*`, `balance:all`, `chart-data*`, `breakdown*`, `bendahara-dashboard*`, `rekap-kas*`                     |
+
+**Key design decision**: patterns are broad (`rekap-kas*`, not `rekap-kas:all*`) so class-specific entries don't survive a global mutation and serve stale data.
+
+### ACID Transactions (Prisma Interactive Transactions)
+
+Every multi-step financial mutation is wrapped in `prisma.$transaction(async (tx) => { ... })` to guarantee atomicity:
+
+- **`approveFundApplication`** — atomically updates fund application status **and** creates an expense transaction record. If the transaction creation fails, the status change rolls back.
+- **`confirmPayment`** — atomically updates bill status with an optimistic lock (`updateMany` WHERE `status = 'menunggu_konfirmasi'`) **and** creates an income transaction. The `count === 0` guard detects a concurrent confirmation and aborts.
+- **`payBillsBatch`** — wraps the entire batch payment in a single transaction so a partial failure leaves no bills half-updated.
+
+```typescript
+// Pattern used throughout bendahara.service.ts
+await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  await tx.fundApplication.update({ where: { id }, data: { status: 'approved' } });
+  await tx.transaction.create({ data: { type: 'expense', amount: application.amount, ... } });
+  // If either fails → full rollback
+});
+```
+
+### Idempotent Cron Jobs
+
+GCP Cloud Scheduler uses **at-least-once delivery** — a transient network error can cause the same trigger to fire twice. Bill generation is protected by a Redis distributed lock:
+
+```
+lock:bill-generation:2026-06  →  TTL 1 hour
+```
+
+- **On first call**: `SET NX EX 3600` acquires the lock and generation proceeds.
+- **On duplicate delivery within 1 hour**: lock exists → `generateMonthlyBills()` returns `{ skipped: true }` → endpoint responds `423 Locked`.
+- **After 1 hour**: lock expires. If Cloud Scheduler retries legitimately (e.g. manual re-trigger), the per-user duplicate check (`cashBill.findMany WHERE userId IN [...] AND month AND year`) is the second line of defence and prevents any duplicate bill records.
+- **Redis unavailable**: `safeRedisSetNX` fails open (returns `true`), so generation always proceeds when Redis is down.
+
+### File Upload Security (Magic-Byte Validation)
+
+`file.mimetype` and `file.originalname` are both strings from the HTTP request — the client sets them. An attacker can rename `shell.php` to `bukti.png`, set `Content-Type: image/jpeg`, and bypass any check that only reads those fields.
+
+The fix in [`upload.middleware.ts`](src/middlewares/upload.middleware.ts) reads the actual bytes at the start of `file.buffer` (available because `multer.memoryStorage()` buffers the whole file before the middleware runs) and matches them against known binary signatures:
+
+| MIME type                  | Signature                                       | Offset  |
+| -------------------------- | ----------------------------------------------- | ------- |
+| `image/jpeg` / `image/jpg` | `FF D8 FF`                                      | 0       |
+| `image/png`                | `89 50 4E 47 0D 0A 1A 0A`                       | 0       |
+| `image/webp`               | `52 49 46 46` (RIFF) **+** `57 45 42 50` (WEBP) | 0 and 8 |
+| `application/pdf`          | `25 50 44 46` (%PDF)                            | 0       |
+
+WebP requires two probes because bytes 4–7 are the variable file size; the magic is split across offsets 0 and 8.
+
+Validation order in `validateFile()`:
+
+1. File size (fail fast on obvious oversize)
+2. Declared MIME type against allowlist (fail fast on obviously wrong content-type)
+3. File extension against allowlist (fail fast on obviously wrong name)
+4. **Magic-byte check** — the only authoritative gate; a mismatch here rejects the file regardless of what the headers say
+
+The error returned to the client (`"File content does not match the declared file type"`) is intentionally generic to avoid revealing implementation details to an attacker.
+
 ### Authentication Flow
 
 1. User logs in with NIM + Password
@@ -615,6 +684,10 @@ To use different ports, edit `docker-compose.yml` and update `.env`.
 - **📦 Binary Compilation**: Can be built as a standalone executable
 - **☁️ Cloud-Native**: Configured for Google Cloud Run deployment
 - **♻️ Clean Architecture**: Layered design with clear separation of concerns
+- **💾 Smart Caching**: Cache-Aside pattern with full invalidation — no stale aggregates after any financial mutation
+- **🔐 ACID Guarantees**: Prisma Interactive Transactions on every multi-step financial operation
+- **🔁 Idempotent Jobs**: Redis distributed lock on bill generation prevents duplicate runs under GCP at-least-once delivery
+- **🧱 Magic-Byte File Validation**: Upload security reads actual file binary signatures — MIME type and filename extension alone are not trusted
 
 ---
 
