@@ -751,12 +751,14 @@ export class BendaharaService {
   }
 
   /**
-   * Invalidate bendahara-related caches
+   * Invalidate all caches that depend on financial state.
+   * Patterns are intentionally broad (no :all* scoping) so class-specific
+   * cache entries are also evicted when a global mutation occurs.
    */
   private async invalidateBendaharaCaches(): Promise<void> {
-    await this.cacheService.invalidateCache(`bendahara-dashboard:all*`);
-    await this.cacheService.invalidateCache(`bendahara-bills:all*`);
-    await this.cacheService.invalidateCache(`rekap-kas:all*`);
+    await this.cacheService.invalidateCache(`bendahara-dashboard*`);
+    await this.cacheService.invalidateCache(`bendahara-bills*`);
+    await this.cacheService.invalidateCache(`rekap-kas*`);
     await this.cacheService.invalidateCache(`all-students*`);
     await this.cacheService.invalidateTransactions('all');
     await this.cacheService.invalidateCache('chart-data*');

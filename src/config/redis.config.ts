@@ -1,5 +1,5 @@
-import Redis, { RedisOptions } from "ioredis";
-import { logger } from "../utils/logger";
+import Redis, { RedisOptions } from 'ioredis';
+import { logger } from '../utils/logger';
 
 let redisClient: Redis | null = null;
 let isRedisAvailable = false;
@@ -9,11 +9,11 @@ let isRedisAvailable = false;
  */
 export async function connectRedis(): Promise<void> {
   try {
-    const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+    const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
     // Log connection target without credentials
     try {
       const urlObj = new URL(REDIS_URL);
-      const safeHost = `${urlObj.hostname}:${urlObj.port || "6379"}`;
+      const safeHost = `${urlObj.hostname}:${urlObj.port || '6379'}`;
       logger.info(`🔌 Redis connecting via ${urlObj.protocol} to ${safeHost}`);
     } catch {}
 
@@ -25,14 +25,14 @@ export async function connectRedis(): Promise<void> {
         return null;
       }
     })();
-    const isTLS = urlObj?.protocol === "rediss:";
-    const isUpstash = urlObj?.hostname?.includes("upstash.io") ?? false;
+    const isTLS = urlObj?.protocol === 'rediss:';
+    const isUpstash = urlObj?.hostname?.includes('upstash.io') ?? false;
 
     const options: RedisOptions = {
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => {
         if (times > 3) {
-          logger.warn("Redis connection failed after 3 retries. Disabling cache.");
+          logger.warn('Redis connection failed after 3 retries. Disabling cache.');
           isRedisAvailable = false;
           return null; // stop retrying
         }
@@ -46,25 +46,25 @@ export async function connectRedis(): Promise<void> {
 
     redisClient = new Redis(REDIS_URL, options);
 
-    redisClient.on("connect", () => {
-      logger.info("✅ Redis connected successfully");
+    redisClient.on('connect', () => {
+      logger.info('✅ Redis connected successfully');
       isRedisAvailable = true;
     });
 
-    redisClient.on("error", (err) => {
-      logger.error("Redis Client Error:", err);
+    redisClient.on('error', (err) => {
+      logger.error('Redis Client Error:', err);
       isRedisAvailable = false;
     });
 
-    redisClient.on("close", () => {
-      logger.warn("Redis connection closed");
+    redisClient.on('close', () => {
+      logger.warn('Redis connection closed');
       isRedisAvailable = false;
     });
 
     // Test connection
     await redisClient.ping();
   } catch (error) {
-    logger.warn("Redis is not available. Running without cache:", error);
+    logger.warn('Redis is not available. Running without cache:', error);
     isRedisAvailable = false;
   }
 }
@@ -80,7 +80,7 @@ export async function safeRedisGet(key: string): Promise<string | null> {
   try {
     return await redisClient.get(key);
   } catch (error) {
-    logger.error("Redis GET error:", error);
+    logger.error('Redis GET error:', error);
     return null;
   }
 }
@@ -96,7 +96,7 @@ export async function safeRedisSet(key: string, value: string, ttl: number = 360
   try {
     await redisClient.setex(key, ttl, value);
   } catch (error) {
-    logger.error("Redis SET error:", error);
+    logger.error('Redis SET error:', error);
   }
 }
 
@@ -113,7 +113,7 @@ export async function safeRedisExists(key: string): Promise<boolean> {
     const result = await redisClient.exists(key);
     return result === 1;
   } catch (error) {
-    logger.error("Redis EXISTS error:", error);
+    logger.error('Redis EXISTS error:', error);
     return false;
   }
 }
@@ -137,34 +137,57 @@ export async function safeRedisDel(pattern: string): Promise<void> {
       const pipeline = redisClient!.pipeline();
       let hasKeys = false;
 
-      stream.on("data", (keys: string[]) => {
+      stream.on('data', (keys: string[]) => {
         if (keys.length > 0) {
           hasKeys = true;
           pipeline.del(...keys);
         }
       });
 
-      stream.on("end", async () => {
+      stream.on('end', async () => {
         if (hasKeys) {
           try {
             await pipeline.exec();
           } catch (error) {
-            logger.error("Redis DEL pipeline error:", error);
+            logger.error('Redis DEL pipeline error:', error);
           }
         }
         resolve();
       });
 
-      stream.on("error", (err) => {
-        logger.error("Redis SCAN stream error:", err);
+      stream.on('error', (err) => {
+        logger.error('Redis SCAN stream error:', err);
         // resolve anyway to avoid breaking flow, but log error
         resolve();
       });
     } catch (error) {
-      logger.error("Redis DEL error:", error);
+      logger.error('Redis DEL error:', error);
       resolve();
     }
   });
+}
+
+/**
+ * Safe Redis SET NX (set-if-not-exists) with TTL — used for distributed locking.
+ * Returns true if the lock was acquired, false if it already exists.
+ * Fails open (returns true) when Redis is unavailable so the caller can proceed.
+ */
+export async function safeRedisSetNX(
+  key: string,
+  value: string,
+  ttlSeconds: number
+): Promise<boolean> {
+  if (!isRedisAvailable || !redisClient) {
+    return true; // Fail open — no Redis, no lock enforcement
+  }
+
+  try {
+    const result = await redisClient.set(key, value, 'EX', ttlSeconds, 'NX');
+    return result === 'OK';
+  } catch (error) {
+    logger.error('Redis SETNX error:', error);
+    return true; // Fail open
+  }
 }
 
 /**
@@ -174,10 +197,10 @@ export async function disconnectRedis(): Promise<void> {
   if (redisClient) {
     try {
       await redisClient.quit();
-      logger.info("Redis disconnected successfully");
+      logger.info('Redis disconnected successfully');
       isRedisAvailable = false;
     } catch (error) {
-      logger.error("Error disconnecting Redis:", error);
+      logger.error('Error disconnecting Redis:', error);
     }
   }
 }

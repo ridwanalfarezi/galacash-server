@@ -1,15 +1,15 @@
-import { Prisma, Transaction } from "@/prisma/generated/client";
+import { Prisma, Transaction } from '@/prisma/generated/client';
 import {
   BalanceData,
   ChartDataPoint,
   PaginatedResponse,
   TransactionFilters,
   transactionRepository,
-} from "@/repositories/transaction.repository";
-import { AuthorizationError, NotFoundError } from "@/utils/errors";
-import { logger } from "@/utils/logger";
-import { prisma } from "@/utils/prisma-client";
-import { CacheService } from "./cache.service";
+} from '@/repositories/transaction.repository';
+import { AuthorizationError, NotFoundError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { prisma } from '@/utils/prisma-client';
+import { CacheService } from './cache.service';
 
 /**
  * Transaction service for handling transaction operations
@@ -34,14 +34,14 @@ export class TransactionService {
       type: filters?.type,
       startDate: filters?.startDate,
       endDate: filters?.endDate,
-      sortBy: filters?.sortBy || "date",
-      sortOrder: filters?.sortOrder || "desc",
+      sortBy: filters?.sortBy || 'date',
+      sortOrder: filters?.sortOrder || 'desc',
       search: filters?.search,
     };
 
     // Generate cache key
     const filterString = JSON.stringify(mergedFilters);
-    const cacheKey = this.cacheService.transactionsKey("all", filterString);
+    const cacheKey = this.cacheService.transactionsKey('all', filterString);
 
     // Try to get from cache
     const cached = await this.cacheService.getCached<PaginatedResponse<Transaction>>(cacheKey);
@@ -58,7 +58,7 @@ export class TransactionService {
 
       return result;
     } catch (error) {
-      logger.error("Failed to fetch transactions:", error);
+      logger.error('Failed to fetch transactions:', error);
       throw error;
     }
   }
@@ -78,11 +78,11 @@ export class TransactionService {
       const transaction = await this.transactionRepository.findById(id);
 
       if (!transaction) {
-        throw new NotFoundError("Transaction not found");
+        throw new NotFoundError('Transaction not found');
       }
 
       // Permission check: if userId is provided, verify user is in the same class
-      if (userId && userRole !== "admin") {
+      if (userId && userRole !== 'admin') {
         // This assumes you'll have a method to verify user-class association
         // For now, we allow the transaction fetch but you may add stricter checks
         logger.info(`User ${userId} accessed transaction ${id} from class ${transaction.classId}`);
@@ -96,7 +96,7 @@ export class TransactionService {
       if (error instanceof NotFoundError || error instanceof AuthorizationError) {
         throw error;
       }
-      logger.error("Failed to fetch transaction:", error);
+      logger.error('Failed to fetch transaction:', error);
       throw error;
     }
   }
@@ -105,14 +105,14 @@ export class TransactionService {
    * Get chart data for pie charts by type (across all classes)
    */
   async getChartData(
-    type: "income" | "expense",
+    type: 'income' | 'expense',
     startDate?: Date,
     endDate?: Date
   ): Promise<ChartDataPoint[]> {
     // Generate cache key
-    const cacheKeyParts = ["all", type, startDate?.toISOString(), endDate?.toISOString()]
+    const cacheKeyParts = ['all', type, startDate?.toISOString(), endDate?.toISOString()]
       .filter((p) => p)
-      .join(":");
+      .join(':');
     const cacheKey = `chart-data:${cacheKeyParts}`;
 
     // Try to get from cache
@@ -129,7 +129,7 @@ export class TransactionService {
 
       return chartData;
     } catch (error) {
-      logger.error("Failed to fetch chart data:", error);
+      logger.error('Failed to fetch chart data:', error);
       throw error;
     }
   }
@@ -139,19 +139,19 @@ export class TransactionService {
    * Returns { name, value, fill } format for frontend
    */
   async getBreakdown(
-    type: "income" | "expense",
+    type: 'income' | 'expense',
     startDate?: Date,
     endDate?: Date
   ): Promise<Array<{ name: string; value: number; fill: string }>> {
     const cacheKeyParts = [
-      "breakdown",
-      "all",
+      'breakdown',
+      'all',
       type,
       startDate?.toISOString(),
       endDate?.toISOString(),
     ]
       .filter((p) => p)
-      .join(":");
+      .join(':');
     const cacheKey = `${cacheKeyParts}`;
 
     // Try to get from cache
@@ -171,7 +171,7 @@ export class TransactionService {
 
       return breakdown;
     } catch (error) {
-      logger.error("Failed to fetch transaction breakdown:", error);
+      logger.error('Failed to fetch transaction breakdown:', error);
       throw error;
     }
   }
@@ -182,7 +182,7 @@ export class TransactionService {
    */
   async getBalance(): Promise<BalanceData> {
     // Try to get from cache
-    const cacheKey = this.cacheService.balanceKey("all");
+    const cacheKey = this.cacheService.balanceKey('all');
     const cached = await this.cacheService.getCached<BalanceData>(cacheKey);
     if (cached) {
       return cached;
@@ -204,7 +204,7 @@ export class TransactionService {
 
       return balanceData;
     } catch (error) {
-      logger.error("Failed to fetch balance:", error);
+      logger.error('Failed to fetch balance:', error);
       throw error;
     }
   }
@@ -222,11 +222,11 @@ export class TransactionService {
       // Use SQL aggregation instead of fetching all rows
       const [incomeAgg, expenseAgg] = await Promise.all([
         prisma.transaction.aggregate({
-          where: { ...where, type: "income" },
+          where: { ...where, type: 'income' },
           _sum: { amount: true },
         }),
         prisma.transaction.aggregate({
-          where: { ...where, type: "expense" },
+          where: { ...where, type: 'expense' },
           _sum: { amount: true },
         }),
       ]);
@@ -251,11 +251,16 @@ export class TransactionService {
   }
 
   /**
-   * Invalidate transaction cache when transaction is created/updated
+   * Full cache eviction after any transaction mutation.
+   * Clears all derived views (balance, charts, breakdown, dashboard, rekap-kas)
+   * so no stale aggregates survive a status change or new entry.
    */
   async invalidateTransactionCache(): Promise<void> {
-    await this.cacheService.invalidateTransactions("all");
-    await this.cacheService.invalidateCache(this.cacheService.balanceKey("all") + "*");
+    await this.cacheService.invalidateTransactions('all');
+    await this.cacheService.invalidateCache('chart-data*');
+    await this.cacheService.invalidateCache('breakdown*');
+    await this.cacheService.invalidateCache('bendahara-dashboard*');
+    await this.cacheService.invalidateCache('rekap-kas*');
   }
 }
 

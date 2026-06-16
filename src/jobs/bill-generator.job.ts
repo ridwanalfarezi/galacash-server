@@ -1,3 +1,4 @@
+import { safeRedisSetNX } from '@/config/redis.config';
 import { logger } from '@/utils/logger';
 import { prisma } from '@/utils/prisma-client';
 import cron from 'node-cron';
@@ -9,26 +10,39 @@ const BIAYA_ADMIN = 0;
 const BATCH_SIZE = 100;
 const SEMESTER_BREAK_MONTHS = [1, 2, 7, 8];
 
+export type BillGenerationResult =
+  | { skipped: true; reason: string }
+  | { skipped: false; createdCount: number; skippedCount: number };
+
 /**
- * Generate monthly bills for all users using batch processing
+ * Generate monthly bills for all users using batch processing.
+ * Idempotent: a Redis lock keyed by year-month prevents duplicate runs
+ * even under GCP Cloud Scheduler's at-least-once delivery.
  */
-async function generateMonthlyBills(): Promise<void> {
+async function generateMonthlyBills(): Promise<BillGenerationResult> {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+
+  // Acquire month-scoped lock (1-hour TTL covers at-least-once re-delivery window)
+  const lockKey = `lock:bill-generation:${year}-${month.toString().padStart(2, '0')}`;
+  const lockAcquired = await safeRedisSetNX(lockKey, 'locked', 3600);
+
+  if (!lockAcquired) {
+    const message = `Bill generation for ${year}-${String(month).padStart(2, '0')} already running or completed. Skipping.`;
+    logger.warn(`⚠️ ${message}`);
+    return { skipped: true, reason: message };
+  }
+
+  logger.info('🔄 Starting monthly bill generation...');
+
+  if (SEMESTER_BREAK_MONTHS.includes(month)) {
+    logger.info(`🚫 Skipping bill generation for month ${month} (Holiday Month - Semester Break)`);
+    return { skipped: true, reason: `Month ${month} is a semester break` };
+  }
+
   try {
-    logger.info('🔄 Starting monthly bill generation...');
-
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-
-    if (SEMESTER_BREAK_MONTHS.includes(month)) {
-      logger.info(
-        `🚫 Skipping bill generation for month ${month} (Holiday Month - Semester Break)`
-      );
-      return;
-    }
-
     const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
     const totalAmount = KAS_KELAS_AMOUNT + BIAYA_ADMIN;
 
     let createdCount = 0;
@@ -37,38 +51,21 @@ async function generateMonthlyBills(): Promise<void> {
 
     do {
       const users = await prisma.user.findMany({
-        where: {
-          role: 'user',
-        },
-        orderBy: {
-          id: 'asc',
-        },
-        select: {
-          id: true,
-          nim: true,
-          name: true,
-          classId: true,
-        },
+        where: { role: 'user' },
+        orderBy: { id: 'asc' },
+        select: { id: true, nim: true, name: true, classId: true },
         take: BATCH_SIZE,
         cursor: cursor ? { id: cursor.id } : undefined,
         skip: cursor ? 1 : 0,
       });
 
-      if (users.length === 0) {
-        break;
-      }
+      if (users.length === 0) break;
 
       const userIds = users.map((u: { id: string }) => u.id);
 
       const existingBills = await prisma.cashBill.findMany({
-        where: {
-          userId: { in: userIds },
-          month,
-          year,
-        },
-        select: {
-          userId: true,
-        },
+        where: { userId: { in: userIds }, month, year },
+        select: { userId: true },
       });
 
       const existingUserIds = new Set(existingBills.map((b: { userId: string }) => b.userId));
@@ -90,11 +87,7 @@ async function generateMonthlyBills(): Promise<void> {
 
       if (billsToCreate.length > 0) {
         try {
-          await prisma.cashBill.createMany({
-            data: billsToCreate,
-            skipDuplicates: true,
-          });
-
+          await prisma.cashBill.createMany({ data: billsToCreate, skipDuplicates: true });
           createdCount += billsToCreate.length;
           logger.info(`✅ Created ${billsToCreate.length} bills for batch`);
         } catch (error) {
@@ -103,15 +96,16 @@ async function generateMonthlyBills(): Promise<void> {
       }
 
       skippedCount += users.length - billsToCreate.length;
-
       cursor = { id: users[users.length - 1].id };
     } while (true);
 
     logger.info(
       `🎉 Monthly bill generation complete! Created: ${createdCount}, Skipped: ${skippedCount}`
     );
+    return { skipped: false, createdCount, skippedCount };
   } catch (error) {
     logger.error('❌ Monthly bill generation failed:', error);
+    throw error;
   }
 }
 
