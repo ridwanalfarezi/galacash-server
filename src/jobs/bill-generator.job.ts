@@ -1,4 +1,4 @@
-import { safeRedisSetNX } from '@/config/redis.config';
+import { acquireLock } from '@/config/redis.config';
 import { logger } from '@/utils/logger';
 import { prisma } from '@/utils/prisma-client';
 import cron from 'node-cron';
@@ -26,9 +26,9 @@ async function generateMonthlyBills(): Promise<BillGenerationResult> {
 
   // Acquire month-scoped lock (1-hour TTL covers at-least-once re-delivery window)
   const lockKey = `lock:bill-generation:${year}-${month.toString().padStart(2, '0')}`;
-  const lockAcquired = await safeRedisSetNX(lockKey, 'locked', 3600);
+  const lock = await acquireLock(lockKey, 3600);
 
-  if (!lockAcquired) {
+  if (!lock.acquired) {
     const message = `Bill generation for ${year}-${String(month).padStart(2, '0')} already running or completed. Skipping.`;
     logger.warn(`⚠️ ${message}`);
     return { skipped: true, reason: message };

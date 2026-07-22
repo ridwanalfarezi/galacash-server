@@ -36,13 +36,15 @@ delete process.env.PRISMA_DATABASE_URL;
 // Mock console.log to keep test output clean, if desired.
 // console.log = mock(() => {});
 
+const mockRedisStore = new Map<string, string>();
+
 // Mock express-rate-limit to bypass Redis connection in tests
 mock.module('express-rate-limit', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rateLimit: () => (req: any, res: any, next: any) => next(),
 }));
 
-// Mock Redis config to prevent undefined redisClient errors
+// Mock Redis config to prevent undefined redisClient errors while preserving state
 mock.module('@/config/redis.config', () => ({
   redisClient: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,9 +55,15 @@ mock.module('@/config/redis.config', () => ({
       return Promise.resolve();
     },
     status: 'ready',
-    get: () => Promise.resolve(null),
-    set: () => Promise.resolve('OK'),
-    del: () => Promise.resolve(1),
+    get: (key: string) => Promise.resolve(mockRedisStore.get(key) ?? null),
+    set: (key: string, val: string) => {
+      mockRedisStore.set(key, val);
+      return Promise.resolve('OK');
+    },
+    del: (...keys: string[]) => {
+      keys.forEach((k) => mockRedisStore.delete(k));
+      return Promise.resolve(keys.length);
+    },
     scanStream: () => ({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       on: (event: string, callback: any) => {
@@ -73,8 +81,43 @@ mock.module('@/config/redis.config', () => ({
   isRedisAvailable: true,
   connectRedis: async () => {},
   disconnectRedis: async () => {},
-  safeRedisGet: async () => null,
-  safeRedisSet: async () => {},
-  safeRedisExists: async () => false,
-  safeRedisDel: async () => {},
+  safeRedisGet: async (key: string) => mockRedisStore.get(key) ?? null,
+  safeRedisSet: async (key: string, val: string) => {
+    mockRedisStore.set(key, val);
+  },
+  safeRedisExists: async (key: string) => mockRedisStore.has(key),
+  safeRedisDel: async (keyPattern: string) => {
+    if (keyPattern.endsWith('*')) {
+      const prefix = keyPattern.slice(0, -1);
+      for (const k of mockRedisStore.keys()) {
+        if (k.startsWith(prefix)) mockRedisStore.delete(k);
+      }
+    } else {
+      mockRedisStore.delete(keyPattern);
+    }
+  },
+  safeRedisIncr: async (key: string) => {
+    const curr = mockRedisStore.has(key) ? parseInt(mockRedisStore.get(key)!, 10) : 1;
+    const next = curr + 1;
+    mockRedisStore.set(key, next.toString());
+    return next;
+  },
+  acquireLock: async (key: string) => {
+    if (mockRedisStore.has(key)) return { acquired: false, token: '' };
+    const token = `token-${Math.random()}`;
+    mockRedisStore.set(key, token);
+    return { acquired: true, token };
+  },
+  releaseLock: async (key: string, token: string) => {
+    if (mockRedisStore.get(key) === token) {
+      mockRedisStore.delete(key);
+      return true;
+    }
+    return false;
+  },
+  safeRedisSetNX: async (key: string, value: string) => {
+    if (mockRedisStore.has(key)) return false;
+    mockRedisStore.set(key, value);
+    return true;
+  },
 }));

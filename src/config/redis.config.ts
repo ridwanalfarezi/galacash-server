@@ -1,8 +1,9 @@
+import crypto from 'crypto';
 import Redis, { RedisOptions } from 'ioredis';
 import { logger } from '../utils/logger';
 
-let redisClient: Redis | null = null;
-let isRedisAvailable = false;
+export let redisClient: Redis | null = null;
+export let isRedisAvailable = false;
 
 /**
  * Initialize Redis client
@@ -168,9 +169,77 @@ export async function safeRedisDel(pattern: string): Promise<void> {
 }
 
 /**
+ * Safe Redis INCR with fallback
+ */
+export async function safeRedisIncr(key: string): Promise<number | null> {
+  if (!isRedisAvailable || !redisClient) {
+    return null;
+  }
+
+  try {
+    return await redisClient.incr(key);
+  } catch (error) {
+    logger.error('Redis INCR error:', error);
+    return null;
+  }
+}
+
+/**
+ * Acquire a distributed lock with a cryptographically unique fencing token.
+ * Fails closed (returns acquired: false) if Redis is unavailable or lock is taken.
+ */
+export async function acquireLock(
+  key: string,
+  ttlSeconds: number = 10
+): Promise<{ acquired: boolean; token: string }> {
+  if (!isRedisAvailable || !redisClient) {
+    logger.warn(`Redis unavailable when acquiring lock for key: ${key}`);
+    return { acquired: false, token: '' };
+  }
+
+  try {
+    const token = crypto.randomUUID();
+    const result = await redisClient.set(key, token, 'EX', ttlSeconds, 'NX');
+    if (result === 'OK') {
+      return { acquired: true, token };
+    }
+    return { acquired: false, token: '' };
+  } catch (error) {
+    logger.error(`Failed to acquire lock for key ${key}:`, error);
+    return { acquired: false, token: '' };
+  }
+}
+
+/**
+ * Release a distributed lock atomically using a Lua script to ensure
+ * the lock token matches the caller's fencing token (prevents deleting another process's lock).
+ */
+const RELEASE_LOCK_LUA = `
+  if redis.call("get", KEYS[1]) == ARGV[1] then
+    return redis.call("del", KEYS[1])
+  else
+    return 0
+  end
+`;
+
+export async function releaseLock(key: string, token: string): Promise<boolean> {
+  if (!isRedisAvailable || !redisClient || !token) {
+    return false;
+  }
+
+  try {
+    const result = await redisClient.eval(RELEASE_LOCK_LUA, 1, key, token);
+    return result === 1;
+  } catch (error) {
+    logger.error(`Failed to release lock for key ${key}:`, error);
+    return false;
+  }
+}
+
+/**
  * Safe Redis SET NX (set-if-not-exists) with TTL — used for distributed locking.
- * Returns true if the lock was acquired, false if it already exists.
- * Fails open (returns true) when Redis is unavailable so the caller can proceed.
+ * Returns true if the lock was acquired, false if it already exists or on error.
+ * Fails closed (returns false) when Redis is unavailable to prevent unhedged concurrency.
  */
 export async function safeRedisSetNX(
   key: string,
@@ -178,7 +247,7 @@ export async function safeRedisSetNX(
   ttlSeconds: number
 ): Promise<boolean> {
   if (!isRedisAvailable || !redisClient) {
-    return true; // Fail open — no Redis, no lock enforcement
+    return false; // Fail closed — no Redis, cannot guarantee exclusive lock
   }
 
   try {
@@ -186,7 +255,7 @@ export async function safeRedisSetNX(
     return result === 'OK';
   } catch (error) {
     logger.error('Redis SETNX error:', error);
-    return true; // Fail open
+    return false; // Fail closed
   }
 }
 
@@ -204,5 +273,3 @@ export async function disconnectRedis(): Promise<void> {
     }
   }
 }
-
-export { isRedisAvailable, redisClient };

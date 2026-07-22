@@ -9,6 +9,7 @@ import {
   storeRefreshToken,
   verifyRefreshToken,
 } from '@/utils/generate-tokens';
+import { prisma } from '@/utils/prisma-client';
 import { CacheService } from './cache.service';
 
 export interface LoginResponse {
@@ -51,13 +52,23 @@ export class AuthService {
       throw new AuthenticationError('Invalid NIM or password');
     }
 
-    // Generate tokens
+    const tokenVersion = (user as unknown as { tokenVersion?: number }).tokenVersion ?? 1;
+
+    // Cache current tokenVersion in Redis for fast-path auth middleware check
+    await this.cacheService.setCached(
+      this.cacheService.userVersionKey(user.id),
+      tokenVersion.toString(),
+      86400
+    );
+
+    // Generate tokens with version
     const accessToken = generateAccessToken({
       id: user.id,
       nim: user.nim,
       name: user.name,
       role: user.role as 'user' | 'bendahara',
       classId: user.classId,
+      tokenVersion,
     });
 
     const refreshToken = generateRefreshToken();
@@ -81,10 +92,6 @@ export class AuthService {
   /**
    * Refresh access token using refresh token
    * Implements refresh token rotation for enhanced security
-   * - Verifies the refresh token
-   * - Deletes the old refresh token (rotation)
-   * - Generates new access token and refresh token
-   * - Stores the new refresh token
    */
   async refresh(refreshToken: string): Promise<RefreshTokenResponse> {
     // Verify refresh token signature
@@ -101,6 +108,7 @@ export class AuthService {
     }
 
     const user = storedToken.user;
+    const tokenVersion = (user as unknown as { tokenVersion?: number }).tokenVersion ?? 1;
 
     // Delete the old refresh token (rotation)
     await deleteRefreshToken(refreshToken);
@@ -112,6 +120,7 @@ export class AuthService {
       name: user.name,
       role: user.role as 'user' | 'bendahara',
       classId: user.classId,
+      tokenVersion,
     });
 
     const newRefreshToken = generateRefreshToken();
@@ -128,6 +137,35 @@ export class AuthService {
    */
   async logout(refreshToken: string): Promise<void> {
     await deleteRefreshToken(refreshToken);
+  }
+
+  /**
+   * Revoke all sessions for a user instantly across all devices
+   * Increments DB tokenVersion and updates Redis version cache
+   */
+  async revokeAllSessions(userId: string): Promise<void> {
+    // 1. Delete all refresh tokens for the user
+    await prisma.refreshToken.deleteMany({
+      where: { userId },
+    });
+
+    // 2. Increment tokenVersion in DB
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        tokenVersion: { increment: 1 },
+      },
+    });
+
+    // 3. Update version in Redis for fast-path middleware rejection
+    await this.cacheService.setCached(
+      this.cacheService.userVersionKey(userId),
+      updatedUser.tokenVersion.toString(),
+      86400
+    );
+
+    // 4. Invalidate user profile cache
+    await this.cacheService.invalidateUser(userId);
   }
 
   /**

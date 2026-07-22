@@ -1,3 +1,4 @@
+import { acquireLock, releaseLock } from '@/config/redis.config';
 import { CashBill, PaymentMethod } from '@/prisma/generated/client';
 import {
   CashBillFilters,
@@ -120,6 +121,7 @@ export class CashBillService {
 
   /**
    * Submit payment for a bill
+   * Protected with distributed lock to prevent double-submission race conditions
    */
   async payBill(
     billId: string,
@@ -128,6 +130,15 @@ export class CashBillService {
     paymentProofUrl: string,
     paymentAccountId?: string
   ): Promise<CashBill> {
+    const lockKey = `lock:bill:pay:${billId}`;
+    const lock = await acquireLock(lockKey, 10);
+
+    if (!lock.acquired) {
+      throw new BusinessLogicError(
+        'Payment submission is currently being processed for this bill. Please wait.'
+      );
+    }
+
     try {
       // Get bill and verify ownership
       const bill = await this.cashBillRepository.findById(billId);
@@ -196,6 +207,8 @@ export class CashBillService {
       }
       logger.error('Failed to submit bill payment:', error);
       throw error;
+    } finally {
+      await releaseLock(lockKey, lock.token);
     }
   }
 

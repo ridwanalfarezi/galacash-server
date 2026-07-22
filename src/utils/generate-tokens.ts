@@ -1,17 +1,18 @@
-import jwt from "jsonwebtoken";
-import { prisma } from "./prisma-client";
+import jwt from 'jsonwebtoken';
+import { prisma } from './prisma-client';
 
 const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET!;
 const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET!;
-const ACCESS_TOKEN_EXPIRY = "1h";
-const REFRESH_TOKEN_EXPIRY = "7d";
+const ACCESS_TOKEN_EXPIRY = '1h';
+const REFRESH_TOKEN_EXPIRY = '7d';
 
 export interface AccessTokenPayload {
   sub: string; // User ID
   nim: string;
   name: string;
-  role: "user" | "bendahara";
+  role: 'user' | 'bendahara';
   classId: string;
+  tokenVersion?: number;
   iat: number;
   exp: number;
 }
@@ -23,15 +24,17 @@ export function generateAccessToken(user: {
   id: string;
   nim: string;
   name: string;
-  role: "user" | "bendahara";
+  role: 'user' | 'bendahara';
   classId: string;
+  tokenVersion?: number;
 }): string {
-  const payload: Omit<AccessTokenPayload, "iat" | "exp"> = {
+  const payload: Omit<AccessTokenPayload, 'iat' | 'exp'> = {
     sub: user.id,
     nim: user.nim,
     name: user.name,
     role: user.role,
     classId: user.classId,
+    tokenVersion: user.tokenVersion ?? 1,
   };
 
   return jwt.sign(payload, ACCESS_TOKEN_SECRET, {

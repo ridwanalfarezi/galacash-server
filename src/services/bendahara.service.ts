@@ -6,6 +6,7 @@ import {
   TransactionCategory,
   User,
 } from '@/prisma/generated/client';
+import { acquireLock, releaseLock } from '@/config/redis.config';
 import {
   PaginatedResponse as BillPaginatedResponse,
   CashBillFilters,
@@ -99,18 +100,30 @@ export class BendaharaService {
   }
 
   /**
-   * Get dashboard with pending applications, payments, and total balance
-   */
-  /**
    * Get dashboard with financial summary and recent lists
+   * Protected with Single-Flight Mutex to prevent Cache Stampedes under load
    */
   async getDashboard(classId?: string, startDate?: Date, endDate?: Date): Promise<DashboardData> {
-    // Generate cache key
+    // Generate versioned cache key based on financial epoch
     const classKey = classId || 'all';
-    const cacheKey = `bendahara-dashboard:${classKey}:${startDate?.toISOString() || 'all'}:${endDate?.toISOString() || 'all'}`;
+    const dateRange = `${startDate?.toISOString() || 'all'}:${endDate?.toISOString() || 'all'}`;
+    const cacheKey = await this.cacheService.getVersionedDashboardKey(classKey, dateRange);
     const cached = await this.cacheService.getCached<DashboardData>(cacheKey);
     if (cached) {
       return cached;
+    }
+
+    // Single-Flight Lock: Prevent Thundering Herd / Cache Stampede
+    const stampedeLockKey = `lock:stampede:${cacheKey}`;
+    const lock = await acquireLock(stampedeLockKey, 5);
+
+    if (!lock.acquired) {
+      // Another worker is actively building this aggregate — pause brief moment and re-query cache
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      const rechecked = await this.cacheService.getCached<DashboardData>(cacheKey);
+      if (rechecked) {
+        return rechecked;
+      }
     }
 
     try {
@@ -207,6 +220,10 @@ export class BendaharaService {
     } catch (error) {
       logger.error('Failed to fetch bendahara dashboard:', error);
       throw error;
+    } finally {
+      if (lock.acquired) {
+        await releaseLock(stampedeLockKey, lock.token);
+      }
     }
   }
 

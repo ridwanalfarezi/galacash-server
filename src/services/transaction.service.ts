@@ -65,26 +65,36 @@ export class TransactionService {
 
   /**
    * Get single transaction by ID with permission check
+   * Hardened against cache penetration via UUID format validation & negative caching sentinel.
    */
   async getTransactionById(id: string, userId?: string, userRole?: string): Promise<Transaction> {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(id)) {
+      throw new NotFoundError('Invalid transaction ID format');
+    }
+
     // Try to get from cache
     const cacheKey = this.cacheService.transactionKey(id);
-    const cached = await this.cacheService.getCached<Transaction>(cacheKey);
-    if (cached) {
-      return cached;
+    const cached = await this.cacheService.getCached<Transaction | string>(cacheKey);
+
+    if (cached === '__NULL__') {
+      throw new NotFoundError('Transaction not found');
+    }
+    if (cached && typeof cached === 'object') {
+      return cached as Transaction;
     }
 
     try {
       const transaction = await this.transactionRepository.findById(id);
 
       if (!transaction) {
+        // Negative Caching: cache non-existent lookup for 30s to absorb DDoS penetration attempts
+        await this.cacheService.setCached(cacheKey, '__NULL__', 30);
         throw new NotFoundError('Transaction not found');
       }
 
       // Permission check: if userId is provided, verify user is in the same class
       if (userId && userRole !== 'admin') {
-        // This assumes you'll have a method to verify user-class association
-        // For now, we allow the transaction fetch but you may add stricter checks
         logger.info(`User ${userId} accessed transaction ${id} from class ${transaction.classId}`);
       }
 
@@ -177,12 +187,11 @@ export class TransactionService {
   }
 
   /**
-   * Get total balance across all classes with caching (for transparency)
-   * FIXED: Use repository aggregate instead of fetching 100k rows
+   * Get total balance across all classes with versioned financial epoch caching
    */
   async getBalance(): Promise<BalanceData> {
-    // Try to get from cache
-    const cacheKey = this.cacheService.balanceKey('all');
+    // Try to get from versioned cache key
+    const cacheKey = await this.cacheService.getVersionedBalanceKey('all');
     const cached = await this.cacheService.getCached<BalanceData>(cacheKey);
     if (cached) {
       return cached;

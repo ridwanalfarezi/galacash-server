@@ -116,6 +116,10 @@ export class UserService {
       password: hashedPassword,
     });
 
+    // Revoke all sessions across devices by incrementing tokenVersion and wiping refresh tokens
+    const { authService } = await import('./auth.service');
+    await authService.revokeAllSessions(userId);
+
     // Invalidate cache
     await this.cacheService.invalidateUser(userId);
   }

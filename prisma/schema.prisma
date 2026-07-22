@@ -104,16 +104,17 @@ model Class {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  nim       String   @unique
-  name      String
-  email     String?  @unique
-  password  String
-  role      UserRole @default(user)
-  avatarUrl String?
-  classId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  nim          String   @unique
+  name         String
+  email        String?  @unique
+  password     String
+  role         UserRole @default(user)
+  avatarUrl    String?
+  classId      String
+  tokenVersion Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   class                    Class             @relation(fields: [classId], references: [id], onDelete: Cascade)

@@ -1,5 +1,11 @@
-import { safeRedisDel, safeRedisExists, safeRedisGet, safeRedisSet } from "@/config/redis.config";
-import { logger } from "@/utils/logger";
+import {
+  safeRedisDel,
+  safeRedisExists,
+  safeRedisGet,
+  safeRedisIncr,
+  safeRedisSet,
+} from '@/config/redis.config';
+import { logger } from '@/utils/logger';
 
 const DEFAULT_TTL = 3600; // 1 hour
 
@@ -17,6 +23,10 @@ export class CacheService {
     return `user:nim:${nim}`;
   }
 
+  userVersionKey(userId: string): string {
+    return `user:token_version:${userId}`;
+  }
+
   transactionKey(transactionId: string): string {
     return `transaction:${transactionId}`;
   }
@@ -27,6 +37,29 @@ export class CacheService {
 
   balanceKey(classId: string): string {
     return `balance:${classId}`;
+  }
+
+  async getFinancialEpoch(classId: string = 'global'): Promise<number> {
+    const key = `epoch:finance:${classId}`;
+    const epoch = await safeRedisGet(key);
+    return epoch ? parseInt(epoch, 10) : 1;
+  }
+
+  async incrementFinancialEpoch(classId: string = 'global'): Promise<number> {
+    const key = `epoch:finance:${classId}`;
+    const newEpoch = await safeRedisIncr(key);
+    logger.info(`Financial epoch incremented for ${classId}: v${newEpoch}`);
+    return newEpoch ?? 1;
+  }
+
+  async getVersionedBalanceKey(classId: string = 'all'): Promise<string> {
+    const epoch = await this.getFinancialEpoch(classId);
+    return `balance:${classId}:v${epoch}`;
+  }
+
+  async getVersionedDashboardKey(classId: string = 'all', extra: string = 'all'): Promise<string> {
+    const epoch = await this.getFinancialEpoch(classId);
+    return `bendahara-dashboard:${classId}:${extra}:v${epoch}`;
   }
 
   fundApplicationKey(id: string): string {
@@ -67,7 +100,7 @@ export class CacheService {
 
       return JSON.parse(cached) as T;
     } catch (error) {
-      logger.error("Cache get error:", error);
+      logger.error('Cache get error:', error);
       return null;
     }
   }
@@ -79,7 +112,7 @@ export class CacheService {
     try {
       await safeRedisSet(key, JSON.stringify(data), ttl);
     } catch (error) {
-      logger.error("Cache set error:", error);
+      logger.error('Cache set error:', error);
     }
   }
 
@@ -91,7 +124,7 @@ export class CacheService {
       await safeRedisDel(pattern);
       logger.info(`Cache invalidated: ${pattern}`);
     } catch (error) {
-      logger.error("Cache invalidation error:", error);
+      logger.error('Cache invalidation error:', error);
     }
   }
 
@@ -101,9 +134,10 @@ export class CacheService {
     await this.invalidateCache(`user:${userId}*`);
   }
 
-  async invalidateTransactions(classId: string): Promise<void> {
+  async invalidateTransactions(classId: string = 'all'): Promise<void> {
+    await this.incrementFinancialEpoch(classId);
     await this.invalidateCache(`transactions:${classId}*`);
-    await this.invalidateCache(`balance:${classId}`);
+    await this.invalidateCache(`balance:${classId}*`);
   }
 
   async invalidateFundApplications(): Promise<void> {
@@ -127,7 +161,7 @@ export class CacheService {
 
   async addToTokenBlacklist(token: string, ttlSeconds: number): Promise<void> {
     const key = this.tokenBlacklistKey(token);
-    await this.setCached(key, "1", ttlSeconds);
+    await this.setCached(key, '1', ttlSeconds);
   }
 
   async isTokenBlacklisted(token: string): Promise<boolean> {
