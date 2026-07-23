@@ -1,8 +1,9 @@
 import app from "@/app";
 import { prisma } from "@/utils/prisma-client";
 import request from "supertest";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { createTestUser, loginUser } from "../helpers/auth";
+import { validPngBuffer } from "../helpers/files";
 import { resetDb } from "../helpers/reset-db";
 
 describe("Bill Payment Integration", () => {
@@ -43,7 +44,7 @@ describe("Bill Payment Integration", () => {
       .post(`/api/cash-bills/${bill.id}/pay`)
       .set("Cookie", [cookie])
       .field("paymentMethod", "bank")
-      .attach("paymentProof", Buffer.from("dummy"), "proof.png");
+      .attach("paymentProof", validPngBuffer, "proof.png");
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
@@ -60,7 +61,7 @@ describe("Bill Payment Integration", () => {
       .post(`/api/cash-bills/${bill.id}/pay`)
       .set("Cookie", [userCookie])
       .field("paymentMethod", "bank")
-      .attach("paymentProof", Buffer.from("dummy"), "proof.png");
+      .attach("paymentProof", validPngBuffer, "proof.png");
 
     // Bendahara login
     const bendaharaCookie = await loginUser("1313624999", "bendahara");
@@ -85,7 +86,7 @@ describe("Bill Payment Integration", () => {
       .post(`/api/cash-bills/${bill.id}/pay`)
       .set("Cookie", [userCookie])
       .field("paymentMethod", "bank")
-      .attach("paymentProof", Buffer.from("dummy"), "proof.png");
+      .attach("paymentProof", validPngBuffer, "proof.png");
 
     // Bendahara login
     const bendaharaCookie = await loginUser("1313624999", "bendahara");
@@ -114,7 +115,7 @@ describe("Bill Payment Integration", () => {
       .set("Cookie", [cookie])
       .field("billIds", JSON.stringify([firstBill.id, secondBill.id]))
       .field("paymentMethod", "bank")
-      .attach("paymentProof", Buffer.from("dummy"), "proof.png");
+      .attach("paymentProof", validPngBuffer, "proof.png");
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
@@ -133,7 +134,7 @@ describe("Bill Payment Integration", () => {
     });
 
     expect(updatedBills).toHaveLength(2);
-    const expectedPrefix = "https://storage.googleapis.com/galacash-bucket/payments/";
+    const expectedPrefix = "mock://test-uploads/payments/";
     const firstProofUrl = updatedBills[0].paymentProofUrl;
     for (const bill of updatedBills) {
       expect(bill.status).toBe("menunggu_konfirmasi");
@@ -142,6 +143,62 @@ describe("Bill Payment Integration", () => {
       expect(bill.paymentProofUrl).toContain(expectedPrefix);
       expect(bill.paidAt).not.toBeNull();
     }
+  });
+
+  it("should allow a cash batch payment without payment proof", async () => {
+    const { user, cls } = await createTestUser();
+    const cookie = await loginUser(user.nim);
+    const firstBill = await createBill(user.id, cls.id, "belum_dibayar", 10);
+    const secondBill = await createBill(user.id, cls.id, "belum_dibayar", 11);
+
+    const response = await request(app)
+      .post("/api/cash-bills/batch-pay")
+      .set("Cookie", [cookie])
+      .field("billIds", JSON.stringify([firstBill.id, secondBill.id]))
+      .field("paymentMethod", "cash");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(2);
+
+    const updatedBills = await prisma.cashBill.findMany({
+      where: { id: { in: [firstBill.id, secondBill.id] } },
+    });
+
+    for (const bill of updatedBills) {
+      expect(bill.status).toBe("menunggu_konfirmasi");
+      expect(bill.paymentMethod).toBe("cash");
+      expect(bill.paymentProofUrl).toBeNull();
+    }
+  });
+
+  it("should reject a bank batch payment without payment proof", async () => {
+    const { user, cls } = await createTestUser();
+    const cookie = await loginUser(user.nim);
+    const bill = await createBill(user.id, cls.id, "belum_dibayar", 12);
+
+    const response = await request(app)
+      .post("/api/cash-bills/batch-pay")
+      .set("Cookie", [cookie])
+      .field("billIds", JSON.stringify([bill.id]))
+      .field("paymentMethod", "bank");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("BAD_REQUEST");
+  });
+
+  it("should reject a payment proof with spoofed PNG content", async () => {
+    const { user, cls } = await createTestUser();
+    const cookie = await loginUser(user.nim);
+    const bill = await createBill(user.id, cls.id, "belum_dibayar", 12);
+
+    const response = await request(app)
+      .post(`/api/cash-bills/${bill.id}/pay`)
+      .set("Cookie", [cookie])
+      .field("paymentMethod", "bank")
+      .attach("paymentProof", Buffer.from("not-a-png"), "proof.png");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
   });
 
   it("should reject batch payment when a bill belongs to another user", async () => {
@@ -157,7 +214,7 @@ describe("Bill Payment Integration", () => {
       .set("Cookie", [cookie])
       .field("billIds", JSON.stringify([ownBill.id, otherBill.id]))
       .field("paymentMethod", "bank")
-      .attach("paymentProof", Buffer.from("dummy"), "proof.png");
+      .attach("paymentProof", validPngBuffer, "proof.png");
 
     expect(response.status).toBe(403);
     expect(response.body.success).toBe(false);
@@ -184,7 +241,7 @@ describe("Bill Payment Integration", () => {
       .set("Cookie", [cookie])
       .field("billIds", JSON.stringify([pendingBill.id, unpaidBill.id]))
       .field("paymentMethod", "bank")
-      .attach("paymentProof", Buffer.from("dummy"), "proof.png");
+      .attach("paymentProof", validPngBuffer, "proof.png");
 
     expect(response.status).toBe(400);
     expect(response.body.success).toBe(false);

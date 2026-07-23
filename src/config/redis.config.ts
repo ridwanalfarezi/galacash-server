@@ -1,6 +1,11 @@
-import crypto from 'crypto';
 import Redis, { RedisOptions } from 'ioredis';
 import { logger } from '../utils/logger';
+import {
+  acquireRedisLock,
+  releaseRedisLock,
+  setRedisNx,
+  type RedisLockClient,
+} from '../utils/redis-lock';
 
 export let redisClient: Redis | null = null;
 export let isRedisAvailable = false;
@@ -198,42 +203,25 @@ export async function acquireLock(
   }
 
   try {
-    const token = crypto.randomUUID();
-    const result = await redisClient.set(key, token, 'EX', ttlSeconds, 'NX');
-    if (result === 'OK') {
-      return { acquired: true, token };
-    }
-    return { acquired: false, token: '' };
-  } catch (error) {
-    logger.error(`Failed to acquire lock for key ${key}:`, error);
+    return await acquireRedisLock(
+      redisClient as unknown as RedisLockClient,
+      key,
+      ttlSeconds,
+      (error) => logger.error(`Failed to acquire lock for key ${key}:`, error)
+    );
+  } catch {
     return { acquired: false, token: '' };
   }
 }
-
-/**
- * Release a distributed lock atomically using a Lua script to ensure
- * the lock token matches the caller's fencing token (prevents deleting another process's lock).
- */
-const RELEASE_LOCK_LUA = `
-  if redis.call("get", KEYS[1]) == ARGV[1] then
-    return redis.call("del", KEYS[1])
-  else
-    return 0
-  end
-`;
 
 export async function releaseLock(key: string, token: string): Promise<boolean> {
   if (!isRedisAvailable || !redisClient || !token) {
     return false;
   }
 
-  try {
-    const result = await redisClient.eval(RELEASE_LOCK_LUA, 1, key, token);
-    return result === 1;
-  } catch (error) {
-    logger.error(`Failed to release lock for key ${key}:`, error);
-    return false;
-  }
+  return releaseRedisLock(redisClient as unknown as RedisLockClient, key, token, (error) =>
+    logger.error(`Failed to release lock for key ${key}:`, error)
+  );
 }
 
 /**
@@ -250,13 +238,9 @@ export async function safeRedisSetNX(
     return false; // Fail closed — no Redis, cannot guarantee exclusive lock
   }
 
-  try {
-    const result = await redisClient.set(key, value, 'EX', ttlSeconds, 'NX');
-    return result === 'OK';
-  } catch (error) {
-    logger.error('Redis SETNX error:', error);
-    return false; // Fail closed
-  }
+  return setRedisNx(redisClient as unknown as RedisLockClient, key, value, ttlSeconds, (error) =>
+    logger.error('Redis SETNX error:', error)
+  );
 }
 
 /**

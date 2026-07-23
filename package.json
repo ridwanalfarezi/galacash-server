@@ -10,8 +10,8 @@
     "build:binary": "bun build ./src/index.ts --compile --outfile galacash-server",
     "start": "bun src/index.ts",
     "start:prod": "bun run prisma:deploy && bun run start",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
+    "lint": "bun node_modules/eslint/bin/eslint.js . --ext .ts",
+    "lint:fix": "bun node_modules/eslint/bin/eslint.js . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -22,11 +22,16 @@
     "seed:expenses": "bun scripts/seed-expense-transactions.ts",
     "clean:data": "bun scripts/clean-data.ts",
     "test": "bun test",
+    "test:unit": "bun test tests/unit",
+    "test:integration": "bun test tests/integration",
+    "test:integration:docker": "docker compose -f docker-compose.test.yml up -d --wait && bun run test:migrate && bun run test:integration",
+    "test:contract": "bun test tests/contract",
     "test:watch": "bun test --watch",
     "test:up": "docker compose -f docker-compose.test.yml up -d",
     "test:down": "docker compose -f docker-compose.test.yml down",
-    "test:migrate": "bun run prisma:deploy",
-    "type-check": "tsc --noEmit",
+    "test:migrate": "bun --env-file=.env.test node_modules/prisma/build/index.js migrate deploy --schema=./prisma/schema.prisma",
+    "type-check:tests": "bun node_modules/typescript/bin/tsc --noEmit -p tsconfig.test.json",
+    "type-check": "bun node_modules/typescript/bin/tsc --noEmit",
     "commit": "git-cz",
     "lint-staged": "lint-staged",
     "prepare": "husky"
@@ -98,5 +103,5 @@
     "tsc-alias": "^1.8.10",
     "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@10.28.0+sha512.05df71d1421f21399e053fde567cea34d446fa02c76571441bfc1c7956e98e363088982d940465fd34480d4d90a0668bc12362f8aa88000a64e83d0b0e47be48"
+  "packageManager": "bun@1.2.14"
 }

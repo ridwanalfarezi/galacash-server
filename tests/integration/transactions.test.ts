@@ -1,7 +1,8 @@
 import app from "@/app";
 import request from "supertest";
-import { describe, expect, it, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { loginUser } from "../helpers/auth";
+import { validPngBuffer } from "../helpers/files";
 import { resetDb } from "../helpers/reset-db";
 
 describe("Transactions Integration", () => {
@@ -29,7 +30,7 @@ describe("Transactions Integration", () => {
       .field("type", transactionData.type)
       .field("amount", transactionData.amount)
       .field("category", transactionData.category)
-      .attach("attachment", Buffer.from("dummy"), "test.png"); // Use .png extension to pass validation
+      .attach("attachment", validPngBuffer, "test.png");
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
@@ -49,7 +50,7 @@ describe("Transactions Integration", () => {
       .field("type", transactionData.type)
       .field("amount", transactionData.amount)
       .field("category", transactionData.category)
-      .attach("attachment", Buffer.from("dummy"), "test.png"); // Use .png extension
+      .attach("attachment", validPngBuffer, "test.png");
 
     const response = await request(app)
       .get("/api/transactions")

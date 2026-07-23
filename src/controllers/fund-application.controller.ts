@@ -51,7 +51,11 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
   const { id } = req.params;
   const applicationId = Array.isArray(id) ? id[0] : id;
 
-  const application = await fundApplicationService.getById(applicationId);
+  const application = await fundApplicationService.getById(
+    applicationId,
+    req.user!.sub,
+    req.user!.role
+  );
 
   res.status(200).json({
     success: true,

@@ -1,12 +1,12 @@
-import { FundApplication, FundCategory, Prisma } from "@/prisma/generated/client";
+import { FundApplication, FundCategory, Prisma } from '@/prisma/generated/client';
 import {
   FundApplicationFilters,
   fundApplicationRepository,
   PaginatedResponse,
-} from "@/repositories/fund-application.repository";
-import { AuthorizationError, NotFoundError } from "@/utils/errors";
-import { logger } from "@/utils/logger";
-import { CacheService } from "./cache.service";
+} from '@/repositories/fund-application.repository';
+import { AuthorizationError, NotFoundError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { CacheService } from './cache.service';
 
 export interface CreateFundApplicationData {
   purpose: string;
@@ -38,8 +38,8 @@ export class FundApplicationService {
       limit: filters?.limit || 20,
       status: filters?.status,
       category: filters?.category,
-      sortBy: filters?.sortBy || "createdAt",
-      sortOrder: filters?.sortOrder || "desc",
+      sortBy: filters?.sortBy || 'createdAt',
+      sortOrder: filters?.sortOrder || 'desc',
       classId: filters?.classId,
       search: filters?.search,
     };
@@ -63,7 +63,7 @@ export class FundApplicationService {
 
       return result;
     } catch (error) {
-      logger.error("Failed to fetch fund applications:", error);
+      logger.error('Failed to fetch fund applications:', error);
       throw error;
     }
   }
@@ -80,8 +80,8 @@ export class FundApplicationService {
       limit: filters?.limit || 20,
       status: filters?.status,
       category: filters?.category,
-      sortBy: filters?.sortBy || "createdAt",
-      sortOrder: filters?.sortOrder || "desc",
+      sortBy: filters?.sortBy || 'createdAt',
+      sortOrder: filters?.sortOrder || 'desc',
       search: filters?.search,
     };
 
@@ -107,7 +107,7 @@ export class FundApplicationService {
 
       return result;
     } catch (error) {
-      logger.error("Failed to fetch user fund applications:", error);
+      logger.error('Failed to fetch user fund applications:', error);
       throw error;
     }
   }
@@ -116,9 +116,9 @@ export class FundApplicationService {
     return this.fundApplicationRepository.findByUserId(userId, {
       page: 1,
       limit: 50,
-      status: "pending",
-      sortBy: "createdAt",
-      sortOrder: "desc",
+      status: 'pending',
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
       category: undefined,
     });
   }
@@ -140,7 +140,7 @@ export class FundApplicationService {
       const application = await this.fundApplicationRepository.findById(id);
 
       if (!application) {
-        throw new NotFoundError("Fund application not found");
+        throw new NotFoundError('Fund application not found');
       }
 
       // Permission check
@@ -154,7 +154,7 @@ export class FundApplicationService {
       if (error instanceof NotFoundError || error instanceof AuthorizationError) {
         throw error;
       }
-      logger.error("Failed to fetch fund application:", error);
+      logger.error('Failed to fetch fund application:', error);
       throw error;
     }
   }
@@ -174,7 +174,7 @@ export class FundApplicationService {
         category: data.category as FundCategory,
         amount: data.amount,
         attachmentUrl: data.attachmentUrl,
-        status: "pending",
+        status: 'pending',
         user: {
           connect: { id: userId },
         },
@@ -194,7 +194,7 @@ export class FundApplicationService {
 
       return application;
     } catch (error) {
-      logger.error("Failed to create fund application:", error);
+      logger.error('Failed to create fund application:', error);
       throw error;
     }
   }
@@ -203,19 +203,19 @@ export class FundApplicationService {
    * Check if user has permission to access the application
    */
   private checkPermission(application: FundApplication, userId?: string, userRole?: string): void {
-    // Admin can access everything
-    if (userRole === "admin") {
+    // Treasurers can review applications across classes.
+    if (userRole === 'bendahara' || userRole === 'admin') {
       return;
     }
 
     // User can only access their own applications
     if (userId && application.userId !== userId) {
-      throw new AuthorizationError("You do not have permission to access this fund application");
+      throw new AuthorizationError('You do not have permission to access this fund application');
     }
 
     // If no userId provided and not admin, deny access
-    if (!userId && userRole !== "admin") {
-      throw new AuthorizationError("You do not have permission to access this fund application");
+    if (!userId && userRole !== 'admin') {
+      throw new AuthorizationError('You do not have permission to access this fund application');
     }
   }
 

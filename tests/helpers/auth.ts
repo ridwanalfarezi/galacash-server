@@ -1,6 +1,19 @@
 import app from "@/app";
 import { prisma } from "@/utils/prisma-client";
 import request from "supertest";
+import { getSetCookies } from "./cookies";
+
+export const TEST_PASSWORD = "password123";
+
+let testPasswordHashPromise: Promise<string> | undefined;
+
+export const getTestPasswordHash = (): Promise<string> => {
+  testPasswordHashPromise ??= Bun.password.hash(TEST_PASSWORD, {
+    algorithm: "bcrypt",
+    cost: 10,
+  });
+  return testPasswordHashPromise;
+};
 
 export const createTestUser = async (nim = "1313624000", role = "user") => {
   // Check if class exists
@@ -16,13 +29,10 @@ export const createTestUser = async (nim = "1313624000", role = "user") => {
   // Check if user exists
   const existingUser = await prisma.user.findUnique({ where: { nim } });
   if (existingUser) {
-    return { user: existingUser, cls, password: "password123" };
+    return { user: existingUser, cls, password: TEST_PASSWORD };
   }
 
-  const hashedPassword = await Bun.password.hash("password123", {
-    algorithm: "bcrypt",
-    cost: 10,
-  });
+  const hashedPassword = await getTestPasswordHash();
 
   // Enum role casting if needed, but string works with Prisma types usually if matches enum
   const user = await prisma.user.create({
@@ -36,7 +46,7 @@ export const createTestUser = async (nim = "1313624000", role = "user") => {
     },
   });
 
-  return { user, cls, password: "password123" };
+  return { user, cls, password: TEST_PASSWORD };
 };
 
 export const loginUser = async (nim = "1313624000", role = "user") => {
@@ -47,8 +57,12 @@ export const loginUser = async (nim = "1313624000", role = "user") => {
     password,
   });
 
-  const cookies = response.headers["set-cookie"];
+  const cookies = getSetCookies(response.headers);
   const accessTokenCookie = cookies.find((c: string) => c.startsWith("accessToken="));
+
+  if (!accessTokenCookie) {
+    throw new Error("Login response did not include an accessToken cookie");
+  }
 
   return accessTokenCookie; // Full cookie string "accessToken=...; Path=/; ..."
 };

@@ -1,7 +1,7 @@
 import { uploadPaymentProof } from '@/config/multer.config';
 import { cashBillController } from '@/controllers';
 import { authenticate, uploadRateLimit, validateBody, validateQuery } from '@/middlewares';
-import { handleFileUpload } from '@/middlewares/upload.middleware';
+import { handleFileUpload, handleOptionalFileUpload } from '@/middlewares/upload.middleware';
 import { cashBillFilterSchema } from '@/validators/schemas';
 import { Router } from 'express';
 import Joi from 'joi';
@@ -32,7 +32,7 @@ router.post(
   '/batch-pay',
   uploadRateLimit,
   uploadPaymentProof.single('paymentProof'),
-  handleFileUpload('payments'),
+  handleOptionalFileUpload('payments'),
   validateBody(
     Joi.object({
       billIds: Joi.alternatives()

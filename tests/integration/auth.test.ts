@@ -1,7 +1,8 @@
 import app from "@/app";
 import { prisma } from "@/utils/prisma-client";
 import request from "supertest";
-import { describe, expect, it, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "bun:test";
+import { getSetCookies } from "../helpers/cookies";
 import { resetDb } from "../helpers/reset-db";
 
 describe("Auth Integration", () => {
@@ -52,7 +53,7 @@ describe("Auth Integration", () => {
       expect(response.body.data.user.nim).toBe("1313624000");
       // Check cookie
       expect(response.headers["set-cookie"]).toBeDefined();
-      const cookies = response.headers["set-cookie"].map((c: string) => c.split(";")[0]);
+      const cookies = getSetCookies(response.headers).map((cookie) => cookie.split(";")[0]);
       expect(cookies.some((c: string) => c.startsWith("accessToken="))).toBe(true);
       expect(cookies.some((c: string) => c.startsWith("refreshToken="))).toBe(true);
     });

@@ -92,15 +92,14 @@ Status values are `accepted`, `provisional`, or `open`.
 - Consequence: source/spec drift must be fixed in this repository rather than
   delegated to API consumers.
 
-## D-011: Runtime/package-manager signals
+## D-011: Bun is the runtime and package manager
 
-- Status: open
-- Current state: scripts and application runtime use Bun; `bun.lock` exists,
-  while `packageManager` declares pnpm and a `.pnpm-store` exists.
-- Consequence: use existing Bun scripts for normal work, but do not rewrite
-  lockfiles or package-manager metadata incidentally.
-- Open question: which package manager should be canonical for dependency
-  installation?
+- Status: accepted
+- Decision: use Bun 1.2.14 for dependency installation, scripts, tests, and
+  application runtime. `bun.lock` is authoritative.
+- Evidence: `package.json`, `bun.lock`, CI, and Dockerfiles.
+- Consequence: do not create npm or pnpm lockfiles. The existing local
+  `.pnpm-store` is not a package-manager policy signal.
 
 ## Known maintenance items
 

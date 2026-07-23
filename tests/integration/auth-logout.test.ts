@@ -1,7 +1,8 @@
 import app from '@/app';
 import { prisma } from '@/utils/prisma-client';
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'bun:test';
+import { getSetCookies } from '../helpers/cookies';
 import { loginUser } from '../helpers/auth';
 import { resetDb } from '../helpers/reset-db';
 
@@ -21,7 +22,7 @@ describe('Auth Logout Integration', () => {
       expect(response.body.message).toBe('Logout berhasil');
 
       // Should clear cookies
-      const setCookies = response.headers['set-cookie'];
+      const setCookies = getSetCookies(response.headers);
       expect(setCookies).toBeDefined();
       // Cleared cookies will have empty value or past expiry
       const accessCookie = setCookies.find((c: string) => c.startsWith('accessToken='));

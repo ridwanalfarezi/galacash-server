@@ -48,7 +48,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.14
 
       - name: Install Dependencies
         run: bun install --frozen-lockfile
@@ -60,6 +60,9 @@ jobs:
         run: bun run build
         env:
           DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
+
+      - name: Type Check Tests
+        run: bun run type-check:tests
 
       - name: Wait for PostgreSQL
         run: |

@@ -21,14 +21,14 @@ atomicity, contract stability, and operationally safe behavior.
 
 ## Layer responsibilities
 
-| Layer | Responsibility | Boundary |
-| --- | --- | --- |
-| routes | endpoint composition, auth/role/upload/validation/rate-limit middleware | no business rules |
-| controllers | HTTP input/output adaptation | no reusable business logic |
-| services | business rules, ownership, state transitions, atomic workflows, cache coordination | may use transaction-scoped Prisma for atomic work |
-| repositories | reusable persistence queries and pagination | no HTTP behavior |
-| Prisma | schema, constraints, indexes, transaction client | generated client is never hand-edited |
-| utilities/middleware | cross-cutting errors, auth, validation, logging, upload security | fail closed for security decisions |
+| Layer                | Responsibility                                                                     | Boundary                                          |
+| -------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------- |
+| routes               | endpoint composition, auth/role/upload/validation/rate-limit middleware            | no business rules                                 |
+| controllers          | HTTP input/output adaptation                                                       | no reusable business logic                        |
+| services             | business rules, ownership, state transitions, atomic workflows, cache coordination | may use transaction-scoped Prisma for atomic work |
+| repositories         | reusable persistence queries and pagination                                        | no HTTP behavior                                  |
+| Prisma               | schema, constraints, indexes, transaction client                                   | generated client is never hand-edited             |
+| utilities/middleware | cross-cutting errors, auth, validation, logging, upload security                   | fail closed for security decisions                |
 
 The older absolute rule "all database access goes through repositories" is not
 true of the current design. Preserve service-level Prisma use where an

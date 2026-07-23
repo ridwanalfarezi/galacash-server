@@ -49,8 +49,13 @@ Use the narrowest relevant checks, then expand with risk:
 
 ```text
 bun run type-check
+bun run type-check:tests
 bun run lint
-bun test
+bun run test:unit
+bun run test:integration:docker
+bun run test:contract
 ```
 
-Integration tests require their configured PostgreSQL/Redis test services.
+`test:integration:docker` starts the configured PostgreSQL/Redis test services,
+deploys committed migrations, and runs the integration suite. Stop them with
+`bun run test:down` when they are no longer needed.

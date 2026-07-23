@@ -5,12 +5,12 @@ Knowledge is separated by type to reduce stale or contradictory guidance.
 
 ## Files
 
-| File | Memory type | Read when |
-| --- | --- | --- |
-| `.ai/AGENTS.md` | operating policy | starting implementation, diagnosis, or review |
-| `.ai/CONTEXT.md` | semantic facts and relationships | understanding domain, architecture, contract, state, or blast radius |
-| `.ai/DECISIONS.md` | rationale, constraints, known mismatches | changing architecture or resolving conflicting guidance |
-| `.ai/SKILLS.md` | procedural playbooks | carrying out a recurring task |
+| File               | Memory type                              | Read when                                                            |
+| ------------------ | ---------------------------------------- | -------------------------------------------------------------------- |
+| `.ai/AGENTS.md`    | operating policy                         | starting implementation, diagnosis, or review                        |
+| `.ai/CONTEXT.md`   | semantic facts and relationships         | understanding domain, architecture, contract, state, or blast radius |
+| `.ai/DECISIONS.md` | rationale, constraints, known mismatches | changing architecture or resolving conflicting guidance              |
+| `.ai/SKILLS.md`    | procedural playbooks                     | carrying out a recurring task                                        |
 
 The repository-root `AGENTS.md` is the discovery hook for this memory.
 
@@ -31,15 +31,15 @@ The repository-root `AGENTS.md` is the discovery hook for this memory.
 
 ## Retrieval guide
 
-| Task | Load |
-| --- | --- |
+| Task                                  | Load                                                   |
+| ------------------------------------- | ------------------------------------------------------ |
 | isolated controller/repository change | `.ai/AGENTS.md` plus relevant `.ai/CONTEXT.md` section |
-| endpoint/contract change | `AGENTS.md`, API sections, endpoint playbook |
-| auth/role/ownership | all four files |
-| bill/application/transaction | all four files |
-| cache/Redis/concurrency | cache sections, `.ai/DECISIONS.md`, relevant playbooks |
-| schema/migration | persistence sections, decisions, Prisma playbook |
-| upload/job/deployment | relevant context and playbook |
+| endpoint/contract change              | `AGENTS.md`, API sections, endpoint playbook           |
+| auth/role/ownership                   | all four files                                         |
+| bill/application/transaction          | all four files                                         |
+| cache/Redis/concurrency               | cache sections, `.ai/DECISIONS.md`, relevant playbooks |
+| schema/migration                      | persistence sections, decisions, Prisma playbook       |
+| upload/job/deployment                 | relevant context and playbook                          |
 
 ## Source priority
 

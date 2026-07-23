@@ -26,6 +26,7 @@ These are safe procedures. Reconfirm them against current source before use.
 7. Update `openapi.yaml`.
 8. Add integration tests for happy path, validation, unauthenticated,
    unauthorized, ownership, and conflict/state cases.
+9. Run `bun run test:contract` to prove exact route/OpenAPI parity.
 
 ## Implement a multi-step financial write
 
@@ -143,10 +144,20 @@ These are safe procedures. Reconfirm them against current source before use.
 
 ## Verification matrix
 
-| Change | Minimum checks |
-| --- | --- |
-| docs/memory only | links, `git diff --check` |
-| utility/repository | `bun run type-check`, focused unit/integration test |
-| endpoint/service | type-check, lint, affected integration tests |
-| auth/financial/concurrency/schema | full relevant local suite and OpenAPI review |
-| OpenAPI contract | validate spec and test affected endpoints |
+| Change                            | Minimum checks                                                              |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| docs/memory only                  | links, `git diff --check`                                                   |
+| utility/repository                | `bun run type-check`, focused unit/integration test                         |
+| endpoint/service                  | type-check, lint, affected integration tests                                |
+| auth/financial/concurrency/schema | full relevant local suite and OpenAPI review                                |
+| OpenAPI contract                  | `bun run test:contract`, regenerate consumer types, test affected endpoints |
+
+Use `bun run test:unit` for isolated tests, `bun run test:integration` for
+PostgreSQL/Redis-backed behavior, `bun run test:contract` for route parity, and
+`bun run type-check:tests` to compile the test sources.
+
+For a fresh local integration environment, run
+`bun run test:integration:docker`. It waits for the isolated Compose services,
+applies committed migrations using `.env.test`, and then runs the integration
+suite. Use `bun run test:down` when the temporary services are no longer
+needed.

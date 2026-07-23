@@ -1,7 +1,8 @@
 import app from '@/app';
 import { prisma } from '@/utils/prisma-client';
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'bun:test';
+import { getSetCookies } from '../helpers/cookies';
 import { resetDb } from '../helpers/reset-db';
 
 describe('Auth Refresh Integration', () => {
@@ -40,7 +41,7 @@ describe('Auth Refresh Integration', () => {
   describe('POST /api/auth/refresh', () => {
     it('should refresh tokens successfully with valid refresh token', async () => {
       const loginResponse = await createAndLoginUser();
-      const cookies = loginResponse.headers['set-cookie'];
+      const cookies = getSetCookies(loginResponse.headers);
 
       const response = await request(app).post('/api/auth/refresh').set('Cookie', cookies);
 
@@ -48,7 +49,7 @@ describe('Auth Refresh Integration', () => {
       expect(response.body.success).toBe(true);
 
       // Should set new cookies
-      const newCookies = response.headers['set-cookie'];
+      const newCookies = getSetCookies(response.headers);
       expect(newCookies).toBeDefined();
       const cookieNames = newCookies.map((c: string) => c.split('=')[0]);
       expect(cookieNames).toContain('accessToken');
@@ -57,7 +58,7 @@ describe('Auth Refresh Integration', () => {
 
     it('should implement token rotation (old refresh token invalidated)', async () => {
       const loginResponse = await createAndLoginUser();
-      const cookies = loginResponse.headers['set-cookie'];
+      const cookies = getSetCookies(loginResponse.headers);
 
       // First refresh should succeed
       const firstRefresh = await request(app).post('/api/auth/refresh').set('Cookie', cookies);

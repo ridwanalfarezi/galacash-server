@@ -117,20 +117,6 @@ paths:
         "200":
           description: Logged out successfully
 
-  /auth/me:
-    get:
-      tags: [Auth]
-      summary: Get current user info
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: User info
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserResponse"
-
   # ========== USERS ==========
   /users/profile:
     get:
@@ -208,6 +194,16 @@ paths:
       responses:
         "200":
           description: Avatar uploaded
+
+  /users/classmates:
+    get:
+      tags: [Users]
+      summary: Get classmates for the authenticated user's class
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of classmates
 
   # ========== DASHBOARD ==========
   /dashboard/summary:
@@ -332,20 +328,63 @@ paths:
         "200":
           description: Chart data
 
+  /transactions/breakdown:
+    get:
+      tags: [Transactions]
+      summary: Get transaction totals grouped by category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Transaction category breakdown
+
   /transactions/export:
-    post:
+    get:
       tags: [Transactions]
       summary: Export transactions
       security:
         - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ExportRequest"
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [excel, csv]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
       responses:
         "200":
-          description: Export URL
+          description: Exported transaction file
 
   # ========== FUND APPLICATIONS ==========
   /fund-applications:
@@ -474,6 +513,60 @@ paths:
               schema:
                 $ref: "#/components/schemas/CashBillListResponse"
 
+  /cash-bills/my:
+    get:
+      tags: [Cash Bills]
+      summary: Get the authenticated user's cash bills
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [belum_dibayar, menunggu_konfirmasi, sudah_dibayar]
+      responses:
+        "200":
+          description: List of the user's cash bills
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CashBillListResponse"
+
+  /cash-bills/batch-pay:
+    post:
+      tags: [Cash Bills]
+      summary: Submit one payment for multiple cash bills
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [billIds, paymentMethod]
+              properties:
+                billIds:
+                  oneOf:
+                    - type: string
+                      description: JSON-encoded array of bill IDs
+                    - type: array
+                      items:
+                        type: string
+                paymentMethod:
+                  type: string
+                  enum: [bank, ewallet, cash]
+                paymentProof:
+                  type: string
+                  format: binary
+                  description: Required unless paymentMethod is cash
+      responses:
+        "200":
+          description: Batch payment submitted
+
   /cash-bills/{id}:
     get:
       tags: [Cash Bills]
@@ -553,16 +646,6 @@ paths:
         "200":
           description: Treasurer dashboard
 
-  /bendahara/fund-applications:
-    get:
-      tags: [Bendahara]
-      summary: Get all fund applications for review
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Applications for review
-
   /bendahara/fund-applications/{id}/approve:
     post:
       tags: [Bendahara]
@@ -619,7 +702,7 @@ paths:
         "200":
           description: All cash bills
 
-  /bendahara/cash-bills/{id}/confirm:
+  /bendahara/cash-bills/{id}/confirm-payment:
     post:
       tags: [Bendahara]
       summary: Confirm payment
@@ -637,7 +720,7 @@ paths:
         "200":
           description: Payment confirmed
 
-  /bendahara/cash-bills/{id}/reject:
+  /bendahara/cash-bills/{id}/reject-payment:
     post:
       tags: [Bendahara]
       summary: Reject payment proof
@@ -681,19 +764,25 @@ paths:
           description: Financial recap
 
   /bendahara/rekap-kas/export:
-    post:
+    get:
       tags: [Bendahara]
       summary: Export financial recap
       security:
         - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ExportRequest"
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
       responses:
         "200":
-          description: Export URL
+          description: Exported financial recap file
 
   /bendahara/students:
     get:
@@ -704,6 +793,23 @@ paths:
       responses:
         "200":
           description: List of students
+
+  /bendahara/students/{id}:
+    get:
+      tags: [Bendahara]
+      summary: Get student details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Student details
 
   /bendahara/transactions:
     post:
@@ -954,6 +1060,32 @@ paths:
       responses:
         "200":
           description: Payment methods
+
+  # ========== SCHEDULED JOBS ==========
+  /cron/generate-bills:
+    post:
+      tags: [Cash Bills]
+      summary: Generate monthly cash bills
+      description: Protected scheduler endpoint for idempotent monthly bill generation
+      parameters:
+        - name: x-cron-secret
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bill generation completed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /cron/health:
+    get:
+      tags: [Cash Bills]
+      summary: Check scheduled-job endpoint health
+      responses:
+        "200":
+          description: Scheduler endpoint is healthy
 
 components:
   securitySchemes:

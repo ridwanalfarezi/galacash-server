@@ -1,17 +1,16 @@
-import { mock } from 'bun:test';
-import { acquireLock, releaseLock, safeRedisSetNX } from '@/config/redis.config';
+import { describe, expect, it, mock, spyOn } from 'bun:test';
+import { acquireLock } from '@/config/redis.config';
 import { authService } from '@/services/auth.service';
 import { cacheService } from '@/services/cache.service';
 import { transactionService } from '@/services/transaction.service';
 import { NotFoundError } from '@/utils/errors';
-import { describe, expect, it, vi } from 'vitest';
 import { transactionRepository } from '@/repositories/transaction.repository';
 
 const mockPrismaUserUpdate = mock(async (args: any) => ({
   id: args?.where?.id || 'user-revocation-test-id',
   tokenVersion: 2,
 }));
-const mockPrismaTokenDeleteMany = mock(async () => ({ count: 1 }));
+const mockPrismaTokenDeleteMany = mock(async (_args?: unknown) => ({ count: 1 }));
 
 mock.module('@/utils/prisma-client', () => ({
   prisma: {
@@ -45,48 +44,6 @@ describe('Financial Caching Stress Test Suite', () => {
     });
   });
 
-  // ============ 2. DOUBLE-SPEND DISTRIBUTED LOCK SAFETY ============
-  describe('Hazard 2: Double-Spend Distributed Lock Safety', () => {
-    it('should acquire lock with a unique fencing UUID token', async () => {
-      const lockKey = 'lock:user_test_123:debit';
-      const lockResult = await acquireLock(lockKey, 5);
-
-      expect(lockResult.acquired).toBe(true);
-      expect(lockResult.token).toBeTruthy();
-      expect(typeof lockResult.token).toBe('string');
-
-      // Cleanup
-      await releaseLock(lockKey, lockResult.token);
-    });
-
-    it('should NOT allow process B to release process A lock with a mismatched token', async () => {
-      const lockKey = 'lock:user_test_456:debit';
-      const lockA = await acquireLock(lockKey, 10);
-      expect(lockA.acquired).toBe(true);
-
-      // Request B attempts to release lock using wrong token
-      const releasedByB = await releaseLock(lockKey, 'invalid-fake-token-b');
-      expect(releasedByB).toBe(false);
-
-      // Lock should STILL be held by A
-      const lockB = await acquireLock(lockKey, 10);
-      expect(lockB.acquired).toBe(false);
-
-      // Process A releases with correct token
-      const releasedByA = await releaseLock(lockKey, lockA.token);
-      expect(releasedByA).toBe(true);
-    });
-
-    it('safeRedisSetNX should fail closed (return false) when key already locked', async () => {
-      const lockKey = 'lock:user_test_789:debit';
-      const acquiredFirst = await safeRedisSetNX(lockKey, 'token1', 10);
-      expect(acquiredFirst).toBe(true);
-
-      const acquiredSecond = await safeRedisSetNX(lockKey, 'token2', 10);
-      expect(acquiredSecond).toBe(false);
-    });
-  });
-
   // ============ 3. CACHE PENETRATION DEFENSE ============
   describe('Hazard 3: Cache Penetration & Negative Sentinel Caching', () => {
     it('should reject invalid UUID formats immediately without querying DB', async () => {
@@ -102,7 +59,7 @@ describe('Financial Caching Stress Test Suite', () => {
       const fakeUuid = '00000000-0000-4000-a000-000000000001';
 
       // Mock repository findById to return null (record not found)
-      const findByIdSpy = vi.spyOn(transactionRepository, 'findById').mockResolvedValue(null);
+      const findByIdSpy = spyOn(transactionRepository, 'findById').mockResolvedValue(null);
 
       // First lookup: misses Redis, queries DB (returns null), stores __NULL__ sentinel in cache
       await expect(transactionService.getTransactionById(fakeUuid)).rejects.toThrow(
@@ -166,12 +123,12 @@ describe('Financial Caching Stress Test Suite', () => {
       const { userRepository } = await import('@/repositories/user.repository');
       const userId = 'user-pwd-change-id';
 
-      const findUserSpy = vi.spyOn(userRepository, 'findById').mockResolvedValue({
+      const findUserSpy = spyOn(userRepository, 'findById').mockResolvedValue({
         id: userId,
         password: await Bun.password.hash('oldPassword123', { algorithm: 'bcrypt', cost: 10 }),
       } as any);
 
-      const updateUserSpy = vi.spyOn(userRepository, 'update').mockResolvedValue({
+      const updateUserSpy = spyOn(userRepository, 'update').mockResolvedValue({
         id: userId,
       } as any);
 

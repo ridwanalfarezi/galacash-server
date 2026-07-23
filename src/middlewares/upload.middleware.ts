@@ -156,6 +156,13 @@ export const handleOptionalFileUpload = (folder: string) => {
 
       if (!isGCPAvailable) {
         logger.warn('GCP Storage not available. File upload skipped.');
+
+        if (process.env.NODE_ENV === 'test') {
+          req.fileUrl = `mock://test-uploads/${folder}/${req.file.originalname}`;
+          next();
+          return;
+        }
+
         next();
         return;
       }

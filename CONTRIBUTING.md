@@ -1,203 +1,148 @@
 # Contributing to GalaCash Server
 
-Thank you for your interest in contributing to GalaCash Server! This document provides guidelines and information for contributors.
+Thank you for contributing. Financial integrity, authorization, atomicity, and
+contract stability take priority over convenience.
 
-## 📋 Table of Contents
+## Setup
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [Making Contributions](#making-contributions)
-- [Pull Request Process](#pull-request-process)
-- [Coding Standards](#coding-standards)
+Requirements:
 
-## Code of Conduct
-
-Please be respectful and constructive in all interactions. We aim to maintain a welcoming and inclusive community.
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js v20 or higher
-- Bun v1.x or higher
-- Docker Desktop (for backend development)
+- Bun 1.2.14
+- Docker with Compose
 - Git
 
-### Project Structure
-
-This is a **Node.js + Express + TypeScript** application using **Prisma** for database management.
-
-```
-src/
-├── config/              # Configuration files
-├── controllers/         # HTTP request handlers
-├── routes/              # API route definitions
-├── services/            # Business logic layer
-├── repositories/        # Data access layer
-├── middlewares/         # Express middlewares
-├── prisma/             # Generated Prisma client
-└── ...
+```bash
+git clone https://github.com/ridwanalfarezi/galacash-server.git
+cd galacash-server
+bun install
+docker compose up -d --wait
 ```
 
-## Development Setup
-
-1. **Install dependencies:**
-
-   ```bash
-   bun install
-   ```
-
-2. **Start Docker services (PostgreSQL & Redis):**
-
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Initialize database:**
-
-   ```bash
-   bun prisma:generate
-   bun prisma:migrate
-   ```
-
-4. **Start development server:**
-   ```bash
-   bun dev
-   ```
-
-## Making Contributions
-
-### Types of Contributions
-
-- 🐛 **Bug fixes**: Found a bug? Open an issue or submit a PR
-- ✨ **Features**: New features are welcome! Please discuss larger changes first
-- 📝 **Documentation**: Help improve our docs
-- 🧪 **Tests**: Additional test coverage is always appreciated
-
-### Workflow
-
-1. **Fork** the repository
-2. **Create a branch** from `main`:
-   ```bash
-   git checkout -b feature/your-feature-name
-   # or
-   git checkout -b fix/your-bug-fix
-   ```
-3. **Make your changes**
-4. **Test your changes**
-5. **Commit** using conventional commits:
-   ```bash
-   git commit -m "feat(scope): add new feature"
-   git commit -m "fix(scope): fix bug description"
-   ```
-6. **Push** to your fork
-7. **Open a Pull Request**
-
-## Pull Request Process
-
-1. Ensure your code follows the project's coding standards
-2. Update documentation if needed
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Request review from maintainers
-6. Address any feedback
-
-### Commit Convention
-
-We use [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-type(scope): description
-
-feat:     New feature
-fix:      Bug fix
-docs:     Documentation only
-style:    Formatting, no code change
-refactor: Code restructuring
-test:     Adding tests
-chore:    Maintenance tasks
-```
-
-## Coding Standards
-
-### TypeScript
-
-- Use strict mode
-- Avoid `any` types
-- Use proper typing for all functions and variables
-
-### Backend
-
-- Follow RESTful API conventions
-- Use Joi for validation
-- Implement proper error handling
-- Add JSDoc comments for public APIs
-
-### Code Quality
+Create `.env` from `.env.example`, configure local database/Redis URLs and
+32-character-or-longer JWT secrets, then run:
 
 ```bash
-# Run linting
-bun lint
-
-# Fix lint issues
-bun lint:fix
-
-# Format code
-bun run format
-
-# Type checking
-bun run type-check
+bun run prisma:generate
+bun run prisma:deploy
+bun run dev
 ```
 
-## Questions?
+Read [AGENTS.md](AGENTS.md) before implementation work. It routes contributors
+to the relevant source-grounded guidance in `.ai/`.
 
-Feel free to open an issue for any questions or concerns.
+## Architecture rules
 
----
+- Routes compose middleware and contain no business rules.
+- Controllers adapt HTTP and use the established response/error envelope.
+- Services own business rules, ownership, state transitions, transactions, and
+  cache coordination.
+- Repositories own reusable persistence queries.
+- Direct Prisma in a service requires a clear interactive-transaction or
+  specialized-aggregation reason.
+- Multi-step financial writes must be atomic and concurrency-safe.
+- Cache invalidation happens after commit and covers all dependent projections.
+- Authentication, role checks, ownership, and correctness locks fail closed.
+- Update `openapi.yaml` whenever the external API contract changes.
+- Never edit `src/prisma/generated` manually.
 
-## 🔒 Security Architecture
+## Authentication and security
 
-Understanding the security decisions made in this project is important for contributors.
+- Passwords are hashed and verified with `Bun.password`.
+- Access and refresh JWTs are held in httpOnly cookies.
+- Refresh tokens rotate and are stored server-side.
+- Logout invalidates the presented refresh/access tokens; revoke-all removes
+  every refresh token and increments `tokenVersion`.
+- Redis cache failure may degrade safely. Redis lock failure may not.
+- Upload validation must include magic-byte checks; MIME and extension alone
+  are not authoritative.
+- Do not expose secrets, tokens, passwords, personal data, stack traces, or
+  `.env` contents.
 
-### Authentication & Tokens
+## Tests and verification
 
-| Mechanism          | Details                                                                            |
-| ------------------ | ---------------------------------------------------------------------------------- |
-| **Access Token**   | JWT (HS256), 1-hour expiry, contains `id`, `nim`, `name`, `role`, `classId`        |
-| **Refresh Token**  | Opaque JWT, 7-day expiry, stored in DB (`RefreshToken` table)                      |
-| **Token Rotation** | On every `/auth/refresh`, the old refresh token is deleted and a new one is issued |
-| **Logout**         | Deletes the refresh token from the database, immediately invalidating the session  |
+Choose checks based on risk:
 
-### Cookie & CORS Policy
+| Change                                | Minimum verification                                         |
+| ------------------------------------- | ------------------------------------------------------------ |
+| Documentation only                    | links and `git diff --check`                                 |
+| Utility or repository                 | source type-check and focused unit/integration test          |
+| Endpoint or service                   | type-checks, lint, affected integration tests, contract test |
+| Auth, finance, concurrency, or schema | full relevant unit/integration coverage and OpenAPI review   |
+| OpenAPI contract                      | `bun run test:contract` and affected API tests               |
 
-- **SameSite**: `lax` — prevents CSRF while allowing top-level navigation
-- **CORS Origins**: Configured via `CORS_ORIGIN` env variable (comma-separated). Only explicitly listed origins are allowed
-- **Credentials**: Enabled for cookie-based auth (`credentials: true`)
+Full verification:
 
-### Rate Limiting
+```bash
+bun run type-check
+bun run type-check:tests
+bun run lint
+bun run test:unit
+bun run test:integration:docker
+bun run test:contract
+bun run build
+```
 
-- Global rate limit applied via `express-rate-limit` with Redis store
-- Prevents brute-force login attempts and API abuse
-- Configurable via environment variables
+The Docker-backed integration command starts isolated PostgreSQL and Redis,
+deploys committed migrations using `.env.test`, and runs the integration suite.
+Stop the services afterward when they are no longer needed:
 
-### Password Handling
+```bash
+bun run test:down
+```
 
-- Passwords hashed with **bcrypt** (cost factor 10) via `Bun.password.hash`
-- Raw passwords are never stored, logged, or returned in API responses
-- Password fields are always destructured out before sending user objects
+## Database changes
 
-### Input Validation
+1. Edit `prisma/schema.prisma`.
+2. Decide how existing data will migrate.
+3. Create a named development migration:
 
-- All endpoints validated with **Joi** schemas via `validator.middleware.ts`
-- Validates body, params, and query parameters
-- Returns structured 400 errors with field-level detail
+   ```bash
+   bun run prisma:migrate -- --name describe_the_change
+   ```
 
-### Security Headers
+4. Regenerate the Prisma client:
 
-- **Helmet.js** configured for security-related HTTP headers
-- Includes Content-Security-Policy, X-Frame-Options, etc.
+   ```bash
+   bun run prisma:generate
+   ```
 
----
+5. Update services, repositories, validation, OpenAPI, seeds, and tests.
+6. Verify a fresh database with `bun run test:integration:docker`.
 
-Thank you for contributing! 🎉
+Never rely on `db push` as a replacement for a committed production migration.
+
+## Workflow
+
+1. Branch from the intended base.
+2. Inspect route, middleware, controller, service, persistence, cache, OpenAPI,
+   and tests before editing.
+3. Implement the smallest complete change.
+4. Add happy-path and failure-path coverage, including permission, ownership,
+   validation, state conflict, and rollback cases where relevant.
+5. Run checks proportional to risk.
+6. Review the diff for money, dates, roles, state transitions, transaction
+   boundaries, and cache invalidation.
+7. Commit using Conventional Commits.
+
+Examples:
+
+```text
+feat(bills): support cash batch payments
+fix(auth): reject replayed refresh tokens
+test(locks): cover compare-and-delete release
+docs(api): document payment rejection
+```
+
+Use `bun run commit` for the interactive Commitizen workflow.
+
+## Pull requests
+
+A pull request should:
+
+- explain the business rule and API impact;
+- identify migrations, OpenAPI changes, cache effects, and security impact;
+- include tests for important failure and concurrency cases;
+- avoid unrelated formatting and generated-client changes;
+- pass CI from a fresh database migration state.
+
+Please keep discussions respectful, specific, and constructive.

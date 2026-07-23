@@ -12,7 +12,7 @@ import {
   transactionFilterSchema,
   updateProfileSchema,
 } from '@/validators/schemas';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 
 describe('Validator Schemas', () => {
   // ============ LOGIN SCHEMA ============

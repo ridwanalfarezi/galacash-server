@@ -1,7 +1,7 @@
 import app from '@/app';
 import { prisma } from '@/utils/prisma-client';
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { loginUser } from '../helpers/auth';
 import { resetDb } from '../helpers/reset-db';
 

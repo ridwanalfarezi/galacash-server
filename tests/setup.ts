@@ -2,6 +2,8 @@ import { mock } from 'bun:test';
 import fs from 'fs';
 import path from 'path';
 
+process.env.NODE_ENV = 'test';
+
 const testEnvPath = path.resolve(__dirname, '../.env.test');
 
 if (fs.existsSync(testEnvPath)) {
@@ -41,7 +43,15 @@ const mockRedisStore = new Map<string, string>();
 // Mock express-rate-limit to bypass Redis connection in tests
 mock.module('express-rate-limit', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  rateLimit: () => (req: any, res: any, next: any) => next(),
+  rateLimit: () => (_req: any, _res: any, next: any) => next(),
+}));
+
+// Keep upload tests hermetic: middleware generates deterministic mock:// URLs in test mode.
+mock.module('@/config/storage.config', () => ({
+  isGCPAvailable: false,
+  uploadToGCS: async () => {
+    throw new Error('uploadToGCS should not be called in tests');
+  },
 }));
 
 // Mock Redis config to prevent undefined redisClient errors while preserving state

@@ -1,23 +1,23 @@
 # Semantic Memory: GalaCash Server
 
-Verified on 2026-07-23 against commit `9a9d012`. This file stores durable,
-source-grounded facts and relationships, not task history.
+Verified on 2026-07-23 against the current working tree. This file stores
+durable, source-grounded facts and relationships, not task history.
 
 ## Retrieval index
 
-| Concept | Aliases | Primary evidence |
-| --- | --- | --- |
-| authentication | auth, JWT, cookie, refresh, token version, blacklist | auth middleware/service/controller, token utilities |
-| authorization | role, ownership, user, bendahara, treasurer | route middleware and service ownership checks |
-| financial transaction | income, expense, balance, chart, breakdown | transaction service/repository, bendahara service |
-| cash bill | tagihan, payment, confirmation, bill state | cash-bill and bendahara services |
-| fund application | aju dana, approval, rejection | fund-application and bendahara services |
-| cache | Redis, TTL, invalidation, epoch, stampede | Redis config, cache service, business services |
-| concurrency | lock, race, optimistic locking, idempotency | Redis config, cash-bill/bendahara services, bill job |
-| persistence | Prisma, PostgreSQL, schema, migration, Decimal | `prisma/schema.prisma`, repositories, Prisma utility |
-| upload | GCS, proof, avatar, attachment, magic bytes | upload middleware, multer/storage config |
-| API contract | OpenAPI, envelope, endpoint, validation | routes, controllers, response/errors, `openapi.yaml` |
-| scheduling | cron, Cloud Scheduler, bill generation | bill job, cron routes, `src/index.ts` |
+| Concept               | Aliases                                              | Primary evidence                                     |
+| --------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+| authentication        | auth, JWT, cookie, refresh, token version, blacklist | auth middleware/service/controller, token utilities  |
+| authorization         | role, ownership, user, bendahara, treasurer          | route middleware and service ownership checks        |
+| financial transaction | income, expense, balance, chart, breakdown           | transaction service/repository, bendahara service    |
+| cash bill             | tagihan, payment, confirmation, bill state           | cash-bill and bendahara services                     |
+| fund application      | aju dana, approval, rejection                        | fund-application and bendahara services              |
+| cache                 | Redis, TTL, invalidation, epoch, stampede            | Redis config, cache service, business services       |
+| concurrency           | lock, race, optimistic locking, idempotency          | Redis config, cash-bill/bendahara services, bill job |
+| persistence           | Prisma, PostgreSQL, schema, migration, Decimal       | `prisma/schema.prisma`, repositories, Prisma utility |
+| upload                | GCS, proof, avatar, attachment, magic bytes          | upload middleware, multer/storage config             |
+| API contract          | OpenAPI, envelope, endpoint, validation              | routes, controllers, response/errors, `openapi.yaml` |
+| scheduling            | cron, Cloud Scheduler, bill generation               | bill job, cron routes, `src/index.ts`                |
 
 ## System identity
 
@@ -159,9 +159,9 @@ Evidence: auth middleware, route modules, transaction/bendahara services.
 
 ### Logout/revoke
 
-Logout deletes all refresh tokens for the user, blacklists the presented access
+Logout deletes the presented refresh token, blacklists the presented access
 token for its remaining lifetime, and clears cookies. `revokeAllSessions`
-deletes refresh tokens and increments `tokenVersion`.
+deletes all refresh tokens for the user and increments `tokenVersion`.
 
 Cookies are httpOnly, secure in production, `sameSite=lax` by default, and use
 path `/`.
@@ -175,7 +175,7 @@ utilities.
 
 ```text
 belum_dibayar
-  --student submits proof, Redis bill lock--> menunggu_konfirmasi
+  --student submits payment, Redis bill lock--> menunggu_konfirmasi
 
 menunggu_konfirmasi
   --bendahara confirms, DB transaction + optimistic update-->
@@ -188,6 +188,9 @@ menunggu_konfirmasi
 Confirmation uses `updateMany` with the expected old status and checks
 `count > 0` to catch a race. The generated income transaction uses the bill's
 class and total amount.
+
+Single-bill submissions require payment proof. Batch cash submissions may omit
+proof, while non-cash batch submissions are rejected without proof.
 
 ### Fund application
 
@@ -234,7 +237,10 @@ payment submission, stampede protection that uses the lock, and monthly bill
 generation. Do not describe all Redis behavior as optional without this
 qualification.
 
-Locks use random fencing tokens and Lua compare-and-delete release.
+Locks use UUID fencing tokens and Lua compare-and-delete release. The
+injectable lock algorithm lives in `src/utils/redis-lock.ts`; Redis config
+adapts the production client to it so the algorithm can be tested without a
+network service.
 
 ### Key families
 
@@ -283,7 +289,8 @@ parameters, and envelopes.
   authoritative content check.
 - GCS upload attaches a URL to `req.fileUrl`. Required uploads fail outside
   tests when storage is unavailable. Optional uploads can continue without a
-  URL.
+  URL. Tests use deterministic `mock://test-uploads/...` URLs when storage is
+  deliberately unavailable.
 
 Evidence: validators, error utilities, multer/storage config, upload middleware.
 
@@ -306,20 +313,22 @@ Evidence: `src/index.ts`, `src/jobs/bill-generator.job.ts`,
 `openapi.yaml` is this repository's published API contract. Any external
 endpoint or schema change must update it in the same change. Coordinate source,
 validation, examples, response envelopes, and error codes locally so API
-consumers receive one consistent contract.
+consumers receive one consistent contract. `tests/contract/openapi-routes.test.ts`
+extracts executable router declarations and enforces exact HTTP method/path
+parity with the specification.
 
 ## Change impact map
 
-| If this changes | Also inspect |
-| --- | --- |
-| Prisma model/enum/index | migration, generated client, repositories/services, OpenAPI |
-| auth token/error code | middleware, controller/service, cookies, OpenAPI, auth tests |
-| bill/application state | validators, services, transaction creation, cache invalidation, OpenAPI |
-| cache key/invalidation | all readers and every related mutation; stress tests |
-| cross-class scope | repository filters, token classId assumptions, dashboards/exports, product intent |
-| upload limits/types | multer, magic signatures, OpenAPI, route schemas, tests |
-| response envelope | global error handler, controllers, OpenAPI, integration tests |
-| bill schedule/month rules | job, cron endpoint, environment example, job tests |
+| If this changes           | Also inspect                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------- |
+| Prisma model/enum/index   | migration, generated client, repositories/services, OpenAPI                       |
+| auth token/error code     | middleware, controller/service, cookies, OpenAPI, auth tests                      |
+| bill/application state    | validators, services, transaction creation, cache invalidation, OpenAPI           |
+| cache key/invalidation    | all readers and every related mutation; stress tests                              |
+| cross-class scope         | repository filters, token classId assumptions, dashboards/exports, product intent |
+| upload limits/types       | multer, magic signatures, OpenAPI, route schemas, tests                           |
+| response envelope         | global error handler, controllers, OpenAPI, integration tests                     |
+| bill schedule/month rules | job, cron endpoint, environment example, job tests                                |
 
 ## Freshness protocol
 

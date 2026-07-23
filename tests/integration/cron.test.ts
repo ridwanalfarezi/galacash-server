@@ -1,7 +1,7 @@
 import app from '@/app';
 import { prisma } from '@/utils/prisma-client';
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { createTestUser } from '../helpers/auth';
 import { resetDb } from '../helpers/reset-db';
 
@@ -51,8 +51,9 @@ describe('Cron Integration', () => {
         .post('/api/cron/generate-bills')
         .set('X-CloudScheduler-Key', 'test-secret-key');
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
+      const isSemesterBreak = [1, 2, 7, 8].includes(new Date().getMonth() + 1);
+      expect(response.status).toBe(isSemesterBreak ? 423 : 200);
+      expect(response.body.success).toBe(!isSemesterBreak);
 
       // Restore
       if (originalKey) {
