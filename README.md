@@ -260,9 +260,6 @@ galacash-server/
 │   ├── seed-expense-transactions.ts
 │   └── clean-data.ts
 ├── tests/                   # Test files
-├── docs/                    # Documentation
-│   ├── API.md              # API documentation
-│   └── DATABASE.md         # Database schema documentation
 ├── package.json
 ├── tsconfig.json
 ├── bunfig.toml              # Bun configuration
@@ -663,9 +660,8 @@ To use different ports, edit `docker-compose.yml` and update `.env`.
 
 ## 📚 Additional Resources
 
-- [API Specification](./docs/API.md)
-- [Database Schema](./docs/DATABASE.md)
 - [OpenAPI Schema](./openapi.yaml)
+- [Prisma Schema](./prisma/schema.prisma)
 - [Prisma v7 Documentation](https://www.prisma.io/docs)
 - [Express.js Guide](https://expressjs.com/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)

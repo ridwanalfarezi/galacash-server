@@ -1,360 +1,328 @@
-# GalaCash Context
+# Semantic Memory: GalaCash Server
 
-Critical knowledge for engineers working on the GalaCash financial management system.
+Verified on 2026-07-23 against commit `9a9d012`. This file stores durable,
+source-grounded facts and relationships, not task history.
 
----
+## Retrieval index
 
-## Core Domain Concepts
+| Concept | Aliases | Primary evidence |
+| --- | --- | --- |
+| authentication | auth, JWT, cookie, refresh, token version, blacklist | auth middleware/service/controller, token utilities |
+| authorization | role, ownership, user, bendahara, treasurer | route middleware and service ownership checks |
+| financial transaction | income, expense, balance, chart, breakdown | transaction service/repository, bendahara service |
+| cash bill | tagihan, payment, confirmation, bill state | cash-bill and bendahara services |
+| fund application | aju dana, approval, rejection | fund-application and bendahara services |
+| cache | Redis, TTL, invalidation, epoch, stampede | Redis config, cache service, business services |
+| concurrency | lock, race, optimistic locking, idempotency | Redis config, cash-bill/bendahara services, bill job |
+| persistence | Prisma, PostgreSQL, schema, migration, Decimal | `prisma/schema.prisma`, repositories, Prisma utility |
+| upload | GCS, proof, avatar, attachment, magic bytes | upload middleware, multer/storage config |
+| API contract | OpenAPI, envelope, endpoint, validation | routes, controllers, response/errors, `openapi.yaml` |
+| scheduling | cron, Cloud Scheduler, bill generation | bill job, cron routes, `src/index.ts` |
 
-**Student Financial Management System**
+## System identity
 
-- Designed for Indonesian university class treasurers ("bendahara")
-- NIM format: `13136[0-9]{5}` (10 digits, starts with 13136)
-- Currency: Indonesian Rupiah (IDR) implied throughout
-- Localized for Indonesia: Bahasa Indonesia labels, Asia/Jakarta timezone
+GalaCash Server is an Express 5 TypeScript API, run through Bun scripts, backed
+by PostgreSQL via Prisma 7 and optionally connected to Redis and Google Cloud
+Storage. It exposes `/api/*`, Swagger UI at `/api/docs`, and `/health`.
 
-**Multi-Class Transparency Model**
+Evidence: `package.json`, `src/app.ts`, `src/index.ts`,
+`prisma/schema.prisma`.
 
-- All users within the same angkatan (batch) can view aggregated data across classes
-- `classId` retained for organizational purposes and future filtering
-- Treasurer (bendahara) has visibility across all classes, not just their own
+## Concept graph
 
----
+```text
+HTTP request
+  -> route middleware
+     -> rate limit
+     -> authentication
+     -> role authorization
+     -> Joi validation
+     -> upload validation/storage when applicable
+  -> controller
+  -> service
+     -> ownership/business-state check
+     -> repository OR transaction-scoped Prisma
+     -> cache invalidation after commit
+  -> response helper / global error handler
 
-## Critical Business Rules
+CashBill confirmation
+  -> CashBill(sudah_dibayar)
+  -> Transaction(income, kas_kelas)
 
-### Authentication & Identity
+FundApplication approval
+  -> FundApplication(approved)
+  -> Transaction(expense, mapped category)
 
-- **NIM Uniqueness**: NIM is the primary identifier; pattern `^13136[0-9]{5}$` is enforced
-- **Email Optional**: Email field is optional but must be unique if provided
-- **Role Binary**: Only two roles exist: `user` (student) and `bendahara` (treasurer)
-- **Password Minimum**: 8 characters minimum, hashed with bcrypt cost factor 10
-
-### Cash Bill (Kas Kelas) System
-
-- **Monthly Billing Cycle**: Bills generated automatically on 1st of each month
-- **Holiday Exclusions**: Months 1, 2, 7, 8 (Jan, Feb, Jul, Aug) are excluded - these are semester break months
-- **Default Amount**: Rp 15,000 per month (`KAS_KELAS_AMOUNT` env var)
-- **Admin Fee**: Currently hardcoded to 0 (`BIAYA_ADMIN = 0`)
-- **Unique Constraint**: One bill per user per month/year (DB-enforced at `@@unique([userId, month, year])`)
-
-### Bill State Machine
-
-```
-belum_dibayar (Unpaid)
-  ├─ student pays ──> menunggu_konfirmasi (Pending Confirmation)
-  │                    ├─ treasurer confirms ──> sudah_dibayar (Paid) + creates income transaction
-  │                    ├─ treasurer rejects ──> belum_dibayar (reset)
-  │                    └─ student cancels ──> belum_dibayar (reset)
-```
-
-**State Transition Guards:**
-
-- Can ONLY pay bills with status `belum_dibayar`
-- Can ONLY cancel payments with status `menunggu_konfirmasi`
-- Can ONLY confirm/reject bills with status `menunggu_konfirmasi`
-
-### Fund Application Workflow
-
-- **Immutable After Review**: Cannot approve/reject already-reviewed applications
-- **Auto-Transaction Creation**: Approving fund application automatically creates an expense transaction
-- **Rejection Requires Reason**: Rejection is invalid without providing a reason
-
----
-
-## Critical Invariants That Must Hold
-
-### Financial Integrity
-
-1. **Balance Formula**: `Balance = Total Income - Total Expense` (calculated via Prisma aggregate `_sum`)
-2. **Decimal Precision**: All financial amounts use `Decimal(12,2)` in DB; explicitly converted to Number for API
-3. **Auto-Transaction Atomicity**: Payment confirmation and fund approval are wrapped in database transactions
-
-### Authorization
-
-1. **Bill Ownership**: Students can ONLY access/pay their OWN bills (`bill.userId !== userId` check)
-2. **Role Restriction**: Bendahara-only operations guarded by `requireRole(["bendahara"])`
-3. **Optimistic Locking**: Payment confirmation uses `updateMany` with WHERE clause to prevent race conditions
-
-### Data Consistency
-
-1. **Cache Invalidation**: All mutations invalidate related cache patterns immediately
-2. **Cache TTL Strategy**:
-   - User data: 1 hour (3600s)
-   - Transactions: 5 minutes (300s)
-   - Dashboard: 1 minute (60s) - high volatility
-   - Charts: 10 minutes (600s)
-   - Student lists: 10 minutes (600s)
-
----
-
-## Implicit Assumptions
-
-### Academic Calendar
-
-- **Two-Semester System**: Holiday months suggest Jan-Feb and Jul-Aug breaks
-- **Monthly Billing**: Fixed monthly cycle, not customizable periods
-- **No Partial Payments**: Bills are binary (paid/unpaid), no partial payment support
-
-### Organizational Model
-
-- **Single Treasurer per Class**: System assumes one bendahara per class
-- **Cross-Class Transparency**: Transaction aggregates span all classes in batch
-- **No Soft Deletes**: Records are hard deleted (no `deletedAt` fields)
-- **No Audit Trail**: No explicit audit logging of who changed what
-
-### Technical Assumptions
-
-- **GCP Dependency**: File uploads require GCP configuration (graceful degradation available)
-- **Redis Dependency**: Caching requires Redis (graceful degradation if unavailable)
-- **PostgreSQL**: Must support Prisma's Decimal type for financial precision
-
----
-
-## Architectural Landmines
-
-### High Blast-Radius Areas
-
-**1. Bill Generation Job** (`jobs/bill-generator.job.ts`)
-
-- **Duplicate Risk**: Cron job runs monthly; unique constraint prevents duplicates but error handling must be graceful
-- **Race Conditions**: Multiple simultaneous runs could cause issues
-- **Holiday Logic**: Hardcoded months `[1, 2, 7, 8]` - changing academic calendar requires code change
-
-**2. Payment Confirmation** (`services/bendahara.service.ts:372-481`)
-
-- **Financial Impact**: Auto-creates income transaction upon confirmation
-- **Optimistic Locking**: Uses `updateMany` with WHERE clause (lines 395-412)
-- **Race Condition Check**: Throws error if `updateResult.count === 0`
-- **Atomic Transaction**: Bill update and transaction creation MUST succeed together or fail together
-
-**3. Fund Approval** (`services/bendahara.service.ts:199-268`)
-
-- **Auto-Transaction**: Approving fund application auto-creates expense transaction
-- **Category Mapping**: Fund categories mapped to transaction categories via `mapFundCategoryToTransactionCategory()`
-
-### Performance-Sensitive Paths
-
-**1. Balance Calculations** (`services/transaction.service.ts`)
-
-- Uses Prisma `aggregate` with `_sum` instead of fetching all rows
-- Parallel queries for income and expense aggregates via `Promise.all`
-- Jakarta timezone used for all chart data grouping
-
-**2. Rekap Kas Generation** (`services/bendahara.service.ts:529-709`)
-
-- Complex aggregation across students, bills, and transactions
-- Filters by `paymentStatus: "up-to-date" | "has-arrears"`
-- Pagination with total count calculation
-
-**3. Cache Pattern Invalidation** (`services/cache.service.ts:85-92`)
-
-- Uses Redis SCAN (not KEYS) for pattern matching
-- Graceful fallback if Redis unavailable
-
----
-
-## Code Conventions
-
-### Raw SQL Table Names
-
-**Use `@@map` table names in raw SQL, NOT Prisma model names.**
-
-The Prisma schema uses `@@map` to define actual PostgreSQL table names (e.g., `@@map("transactions")`). When writing `prisma.$queryRaw`, always use the mapped name:
-
-```sql
--- ✅ Correct: uses @@map table name
-SELECT * FROM "transactions" WHERE type = 'income'
-
--- ❌ Wrong: uses Prisma model name (fails with Prisma Accelerate)
-SELECT * FROM "Transaction" WHERE type = 'income'
+Prisma schema
+  -> generated client in src/prisma/generated
+  -> repositories/services
+  -> OpenAPI response contract
+  -> external API consumers
 ```
 
-| Model             | `@@map` Table Name  |
-| ----------------- | ------------------- |
-| `User`            | `users`             |
-| `Class`           | `classes`           |
-| `RefreshToken`    | `refresh_tokens`    |
-| `Transaction`     | `transactions`      |
-| `FundApplication` | `fund_applications` |
-| `CashBill`        | `cash_bills`        |
-| `PaymentAccount`  | `payment_accounts`  |
+## Layered architecture
 
-### Unused Variable Convention
+The dominant flow is controller -> service -> repository -> Prisma. Two
+intentional exceptions exist in current source:
 
-Prefix intentionally unused destructured variables with `_` instead of using `eslint-disable` comments:
+- service-level interactive Prisma transactions for atomic multi-entity
+  workflows;
+- service-level aggregate/specialized queries in bendahara/auth/job code.
 
-```typescript
-// ✅ Correct
-const { password: _password, ...userWithoutPassword } = user;
+Controllers should not access Prisma. New reusable query behavior should
+normally enter a repository. Transaction-scoped reads/writes may remain in the
+service that owns the atomic business event.
 
-// ❌ Wrong
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { password, ...userWithoutPassword } = user;
+Evidence: `src/controllers/**`, `src/services/**`, `src/repositories/**`.
+
+## Persistence model
+
+### Class
+
+Owns users, transactions, fund applications, and cash bills.
+
+### User
+
+Has unique NIM, optional unique email, `user | bendahara` role, class relation,
+avatar, password hash, and `tokenVersion` for broad session revocation.
+
+### RefreshToken
+
+Stores a unique signed refresh token, owner, and expiry. Refresh rotates by
+deleting the old row and creating a new one.
+
+### Transaction
+
+Class-scoped `income | expense` record with Decimal amount, category,
+description, date, and optional attachment. Aggregate views intentionally span
+all classes unless a particular service supplies `classId`.
+
+### FundApplication
+
+Belongs to a user and class; has `pending | approved | rejected`, category,
+Decimal amount, optional attachment/rejection reason, and optional reviewer.
+
+### CashBill
+
+Belongs to a student and class; unique by `(userId, month, year)` and also has a
+unique external `billId`. Holds amount components, payment evidence/account,
+status, and confirmer metadata.
+
+### PaymentAccount
+
+An active/inactive bank or e-wallet destination. Cash bills can retain a
+nullable reference; deletion uses `SetNull`.
+
+Evidence: `prisma/schema.prisma`.
+
+## Role and visibility semantics
+
+- `authenticate` accepts `accessToken` cookie first, then Bearer token.
+- `requireBendahara` allows only `bendahara`.
+- `requireUser` currently allows both `user` and `bendahara`.
+- Bendahara routes are explicitly protected by both authentication and
+  `requireBendahara`.
+- Personal bill/application methods enforce ownership.
+- Many transactions, charts, balance, students, and bendahara lists support
+  cross-class transparency by design.
+- Class scoping is endpoint-specific. Never infer it only from the caller's
+  token `classId`.
+
+Evidence: auth middleware, route modules, transaction/bendahara services.
+
+## Authentication lifecycle
+
+### Login
+
+1. Validate NIM/password input.
+2. Load user by NIM and verify with `Bun.password`.
+3. Cache current `tokenVersion`.
+4. Generate a one-hour access token and seven-day refresh token.
+5. Store refresh token in PostgreSQL.
+6. Set httpOnly cookies and return user data, not tokens.
+
+### Authenticated request
+
+1. Read cookie or Bearer token.
+2. Reject a Redis-blacklisted token.
+3. Verify JWT signature/expiry.
+4. Compare token version with cached active version when available.
+5. Attach claims to `req.user`.
+
+### Refresh
+
+1. Read refresh cookie.
+2. Verify signature and stored token row.
+3. Delete old token.
+4. create and store a new refresh token;
+5. set both cookies again.
+
+### Logout/revoke
+
+Logout deletes all refresh tokens for the user, blacklists the presented access
+token for its remaining lifetime, and clears cookies. `revokeAllSessions`
+deletes refresh tokens and increments `tokenVersion`.
+
+Cookies are httpOnly, secure in production, `sameSite=lax` by default, and use
+path `/`.
+
+Evidence: auth route/controller/service, auth middleware, token and cookie
+utilities.
+
+## Financial state machines
+
+### Cash bill
+
+```text
+belum_dibayar
+  --student submits proof, Redis bill lock--> menunggu_konfirmasi
+
+menunggu_konfirmasi
+  --bendahara confirms, DB transaction + optimistic update-->
+  sudah_dibayar + income(kas_kelas) transaction
+
+menunggu_konfirmasi
+  --student cancels or bendahara rejects--> belum_dibayar
 ```
 
-ESLint is configured with `argsIgnorePattern: "^_"`, `varsIgnorePattern: "^_"`, and `destructuredArrayIgnorePattern: "^_"` to support this pattern.
+Confirmation uses `updateMany` with the expected old status and checks
+`count > 0` to catch a race. The generated income transaction uses the bill's
+class and total amount.
 
----
+### Fund application
 
-## Security-Sensitive Logic
+```text
+pending
+  --bendahara approves in DB transaction-->
+  approved + mapped expense transaction
 
-### Authentication
-
-- **JWT Access Token**: 1 hour expiry (`ACCESS_TOKEN_EXPIRY = "1h"`)
-- **JWT Refresh Token**: 7 days expiry (`REFRESH_TOKEN_EXPIRY = "7d"`)
-- **Token Storage**: Refresh tokens stored in DB with expiration
-- **Cookie-Based**: Access token from cookie preferred, fallback to Authorization header
-
-### Authorization Patterns
-
-```typescript
-// Ownership Check Pattern
-private checkOwnership(bill: CashBill, userId: string): void {
-  if (bill.userId !== userId) {
-    throw new AuthorizationError("This bill does not belong to you");
-  }
-}
+pending
+  --bendahara rejects--> rejected + rejection reason
 ```
 
-### File Upload Security
+Only pending applications can be reviewed.
 
-- **Max Size**: 10MB general, 5MB for avatars
-- **Allowed Types**: JPEG, PNG, WebP, PDF
-- **Extension + MIME Validation**: Both checks performed
-- **GCP Storage**: Files uploaded to GCS with public URLs
+Evidence: cash-bill service and bendahara service.
 
-### Cron Job Security
+## Financial visibility and precision
 
-- **Secret Key Verification**: `X-CloudScheduler-Key` header check
-- **User-Agent Validation**: Checks for `Google-Cloud-Scheduler`
-- **Development Bypass**: Allowed when `NODE_ENV=development` and no secret configured
+- Public transaction list, chart, breakdown, and default balance behavior are
+  cross-class.
+- Bendahara dashboard and recap can accept class filters; absent filters can
+  represent global views.
+- Amounts are Prisma Decimal in storage.
+- Aggregates use database `_sum` or SQL `SUM` rather than loading all rows.
+- Raw SQL chart/breakdown queries use the mapped `"transactions"` table.
+- API/report layers explicitly convert Decimal aggregates to numbers.
+- Currency is IDR; no conversion entity exists.
 
----
+Evidence: transaction repository/service, bendahara service,
+`prisma/schema.prisma`.
 
-## Critical Magic Numbers
+## Cache and concurrency model
 
-### Business Values
+### Degradable cache operations
 
-| Value              | Location                   | Purpose                                 |
-| ------------------ | -------------------------- | --------------------------------------- |
-| `[1, 2, 7, 8]`     | `bill-generator.job.ts:23` | Holiday months (semester breaks)        |
-| `10 * 1024 * 1024` | `multer.config.ts:4`       | Max file size (10MB)                    |
-| `5 * 1024 * 1024`  | `multer.config.ts:5`       | Max avatar size (5MB)                   |
-| `10000`            | `export.service.ts`        | Export limit (rows)                     |
-| `50`               | `bendahara.service.ts:680` | Recent transactions limit for rekap kas |
-| `1000`             | `user.service.ts:168`      | Classmate fetch limit                   |
+Safe Redis get/set/delete/exists/incr helpers return cache-miss/no-op style
+fallbacks when Redis is unavailable. Standard cached reads can continue from
+PostgreSQL.
 
-### Rate Limits
+### Correctness locks
 
-| Endpoint Type            | Window | Max Requests |
-| ------------------------ | ------ | ------------ |
-| Auth                     | 15 min | 100          |
-| General API              | 1 min  | 1000         |
-| Upload                   | 15 min | 50           |
-| Strict (password change) | 15 min | 30           |
+`acquireLock()` fails closed when Redis is unavailable. This affects bill
+payment submission, stampede protection that uses the lock, and monthly bill
+generation. Do not describe all Redis behavior as optional without this
+qualification.
 
-### ESLint Configuration
+Locks use random fencing tokens and Lua compare-and-delete release.
 
-- `@typescript-eslint/no-unused-vars`: `"warn"` with `argsIgnorePattern`, `varsIgnorePattern`, and `destructuredArrayIgnorePattern` all set to `"^_"`
-- This allows `_password`, `_next`, etc. as intentionally unused variables
+### Key families
 
----
+- `user:*`, `user:nim:*`, `user:token_version:*`
+- `token:blacklist:*`
+- `transactions:*`, `balance:*`
+- `epoch:finance:*`
+- `fund-application*`, `my-applications:*`
+- `cash-bill*`, `my-bills:*`
+- `dashboard:*`, `bendahara-dashboard:*`
+- `chart-data*`, `breakdown*`, `rekap-kas*`, `all-students*`
+- `lock:*`
 
-## Error Code Meanings
+Financial mutations use broad invalidation and/or a financial epoch after the
+database commit. Adding a cached projection requires adding its mutation
+invalidation paths.
 
-### Business Logic Errors
+Evidence: Redis config, cache service, business services.
 
-- `INVALID_STATUS_TRANSITION`: Attempted invalid state change in workflow
-- `PAYMENT_ALREADY_SUBMITTED`: Bill already in `menunggu_konfirmasi` state
-- `ALREADY_REVIEWED`: Fund application already approved/rejected
-- `INSUFFICIENT_BALANCE`: Balance check failed (currently not actively used)
+## API surface by module
 
-### Prisma Error Mapping
+- `/api/auth`: login, refresh, logout
+- `/api/users`: profile, password, avatar, classmates
+- `/api/dashboard`: summary and pending counts
+- `/api/transactions`: lists, charts, breakdown, balance/export/detail
+- `/api/fund-applications`: global/personal reads and creation
+- `/api/cash-bills`: personal reads, single/batch payment, cancellation
+- `/api/payment-accounts`: public active list; bendahara management
+- `/api/labels`: public label dictionaries
+- `/api/bendahara`: dashboard, reviews, confirmations, recap, students,
+  transaction creation/export
+- `/api/cron`: authenticated scheduler bill generation plus a public health
+  endpoint
 
-- `P2002` (409): Unique constraint violation (duplicate NIM/email)
-- `P2025` (404): Record not found
+The route modules and `openapi.yaml` are authoritative for exact methods,
+parameters, and envelopes.
 
----
+## Validation, errors, and uploads
 
-## Historical Tradeoffs
+- Joi schemas validate request body/query data at route boundaries.
+- Async controllers use `asyncHandler`; the global handler serializes
+  `AppError` descendants and hides production stacks.
+- Uploads use in-memory file buffers and accept JPEG, PNG, WebP, or PDF up to
+  10 MB in the shared upload middleware.
+- Extension and declared MIME checks fail fast; magic-byte signatures are the
+  authoritative content check.
+- GCS upload attaches a URL to `req.fileUrl`. Required uploads fail outside
+  tests when storage is unavailable. Optional uploads can continue without a
+  URL.
 
-### Simplified Architecture
+Evidence: validators, error utilities, multer/storage config, upload middleware.
 
-- **No Soft Deletes**: Hard deletion only
-- **No Audit Trail**: No change history tracking
-- **No Multi-Currency**: IDR only
-- **No Notifications**: No email/SMS system
-- **No Recurring Bills**: Fixed monthly only
-- **No Payment Plans**: Cannot split bills
+## Bill generation
 
-### Performance vs Consistency
+- Schedule defaults to `0 0 1 * *`.
+- Local cron runs only when `USE_LOCAL_CRON=true`; production guidance is Cloud
+  Scheduler calling `/api/cron/generate-bills`.
+- Amount defaults to `KAS_KELAS_AMOUNT` or 10000; admin fee is currently zero.
+- January, February, July, and August are semester breaks and generate no bills.
+- Users are processed in batches of 100.
+- Database uniqueness and a month-scoped Redis lock provide duplicate
+  protection.
 
-- **Eventual Consistency**: Cache may be stale up to TTL duration
-- **Optimistic Locking**: Used only for critical payment confirmations
-- **Async Cache Invalidation**: Non-blocking cache clearing
+Evidence: `src/index.ts`, `src/jobs/bill-generator.job.ts`,
+`src/routes/cron.routes.ts`, Prisma unique constraint.
 
-### Feature Limitations
+## Published contract consistency
 
-- **No Refunds**: No explicit refund mechanism
-- **No Interest**: No interest calculations on balances
-- **No Partial Payments**: Binary paid/unpaid model
+`openapi.yaml` is this repository's published API contract. Any external
+endpoint or schema change must update it in the same change. Coordinate source,
+validation, examples, response envelopes, and error codes locally so API
+consumers receive one consistent contract.
 
----
+## Change impact map
 
-## Cache Key Patterns
+| If this changes | Also inspect |
+| --- | --- |
+| Prisma model/enum/index | migration, generated client, repositories/services, OpenAPI |
+| auth token/error code | middleware, controller/service, cookies, OpenAPI, auth tests |
+| bill/application state | validators, services, transaction creation, cache invalidation, OpenAPI |
+| cache key/invalidation | all readers and every related mutation; stress tests |
+| cross-class scope | repository filters, token classId assumptions, dashboards/exports, product intent |
+| upload limits/types | multer, magic signatures, OpenAPI, route schemas, tests |
+| response envelope | global error handler, controllers, OpenAPI, integration tests |
+| bill schedule/month rules | job, cron endpoint, environment example, job tests |
 
-Invalidating the wrong pattern can cause stale data:
+## Freshness protocol
 
-```
-user:${userId}*              - User profile data
-transactions:${classId}*     - Transaction lists
-balance:${classId}           - Financial summaries
-cash-bills:${userId}*        - User's bill data
-dashboard:${userId}*         - Dashboard aggregations
-bendahara-dashboard:all*     - Treasurer dashboard
-rekap-kas:all*               - Financial reports
-chart-data*                  - Chart aggregations
-breakdown*                   - Category breakdowns
-```
-
----
-
-## Database Index Strategy
-
-**Critical for Performance:**
-
-- `User`: indexed by `classId`, `nim`
-- `Transaction`: indexed by `classId`, `date`, `type`, `category`
-- `CashBill`: composite indexes on `[userId, status, dueDate]`, `[classId, status, dueDate]`, `[month, year]`
-- `FundApplication`: indexed by `userId`, `classId`, `status`, `createdAt`
-
----
-
-## Deployment Considerations
-
-### Environment Variables (Critical for Production)
-
-- `JWT_SECRET` and `JWT_REFRESH_SECRET`: Must be generated securely (`openssl rand -base64 64`)
-- `CRON_SECRET_KEY`: Required for Cloud Scheduler authentication
-- `KAS_KELAS_AMOUNT`: Monthly bill amount (default: 15000)
-- `BILL_GENERATION_SCHEDULE`: Cron expression (default: `0 0 1 * *`)
-- `GCP_PROJECT_ID` and `GCP_BUCKET_NAME`: Required for file uploads
-
-### Database Migration Notes
-
-- Prisma v7 with `prisma-client` provider (not `prisma-client-js`)
-- Custom output path: `src/prisma/generated`
-- Uses `@prisma/adapter-pg` for PostgreSQL
-
----
-
-## Assumption Notes
-
-**Marked as Assumption:**
-
-- Single treasurer per class assumption may need revisiting if batch has multiple treasurers
-- Holiday months (Jan, Feb, Jul, Aug) are hardcoded based on Indonesian academic calendar
-- Cross-class transparency is a product decision; `classId` filtering could be enabled in future
-- No notification system assumes manual checking by users
-- Currency is assumed IDR throughout; no currency conversion logic exists
+Update stable facts here only after verifying code/config/tests. Put rationale
+and contradictions in `.ai/DECISIONS.md`; procedures in `.ai/SKILLS.md`.
+Refresh the verified commit/date only after a complete memory audit.

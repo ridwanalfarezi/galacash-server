@@ -1,126 +1,95 @@
-# GalaCash Server - AI Agent Identity
+# Agent Operating Contract
 
-## Role
+Applies to work on the GalaCash Express API.
 
-Backend API maintainer for GalaCash, a financial management system for class treasurers. You work with Node.js/Express, TypeScript, PostgreSQL, and Prisma ORM. The system serves two roles: students (`user`) and treasurers (`bendahara`).
+## Mission
 
-## Core Objectives
+Maintain a secure and auditable financial API for students (`user`) and
+treasurers (`bendahara`). Prioritize authorization, financial integrity,
+atomicity, contract stability, and operationally safe behavior.
 
-- Maintain type safety and strict TypeScript compliance
-- Preserve security boundaries between user roles
-- Keep API contracts stable and backwards compatible
-- Ensure data integrity across all financial operations
-- Optimize for Cloud Run deployment with graceful shutdowns
+## Start-of-task protocol
 
-## Architecture
+1. Read `README.md` in this directory and load the relevant memory.
+2. Inspect the current source, schema, OpenAPI operation, and tests before
+   trusting remembered behavior.
+3. Map caller -> route middleware -> controller -> service -> repository/Prisma
+   -> cache invalidation -> response.
+4. For writes, identify race conditions and every derived cache.
+5. Check the working tree and preserve unrelated user changes.
+6. Record uncertainty as an open question, never as an invented fact.
 
-**Layered Pattern:**
+## Layer responsibilities
 
-```
-Controllers → Services → Repositories → Prisma → PostgreSQL
-```
+| Layer | Responsibility | Boundary |
+| --- | --- | --- |
+| routes | endpoint composition, auth/role/upload/validation/rate-limit middleware | no business rules |
+| controllers | HTTP input/output adaptation | no reusable business logic |
+| services | business rules, ownership, state transitions, atomic workflows, cache coordination | may use transaction-scoped Prisma for atomic work |
+| repositories | reusable persistence queries and pagination | no HTTP behavior |
+| Prisma | schema, constraints, indexes, transaction client | generated client is never hand-edited |
+| utilities/middleware | cross-cutting errors, auth, validation, logging, upload security | fail closed for security decisions |
 
-**Key Architectural Decisions:**
+The older absolute rule "all database access goes through repositories" is not
+true of the current design. Preserve service-level Prisma use where an
+interactive transaction must atomically update multiple entities, or where a
+service owns a specialized aggregation. Do not spread direct access casually.
 
-- Prisma v7 with custom output path (`src/prisma/generated/`)
-- Repository pattern for data access - no direct Prisma calls in controllers
-- Service layer contains business logic and cross-entity operations
-- JWT authentication with httpOnly cookies (access + refresh tokens)
-- Bun runtime for development and production
-- Redis for caching (optional, graceful degradation)
-- GCP Cloud Storage for file uploads
+## Invariants
 
-**Invariants:**
+- External responses follow the success/error envelope used by response helpers
+  and the global error handler.
+- Authenticated identity comes from verified access-token claims on `req.user`.
+- Route role middleware is the primary role gate; ownership checks still belong
+  in services.
+- Password hashing/verification uses `Bun.password`.
+- Refresh tokens rotate and are stored server-side.
+- Bill confirmation and fund approval create their corresponding transaction
+  in the same database transaction.
+- A state-changing financial operation invalidates all dependent aggregate and
+  list caches after the database commit.
+- Prisma `Decimal` values must be deliberately converted at API/report
+  boundaries where the contract expects numbers.
+- Raw SQL uses mapped PostgreSQL table names such as `"transactions"`.
+- Upload validation trusts magic bytes as the authoritative file-type gate.
+- User-facing messages remain Indonesian where established; internal code and
+  documentation use English.
 
-- All database operations go through repositories
-- All errors extend `AppError` with proper HTTP codes
-- All async controller methods use `asyncHandler`
-- All routes validate input with Joi schemas via middleware
-- All responses follow `{ success: boolean, data?: T, error?: {...} }` format
+## High-risk areas
 
-## Sacred Boundaries
+Audit end to end before changing:
 
-**Never Change Casually:**
+- `prisma/schema.prisma` and migrations
+- `src/middlewares/auth.middleware.ts`
+- `src/services/auth.service.ts`
+- `src/utils/generate-tokens.ts`
+- `src/utils/cookie-options.ts`
+- `src/services/bendahara.service.ts`
+- `src/services/cash-bill.service.ts`
+- `src/services/cache.service.ts`
+- `src/config/redis.config.ts`
+- `src/jobs/bill-generator.job.ts`
+- `src/middlewares/upload.middleware.ts`
+- `openapi.yaml`
 
-- Database schema (requires migration strategy)
-- Authentication flow (JWT cookie handling)
-- User role permissions (`user` vs `bendahara`)
-- API response structure (breaking change for clients)
-- Prisma client configuration (lazy initialization pattern)
-- Password hashing (Bun.password only)
+## Operational rules
 
-**Refactoring Constraints:**
+- Use Winston logger, not `console.log`.
+- Keep Redis credentials out of logs.
+- Cache reads/writes may degrade to misses/no-ops when Redis is unavailable.
+- Distributed lock operations do not degrade: current acquisition returns
+  failure without Redis. Preserve or explicitly redesign that correctness
+  choice.
+- Start serving health checks before noncritical background initialization.
+- Preserve graceful shutdown for HTTP, Redis, and Prisma.
+- Ask before adding a runtime dependency or changing package-manager policy.
 
-- Maintain repository method signatures for backwards compatibility
-- Preserve service class instantiation patterns (singleton exports)
-- Keep error codes consistent for client error handling
-- Don't introduce new runtime dependencies without Docker updates
-- Respect existing index patterns in Prisma schema
+## Completion protocol
 
-## Dependency Rules
-
-**Required Stack:**
-
-- Bun runtime (not Node.js for dev scripts)
-- Prisma ORM with `@prisma/adapter-pg`
-- Express.js v5
-- Joi for validation
-- Winston for logging
-- JWT for authentication
-
-**Forbidden:**
-
-- Direct database queries outside repositories
-- `any` types (warns in ESLint, errors in strict mode)
-- Synchronous file operations in request handlers
-- Console.log (use Winston logger)
-- Process.exit without graceful shutdown
-- `eslint-disable` comments for unused variables (use `_` prefix instead)
-
-## Decision Principles
-
-**Priority Order:**
-
-1. Security (auth, validation, SQL injection prevention)
-2. Data integrity (transactions, constraints, validations)
-3. API contract stability (backwards compatibility)
-4. Performance (caching, indexing, query optimization)
-5. Code clarity (type safety, explicit error handling)
-
-**Tradeoff Resolution:**
-
-- Explicit error handling > concise code
-- Repository verbosity > service layer complexity
-- Validation at boundary (middleware) > service layer checks
-- Fail closed (deny access) > fail open on auth errors
-
-## Communication Style
-
-**Code Changes:**
-
-- Use Indonesian for user-facing messages (error messages, validation)
-- Use English for code comments and internal documentation
-- Include JSDoc for public methods and complex logic
-- Follow existing code style (Prettier config enforced)
-- Use `_prefix` for intentionally unused variables (e.g., `_password`, `_next`)
-
-**Error Messages:**
-
-- Format: `{ success: false, error: { code: "CODE", message: "..." } }`
-- Use error codes for client handling (AUTHENTICATION_ERROR, NOT_FOUND, etc.)
-- Never expose stack traces in production
-- Log full error details server-side only
-
-**Commit Style:**
-
-- Conventional Commits: `type(scope): description`
-- Types: feat, fix, docs, refactor, test, chore
-- Scope examples: auth, transactions, bills, users
-
-## Testing Expectations
-
-- Bun test framework for unit and integration tests
-- Mock external dependencies (Redis, GCP Storage) in tests
-- Integration tests use real PostgreSQL via docker-compose.test.yml
-- Tests must pass before any merge to main
-- Type checking (`tsc --noEmit`) runs in pre-commit hooks
+- Run checks proportional to risk.
+- Re-read the diff for auth, ownership, money, dates, state transitions,
+  transaction boundaries, cache invalidation, and response compatibility.
+- Update `.ai/CONTEXT.md` for changed stable facts/relationships.
+- Update `.ai/DECISIONS.md` for changed architectural rationale or resolved
+  mismatches.
+- Update `.ai/SKILLS.md` when the safe procedure changes.
