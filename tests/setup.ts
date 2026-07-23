@@ -6,7 +6,7 @@ process.env.NODE_ENV = 'test';
 
 const testEnvPath = path.resolve(__dirname, '../.env.test');
 
-if (fs.existsSync(testEnvPath)) {
+if (process.env.CI !== 'true' && fs.existsSync(testEnvPath)) {
   const envFile = fs.readFileSync(testEnvPath, 'utf8');
   for (const line of envFile.split(/\r?\n/)) {
     const trimmedLine = line.trim();
@@ -34,6 +34,9 @@ if (fs.existsSync(testEnvPath)) {
 }
 
 delete process.env.PRISMA_DATABASE_URL;
+
+process.env.JWT_SECRET ||= 'test-only-access-secret-at-least-32-characters';
+process.env.JWT_REFRESH_SECRET ||= 'test-only-refresh-secret-at-least-32-characters';
 
 // Mock console.log to keep test output clean, if desired.
 // console.log = mock(() => {});
