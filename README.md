@@ -130,6 +130,15 @@ bun run test:contract
 The contract test enforces exact HTTP method/path parity between executable
 routes and `openapi.yaml`.
 
+Run every suite in isolated Bun processes with:
+
+```bash
+bun run test
+```
+
+Do not replace this with plain `bun test`: unit-level `mock.module()`
+declarations can otherwise leak into integration files in the same process.
+
 ### Docker-backed integration tests
 
 The recommended fresh integration workflow starts isolated PostgreSQL and Redis
@@ -286,6 +295,7 @@ openapi.yaml         published API contract
 | `bun run test:integration`        | Run integration tests against configured services        |
 | `bun run test:integration:docker` | Start services, migrate, and run integration tests       |
 | `bun run test:contract`           | Check route/OpenAPI parity                               |
+| `bun run test`                    | Run all suites in separate Bun processes                 |
 | `bun run test:up`                 | Start isolated test services                             |
 | `bun run test:down`               | Stop isolated test services                              |
 | `bun run test:migrate`            | Deploy migrations using `.env.test`                      |

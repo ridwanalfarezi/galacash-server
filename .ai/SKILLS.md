@@ -156,6 +156,11 @@ Use `bun run test:unit` for isolated tests, `bun run test:integration` for
 PostgreSQL/Redis-backed behavior, `bun run test:contract` for route parity, and
 `bun run type-check:tests` to compile the test sources.
 
+Use `bun run test` for a complete local/CI run. It launches unit, integration,
+and contract suites in separate Bun processes so process-global
+`mock.module()` declarations cannot leak across suite boundaries. Do not use
+plain `bun test` as the full-repository test command.
+
 For a fresh local integration environment, run
 `bun run test:integration:docker`. It waits for the isolated Compose services,
 applies committed migrations using `.env.test`, and then runs the integration

@@ -2,9 +2,9 @@ name: Galacash Server CI
 
 on:
   push:
-    branches: ["main", "develop", "migrate-to-bun-9072459063361523470"]
+    branches: ['main', 'develop', 'migrate-to-bun-9072459063361523470']
   pull_request:
-    branches: ["main", "develop", "migrate-to-bun-9072459063361523470"]
+    branches: ['main', 'develop', 'migrate-to-bun-9072459063361523470']
 
 jobs:
   build-and-test:
@@ -43,7 +43,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -108,7 +108,7 @@ jobs:
         shell: bash
 
       - name: Run Tests
-        run: bun test
+        run: bun run test
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://galacash:galacash123@localhost:5432/galacash_test_db
