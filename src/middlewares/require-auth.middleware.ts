@@ -1,5 +1,5 @@
-import { AuthenticationError } from '@/utils/errors';
-import { AccessTokenPayload } from '@/utils/generate-tokens';
+import { AuthenticationError } from '../utils/errors/index.js';
+import { AccessTokenPayload } from '../utils/generate-tokens.js';
 import { NextFunction, Request, Response } from 'express';
 
 export interface AuthenticatedRequest extends Request {

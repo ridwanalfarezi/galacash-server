@@ -1,9 +1,9 @@
-import { AccountStatus, AccountType, PaymentAccount } from "@/prisma/generated/client";
+import { AccountStatus, AccountType, PaymentAccount } from '../prisma/generated/client.js';
 import {
   PaymentAccountFilters,
   paymentAccountRepository,
-} from "@/repositories/payment-account.repository";
-import { NotFoundError, ValidationError } from "@/utils/errors";
+} from '../repositories/payment-account.repository.js';
+import { NotFoundError, ValidationError } from '../utils/errors/index.js';
 
 export interface CreatePaymentAccountDto {
   name: string;
@@ -43,7 +43,7 @@ export class PaymentAccountService {
     const account = await paymentAccountRepository.findById(id);
 
     if (!account) {
-      throw new NotFoundError("Payment account not found");
+      throw new NotFoundError('Payment account not found');
     }
 
     return account;
@@ -55,7 +55,7 @@ export class PaymentAccountService {
   async create(data: CreatePaymentAccountDto): Promise<PaymentAccount> {
     // Validate required fields
     if (!data.name || !data.accountType) {
-      throw new ValidationError("Name and account type are required");
+      throw new ValidationError('Name and account type are required');
     }
 
     return await paymentAccountRepository.create({
@@ -64,7 +64,7 @@ export class PaymentAccountService {
       accountNumber: data.accountNumber,
       accountHolder: data.accountHolder,
       description: data.description,
-      status: "active",
+      status: 'active',
     });
   }
 
@@ -100,21 +100,21 @@ export class PaymentAccountService {
    * Activate payment account
    */
   async activate(id: string): Promise<PaymentAccount> {
-    return await this.update(id, { status: "active" });
+    return await this.update(id, { status: 'active' });
   }
 
   /**
    * Deactivate payment account
    */
   async deactivate(id: string): Promise<PaymentAccount> {
-    return await this.update(id, { status: "inactive" });
+    return await this.update(id, { status: 'inactive' });
   }
 
   /**
    * Check how many cash bills are using this payment account
    */
   private async checkUsage(id: string): Promise<number> {
-    const { prisma } = await import("@/utils/prisma-client");
+    const { prisma } = await import('../utils/prisma-client.js');
     return await prisma.cashBill.count({
       where: { paymentAccountId: id },
     });

@@ -1,9 +1,9 @@
-import { isGCPAvailable, uploadToGCS } from '@/config/storage.config';
-import { ValidationError } from '@/utils/errors';
-import { logger } from '@/utils/logger';
+import { isStorageAvailable, uploadToStorage } from '../config/storage.config.js';
+import { ValidationError } from '../utils/errors/index.js';
+import { logger } from '../utils/logger.js';
 import { NextFunction, Request, Response } from 'express';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // Fits Vercel's 4.5MB request limit
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/png',
@@ -90,7 +90,7 @@ const validateFile = (file: Express.Multer.File): void => {
 };
 
 /**
- * Handle file upload to GCP Storage
+ * Handle file upload to Supabase Storage
  * Uploads file and attaches the public URL to req.fileUrl
  */
 export const handleFileUpload = (folder: string) => {
@@ -104,8 +104,8 @@ export const handleFileUpload = (folder: string) => {
       // Validate file before upload
       validateFile(req.file);
 
-      if (!isGCPAvailable) {
-        logger.warn('GCP Storage not available. File upload skipped.');
+      if (!isStorageAvailable) {
+        logger.warn('Supabase Storage not available. File upload skipped.');
 
         // In test mode, allow file uploads to proceed with a mock URL
         if (process.env.NODE_ENV === 'test') {
@@ -117,14 +117,13 @@ export const handleFileUpload = (folder: string) => {
 
         next(
           new ValidationError(
-            'File uploads are currently disabled. Please configure GCP credentials.'
+            'File uploads are currently disabled. Please configure Supabase Storage.'
           )
         );
         return;
       }
 
-      // Upload to GCP
-      const fileUrl = await uploadToGCS(req.file, folder);
+      const fileUrl = await uploadToStorage(req.file, folder);
 
       // Attach URL to request
       req.fileUrl = fileUrl;
@@ -154,8 +153,8 @@ export const handleOptionalFileUpload = (folder: string) => {
       // Validate file before upload
       validateFile(req.file);
 
-      if (!isGCPAvailable) {
-        logger.warn('GCP Storage not available. File upload skipped.');
+      if (!isStorageAvailable) {
+        logger.warn('Supabase Storage not available. File upload skipped.');
 
         if (process.env.NODE_ENV === 'test') {
           req.fileUrl = `mock://test-uploads/${folder}/${req.file.originalname}`;
@@ -167,8 +166,7 @@ export const handleOptionalFileUpload = (folder: string) => {
         return;
       }
 
-      // Upload to GCP
-      const fileUrl = await uploadToGCS(req.file, folder);
+      const fileUrl = await uploadToStorage(req.file, folder);
 
       // Attach URL to request
       req.fileUrl = fileUrl;

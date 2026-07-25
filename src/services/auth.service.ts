@@ -1,16 +1,16 @@
-import { User } from '@/prisma/generated/client';
-import { RefreshTokenRepository } from '@/repositories/refresh-token.repository';
-import { userRepository } from '@/repositories/user.repository';
-import { AuthenticationError, NotFoundError } from '@/utils/errors';
+import { User } from '../prisma/generated/client.js';
+import { RefreshTokenRepository } from '../repositories/refresh-token.repository.js';
+import { userRepository } from '../repositories/user.repository.js';
+import { AuthenticationError, NotFoundError } from '../utils/errors/index.js';
 import {
   deleteRefreshToken,
   generateAccessToken,
   generateRefreshToken,
   storeRefreshToken,
   verifyRefreshToken,
-} from '@/utils/generate-tokens';
-import { prisma } from '@/utils/prisma-client';
-import { CacheService } from './cache.service';
+} from '../utils/generate-tokens.js';
+import { prisma } from '../utils/prisma-client.js';
+import { CacheService } from './cache.service.js';
 
 export interface LoginResponse {
   user: User;

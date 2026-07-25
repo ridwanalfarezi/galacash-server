@@ -1,1 +1,1 @@
-export * from "./express.d";
+export * from './express.d.js';

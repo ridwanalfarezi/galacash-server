@@ -1,5 +1,5 @@
-import { AccountStatus, AccountType, PaymentAccount, Prisma } from "@/prisma/generated/client";
-import { prisma } from "@/utils/prisma-client";
+import { AccountStatus, AccountType, PaymentAccount, Prisma } from '../prisma/generated/client.js';
+import { prisma } from '../utils/prisma-client.js';
 
 export interface PaymentAccountFilters {
   status?: AccountStatus;
@@ -24,15 +24,15 @@ export class PaymentAccountRepository {
 
     if (filters?.search) {
       where.OR = [
-        { name: { contains: filters.search, mode: "insensitive" } },
-        { accountHolder: { contains: filters.search, mode: "insensitive" } },
-        { accountNumber: { contains: filters.search, mode: "insensitive" } },
+        { name: { contains: filters.search, mode: 'insensitive' } },
+        { accountHolder: { contains: filters.search, mode: 'insensitive' } },
+        { accountNumber: { contains: filters.search, mode: 'insensitive' } },
       ];
     }
 
     return await prisma.paymentAccount.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -41,8 +41,8 @@ export class PaymentAccountRepository {
    */
   async findActive(): Promise<PaymentAccount[]> {
     return await prisma.paymentAccount.findMany({
-      where: { status: "active" },
-      orderBy: { name: "asc" },
+      where: { status: 'active' },
+      orderBy: { name: 'asc' },
     });
   }
 
@@ -99,9 +99,9 @@ export class PaymentAccountRepository {
 
     if (filters?.search) {
       where.OR = [
-        { name: { contains: filters.search, mode: "insensitive" } },
-        { accountHolder: { contains: filters.search, mode: "insensitive" } },
-        { accountNumber: { contains: filters.search, mode: "insensitive" } },
+        { name: { contains: filters.search, mode: 'insensitive' } },
+        { accountHolder: { contains: filters.search, mode: 'insensitive' } },
+        { accountNumber: { contains: filters.search, mode: 'insensitive' } },
       ];
     }
 

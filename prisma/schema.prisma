@@ -3,9 +3,13 @@
 // Note: datasource URL is configured in prisma.config.ts (Prisma v7 best practice)
 
 generator client {
-  provider      = "prisma-client"
-  output        = "../src/prisma/generated"
-  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+  provider               = "prisma-client"
+  output                 = "../src/prisma/generated"
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+  binaryTargets          = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {

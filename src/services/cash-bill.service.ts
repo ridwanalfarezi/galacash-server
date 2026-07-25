@@ -1,13 +1,13 @@
-import { acquireLock, releaseLock } from '@/config/redis.config';
-import { CashBill, PaymentMethod } from '@/prisma/generated/client';
+import { acquireLock, releaseLock } from '../config/redis.config.js';
+import { CashBill, PaymentMethod } from '../prisma/generated/client.js';
 import {
   CashBillFilters,
   cashBillRepository,
   PaginatedResponse,
-} from '@/repositories/cash-bill.repository';
-import { AuthorizationError, BusinessLogicError, NotFoundError } from '@/utils/errors';
-import { logger } from '@/utils/logger';
-import { CacheService } from './cache.service';
+} from '../repositories/cash-bill.repository.js';
+import { AuthorizationError, BusinessLogicError, NotFoundError } from '../utils/errors/index.js';
+import { logger } from '../utils/logger.js';
+import { CacheService } from './cache.service.js';
 
 export interface PayBillData {
   paymentMethod: 'bank' | 'ewallet' | 'cash';
@@ -161,7 +161,7 @@ export class CashBillService {
 
       // Validate payment account if provided
       if (paymentAccountId) {
-        const { paymentAccountService } = await import('./payment-account.service');
+        const { paymentAccountService } = await import('./payment-account.service.js');
         const account = await paymentAccountService.getById(paymentAccountId);
 
         if (account.status !== 'active') {
@@ -331,8 +331,8 @@ export class CashBillService {
 
       // Atomic batch update
       const updatedBills = await this.cashBillRepository.updateManyBatchPay(billIds, {
-        status: 'menunggu_konfirmasi' as import('@/prisma/generated/client').BillStatus,
-        paymentMethod: paymentMethod as import('@/prisma/generated/client').PaymentMethod,
+        status: 'menunggu_konfirmasi' as import('../prisma/generated/client.js').BillStatus,
+        paymentMethod: paymentMethod as import('../prisma/generated/client.js').PaymentMethod,
         paymentProofUrl: paymentMethod === 'cash' ? null : paymentProofUrl,
         paidAt: new Date(),
       });

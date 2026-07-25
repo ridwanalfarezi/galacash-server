@@ -1,8 +1,13 @@
-import { uploadPaymentProof } from '@/config/multer.config';
-import { cashBillController } from '@/controllers';
-import { authenticate, uploadRateLimit, validateBody, validateQuery } from '@/middlewares';
-import { handleFileUpload, handleOptionalFileUpload } from '@/middlewares/upload.middleware';
-import { cashBillFilterSchema } from '@/validators/schemas';
+import { uploadPaymentProof } from '../config/multer.config.js';
+import { cashBillController } from '../controllers/index.js';
+import {
+  authenticate,
+  uploadRateLimit,
+  validateBody,
+  validateQuery,
+} from '../middlewares/index.js';
+import { handleFileUpload, handleOptionalFileUpload } from '../middlewares/upload.middleware.js';
+import { cashBillFilterSchema } from '../validators/schemas.js';
 import { Router } from 'express';
 import Joi from 'joi';
 

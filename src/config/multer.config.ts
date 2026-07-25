@@ -1,11 +1,12 @@
-import multer from "multer";
-import { ValidationError } from "../utils/errors";
+import multer from 'multer';
+import { ValidationError } from '../utils/errors/index.js';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
+// Vercel Functions cap request payloads at 4.5 MB, including multipart overhead.
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
+const MAX_AVATAR_SIZE = 4 * 1024 * 1024; // 4MB
 
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const ALLOWED_DOCUMENT_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 
 /**
  * File filter for avatar uploads
@@ -18,7 +19,7 @@ const avatarFileFilter = (
   if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new ValidationError("Only JPEG, PNG, and WebP images are allowed for avatars"));
+    cb(new ValidationError('Only JPEG, PNG, and WebP images are allowed for avatars'));
   }
 };
 
@@ -33,7 +34,7 @@ const paymentProofFileFilter = (
   if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new ValidationError("Only JPEG, PNG, and WebP images are allowed for payment proofs"));
+    cb(new ValidationError('Only JPEG, PNG, and WebP images are allowed for payment proofs'));
   }
 };
 
@@ -48,7 +49,7 @@ const attachmentFileFilter = (
   if (ALLOWED_DOCUMENT_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new ValidationError("Only PDF, JPEG, PNG, and WebP files are allowed for attachments"));
+    cb(new ValidationError('Only PDF, JPEG, PNG, and WebP files are allowed for attachments'));
   }
 };
 

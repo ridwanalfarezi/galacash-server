@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { logger } from '../logger';
-import { AppError } from './app-error';
+import { logger } from '../logger.js';
+import { AppError } from './app-error.js';
 
 /**
  * Error response interface
@@ -24,7 +24,7 @@ export const globalErrorHandler = (
   error: Error | AppError,
   req: Request,
   res: Response,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   _next: NextFunction
 ): void => {
   // Log error

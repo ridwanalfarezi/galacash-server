@@ -1,4 +1,4 @@
-import { CashBill, FundApplication, Transaction } from "@/prisma/generated/client";
+import { CashBill, FundApplication, Transaction } from '../prisma/generated/client.js';
 import {
   getBillStatusLabel,
   getFundCategoryLabel,
@@ -7,12 +7,12 @@ import {
   getTransactionCategoryLabel,
   getTransactionTypeLabel,
   StatusLabel,
-} from "./status-labels";
+} from './status-labels.js';
 
 /**
  * Add status label to cash bill object
  */
-export const addBillStatusLabel = <T extends Pick<CashBill, "status" | "paymentMethod">>(
+export const addBillStatusLabel = <T extends Pick<CashBill, 'status' | 'paymentMethod'>>(
   bill: T
 ): T & { statusLabel: StatusLabel; paymentMethodLabel?: StatusLabel } => {
   return {
@@ -25,7 +25,7 @@ export const addBillStatusLabel = <T extends Pick<CashBill, "status" | "paymentM
 /**
  * Add status label to fund application object
  */
-export const addFundStatusLabel = <T extends Pick<FundApplication, "status" | "category">>(
+export const addFundStatusLabel = <T extends Pick<FundApplication, 'status' | 'category'>>(
   fund: T
 ): T & { statusLabel: StatusLabel; categoryLabel: StatusLabel } => {
   return {
@@ -39,7 +39,7 @@ export const addFundStatusLabel = <T extends Pick<FundApplication, "status" | "c
  * Add labels to transaction object
  */
 export const addTransactionLabels = <
-  T extends Pick<Transaction, "type"> & { category?: string | null },
+  T extends Pick<Transaction, 'type'> & { category?: string | null },
 >(
   transaction: T
 ): T & { typeLabel: StatusLabel; categoryLabel?: StatusLabel } => {
@@ -55,7 +55,7 @@ export const addTransactionLabels = <
 /**
  * Add status labels to array of cash bills
  */
-export const addBillStatusLabels = <T extends Pick<CashBill, "status" | "paymentMethod">>(
+export const addBillStatusLabels = <T extends Pick<CashBill, 'status' | 'paymentMethod'>>(
   bills: T[]
 ): (T & { statusLabel: StatusLabel; paymentMethodLabel?: StatusLabel })[] => {
   return bills.map(addBillStatusLabel);
@@ -64,7 +64,7 @@ export const addBillStatusLabels = <T extends Pick<CashBill, "status" | "payment
 /**
  * Add status labels to array of fund applications
  */
-export const addFundStatusLabels = <T extends Pick<FundApplication, "status" | "category">>(
+export const addFundStatusLabels = <T extends Pick<FundApplication, 'status' | 'category'>>(
   funds: T[]
 ): (T & { statusLabel: StatusLabel; categoryLabel: StatusLabel })[] => {
   return funds.map(addFundStatusLabel);
@@ -74,7 +74,7 @@ export const addFundStatusLabels = <T extends Pick<FundApplication, "status" | "
  * Add labels to array of transactions
  */
 export const addTransactionLabelsToArray = <
-  T extends Pick<Transaction, "type"> & { category?: string | null },
+  T extends Pick<Transaction, 'type'> & { category?: string | null },
 >(
   transactions: T[]
 ): (T & { typeLabel: StatusLabel; categoryLabel?: StatusLabel })[] => {

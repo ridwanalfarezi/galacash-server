@@ -9,13 +9,13 @@ dashboards, recaps, exports, uploads, and scheduled bill generation.
 
 - Bun 1.2.14 and TypeScript
 - Express 5
-- PostgreSQL 16
+- Supabase PostgreSQL
 - Prisma 7 with the generated client in `src/prisma/generated`
 - Redis through ioredis for caches, token state, rate limiting, and
   correctness locks
 - Joi request validation
 - httpOnly-cookie JWT authentication with stored rotating refresh tokens
-- Google Cloud Storage for persisted uploads
+- Supabase Storage for persisted uploads
 - Winston logging, Helmet, and Express rate limiting
 - Swagger UI backed by `openapi.yaml`
 - Bun's test runner and Supertest
@@ -89,8 +89,8 @@ CORS_ORIGIN=http://localhost:5173,http://localhost:3000
 USE_LOCAL_CRON=true
 ```
 
-Do not commit real credentials. GCP storage variables can be added when upload
-persistence is required.
+Do not commit real credentials. Supabase Storage variables are required when
+testing persisted uploads locally.
 
 ### Start infrastructure and apply migrations
 
@@ -210,12 +210,13 @@ the production Redis client to it.
 ## Uploads
 
 The shared upload middleware accepts JPEG, PNG, WebP, and PDF files up to
-10 MB. Extension and declared MIME checks reject obvious mismatches, but
+4 MB, leaving room below Vercel's 4.5 MB request limit. Extension and declared
+MIME checks reject obvious mismatches, but
 magic-byte validation is the authoritative content-type gate.
 
 Required uploads fail outside tests when storage is unavailable. In tests, the
 middleware can provide deterministic `mock://test-uploads/...` URLs without
-requiring GCP.
+requiring Supabase.
 
 ## Monthly bill generation
 
@@ -225,9 +226,9 @@ requiring GCP.
 - Processing batch size: 100 users
 - Duplicate protection: month-scoped Redis lock plus database uniqueness
 
-Local cron runs only when `USE_LOCAL_CRON=true`. Production deployments should
-invoke `POST /api/cron/generate-bills` from an authenticated scheduler using
-`CRON_SECRET_KEY`.
+Local cron runs only when `USE_LOCAL_CRON=true`. Vercel Cron invokes
+`GET /api/cron/generate-bills` and authenticates with `CRON_SECRET`. An
+authenticated `POST` remains available for manual runs.
 
 ## API contract
 
@@ -302,16 +303,26 @@ openapi.yaml         published API contract
 
 ## Deployment
 
-Production artifacts can be built with:
+The production API is configured for Vercel's Bun runtime in `vercel.json`.
+Create a separate Vercel project rooted at this repository and configure the
+variables from `.env.example`.
+
+Use the Supabase transaction-pooler URL (port `6543`) for `DATABASE_URL` and
+the direct or session-pooler URL (port `5432`) for `DIRECT_URL`. Apply
+migrations before the first deployment:
 
 ```bash
 bun run build
-docker build -t galacash-server .
+bun run prisma:deploy
 ```
 
-`cloudbuild.yaml`, `Dockerfile`, and `Dockerfile.binary` contain the current
-Google Cloud and container build definitions. Supply production configuration
-through the deployment platform's secret manager, not through committed files.
+Create a public Supabase Storage bucket matching `SUPABASE_STORAGE_BUCKET`
+(the template uses `galacash`). Keep `SUPABASE_SECRET_KEY`, database URLs,
+Redis credentials, and JWT secrets in Vercel's server-side environment
+settings. Never prefix backend secrets with `VITE_`.
+
+`Dockerfile` and `Dockerfile.binary` remain available for local or
+container-based deployments.
 
 ## Contributing
 

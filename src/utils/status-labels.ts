@@ -1,4 +1,4 @@
-import { BillStatus, FundStatus } from "@/prisma/generated/client";
+import { BillStatus, FundStatus } from '../prisma/generated/client.js';
 
 /**
  * Status label configuration
@@ -8,7 +8,7 @@ export interface StatusLabel {
   label: string;
   labelId: string; // Indonesian
   color: string;
-  badgeVariant: "default" | "secondary" | "success" | "warning" | "danger" | "info";
+  badgeVariant: 'default' | 'secondary' | 'success' | 'warning' | 'danger' | 'info';
 }
 
 /**
@@ -16,25 +16,25 @@ export interface StatusLabel {
  */
 export const BILL_STATUS_LABELS: Record<BillStatus, StatusLabel> = {
   belum_dibayar: {
-    value: "belum_dibayar",
-    label: "Unpaid",
-    labelId: "Belum Dibayar",
-    color: "#EF4444", // red
-    badgeVariant: "danger",
+    value: 'belum_dibayar',
+    label: 'Unpaid',
+    labelId: 'Belum Dibayar',
+    color: '#EF4444', // red
+    badgeVariant: 'danger',
   },
   menunggu_konfirmasi: {
-    value: "menunggu_konfirmasi",
-    label: "Pending Confirmation",
-    labelId: "Menunggu Konfirmasi",
-    color: "#F59E0B", // amber
-    badgeVariant: "warning",
+    value: 'menunggu_konfirmasi',
+    label: 'Pending Confirmation',
+    labelId: 'Menunggu Konfirmasi',
+    color: '#F59E0B', // amber
+    badgeVariant: 'warning',
   },
   sudah_dibayar: {
-    value: "sudah_dibayar",
-    label: "Paid",
-    labelId: "Sudah Dibayar",
-    color: "#10B981", // green
-    badgeVariant: "success",
+    value: 'sudah_dibayar',
+    label: 'Paid',
+    labelId: 'Sudah Dibayar',
+    color: '#10B981', // green
+    badgeVariant: 'success',
   },
 };
 
@@ -43,25 +43,25 @@ export const BILL_STATUS_LABELS: Record<BillStatus, StatusLabel> = {
  */
 export const FUND_STATUS_LABELS: Record<FundStatus, StatusLabel> = {
   pending: {
-    value: "pending",
-    label: "Pending Review",
-    labelId: "Menunggu Review",
-    color: "#F59E0B", // amber
-    badgeVariant: "warning",
+    value: 'pending',
+    label: 'Pending Review',
+    labelId: 'Menunggu Review',
+    color: '#F59E0B', // amber
+    badgeVariant: 'warning',
   },
   approved: {
-    value: "approved",
-    label: "Approved",
-    labelId: "Disetujui",
-    color: "#10B981", // green
-    badgeVariant: "success",
+    value: 'approved',
+    label: 'Approved',
+    labelId: 'Disetujui',
+    color: '#10B981', // green
+    badgeVariant: 'success',
   },
   rejected: {
-    value: "rejected",
-    label: "Rejected",
-    labelId: "Ditolak",
-    color: "#EF4444", // red
-    badgeVariant: "danger",
+    value: 'rejected',
+    label: 'Rejected',
+    labelId: 'Ditolak',
+    color: '#EF4444', // red
+    badgeVariant: 'danger',
   },
 };
 
@@ -70,18 +70,18 @@ export const FUND_STATUS_LABELS: Record<FundStatus, StatusLabel> = {
  */
 export const TRANSACTION_TYPE_LABELS = {
   income: {
-    value: "income",
-    label: "Income",
-    labelId: "Pemasukan",
-    color: "#10B981", // green
-    badgeVariant: "success" as const,
+    value: 'income',
+    label: 'Income',
+    labelId: 'Pemasukan',
+    color: '#10B981', // green
+    badgeVariant: 'success' as const,
   },
   expense: {
-    value: "expense",
-    label: "Expense",
-    labelId: "Pengeluaran",
-    color: "#EF4444", // red
-    badgeVariant: "danger" as const,
+    value: 'expense',
+    label: 'Expense',
+    labelId: 'Pengeluaran',
+    color: '#EF4444', // red
+    badgeVariant: 'danger' as const,
   },
 };
 
@@ -91,61 +91,61 @@ export const TRANSACTION_TYPE_LABELS = {
 export const TRANSACTION_CATEGORY_LABELS = {
   // Income categories
   kas_kelas: {
-    value: "kas_kelas",
-    label: "Class Cash",
-    labelId: "Kas Kelas",
-    color: "#3B82F6", // blue
-    badgeVariant: "info" as const,
+    value: 'kas_kelas',
+    label: 'Class Cash',
+    labelId: 'Kas Kelas',
+    color: '#3B82F6', // blue
+    badgeVariant: 'info' as const,
   },
   donation: {
-    value: "donation",
-    label: "Donation",
-    labelId: "Donasi",
-    color: "#8B5CF6", // purple
-    badgeVariant: "secondary" as const,
+    value: 'donation',
+    label: 'Donation',
+    labelId: 'Donasi',
+    color: '#8B5CF6', // purple
+    badgeVariant: 'secondary' as const,
   },
   fundraising: {
-    value: "fundraising",
-    label: "Fundraising",
-    labelId: "Penggalangan Dana",
-    color: "#06B6D4", // cyan
-    badgeVariant: "info" as const,
+    value: 'fundraising',
+    label: 'Fundraising',
+    labelId: 'Penggalangan Dana',
+    color: '#06B6D4', // cyan
+    badgeVariant: 'info' as const,
   },
   // Expense categories
   office_supplies: {
-    value: "office_supplies",
-    label: "Office Supplies",
-    labelId: "Perlengkapan Kantor",
-    color: "#F59E0B", // amber
-    badgeVariant: "warning" as const,
+    value: 'office_supplies',
+    label: 'Office Supplies',
+    labelId: 'Perlengkapan Kantor',
+    color: '#F59E0B', // amber
+    badgeVariant: 'warning' as const,
   },
   consumption: {
-    value: "consumption",
-    label: "Consumption",
-    labelId: "Konsumsi",
-    color: "#EC4899", // pink
-    badgeVariant: "secondary" as const,
+    value: 'consumption',
+    label: 'Consumption',
+    labelId: 'Konsumsi',
+    color: '#EC4899', // pink
+    badgeVariant: 'secondary' as const,
   },
   event: {
-    value: "event",
-    label: "Event",
-    labelId: "Acara",
-    color: "#8B5CF6", // purple
-    badgeVariant: "secondary" as const,
+    value: 'event',
+    label: 'Event',
+    labelId: 'Acara',
+    color: '#8B5CF6', // purple
+    badgeVariant: 'secondary' as const,
   },
   maintenance: {
-    value: "maintenance",
-    label: "Maintenance",
-    labelId: "Pemeliharaan",
-    color: "#6366F1", // indigo
-    badgeVariant: "info" as const,
+    value: 'maintenance',
+    label: 'Maintenance',
+    labelId: 'Pemeliharaan',
+    color: '#6366F1', // indigo
+    badgeVariant: 'info' as const,
   },
   other: {
-    value: "other",
-    label: "Other",
-    labelId: "Lainnya",
-    color: "#6B7280", // gray
-    badgeVariant: "default" as const,
+    value: 'other',
+    label: 'Other',
+    labelId: 'Lainnya',
+    color: '#6B7280', // gray
+    badgeVariant: 'default' as const,
   },
 };
 
@@ -154,25 +154,25 @@ export const TRANSACTION_CATEGORY_LABELS = {
  */
 export const PAYMENT_METHOD_LABELS = {
   bank: {
-    value: "bank",
-    label: "Bank Transfer",
-    labelId: "Transfer Bank",
-    color: "#3B82F6", // blue
-    badgeVariant: "info" as const,
+    value: 'bank',
+    label: 'Bank Transfer',
+    labelId: 'Transfer Bank',
+    color: '#3B82F6', // blue
+    badgeVariant: 'info' as const,
   },
   ewallet: {
-    value: "ewallet",
-    label: "E-Wallet",
-    labelId: "E-Wallet",
-    color: "#8B5CF6", // purple
-    badgeVariant: "secondary" as const,
+    value: 'ewallet',
+    label: 'E-Wallet',
+    labelId: 'E-Wallet',
+    color: '#8B5CF6', // purple
+    badgeVariant: 'secondary' as const,
   },
   cash: {
-    value: "cash",
-    label: "Cash",
-    labelId: "Tunai",
-    color: "#10B981", // green
-    badgeVariant: "success" as const,
+    value: 'cash',
+    label: 'Cash',
+    labelId: 'Tunai',
+    color: '#10B981', // green
+    badgeVariant: 'success' as const,
   },
 };
 
@@ -181,32 +181,32 @@ export const PAYMENT_METHOD_LABELS = {
  */
 export const FUND_CATEGORY_LABELS = {
   education: {
-    value: "education",
-    label: "Education",
-    labelId: "Pendidikan",
-    color: "#3B82F6", // blue
-    badgeVariant: "info" as const,
+    value: 'education',
+    label: 'Education',
+    labelId: 'Pendidikan',
+    color: '#3B82F6', // blue
+    badgeVariant: 'info' as const,
   },
   health: {
-    value: "health",
-    label: "Health",
-    labelId: "Kesehatan",
-    color: "#EF4444", // red
-    badgeVariant: "danger" as const,
+    value: 'health',
+    label: 'Health',
+    labelId: 'Kesehatan',
+    color: '#EF4444', // red
+    badgeVariant: 'danger' as const,
   },
   emergency: {
-    value: "emergency",
-    label: "Emergency",
-    labelId: "Darurat",
-    color: "#F59E0B", // amber
-    badgeVariant: "warning" as const,
+    value: 'emergency',
+    label: 'Emergency',
+    labelId: 'Darurat',
+    color: '#F59E0B', // amber
+    badgeVariant: 'warning' as const,
   },
   equipment: {
-    value: "equipment",
-    label: "Equipment",
-    labelId: "Perlengkapan",
-    color: "#8B5CF6", // purple
-    badgeVariant: "secondary" as const,
+    value: 'equipment',
+    label: 'Equipment',
+    labelId: 'Perlengkapan',
+    color: '#8B5CF6', // purple
+    badgeVariant: 'secondary' as const,
   },
 };
 
@@ -215,18 +215,18 @@ export const FUND_CATEGORY_LABELS = {
  */
 export const ACCOUNT_TYPE_LABELS = {
   bank: {
-    value: "bank",
-    label: "Bank Account",
-    labelId: "Rekening Bank",
-    color: "#3B82F6", // blue
-    badgeVariant: "info" as const,
+    value: 'bank',
+    label: 'Bank Account',
+    labelId: 'Rekening Bank',
+    color: '#3B82F6', // blue
+    badgeVariant: 'info' as const,
   },
   ewallet: {
-    value: "ewallet",
-    label: "E-Wallet",
-    labelId: "E-Wallet",
-    color: "#8B5CF6", // purple
-    badgeVariant: "secondary" as const,
+    value: 'ewallet',
+    label: 'E-Wallet',
+    labelId: 'E-Wallet',
+    color: '#8B5CF6', // purple
+    badgeVariant: 'secondary' as const,
   },
 };
 
@@ -235,18 +235,18 @@ export const ACCOUNT_TYPE_LABELS = {
  */
 export const ACCOUNT_STATUS_LABELS = {
   active: {
-    value: "active",
-    label: "Active",
-    labelId: "Aktif",
-    color: "#10B981", // green
-    badgeVariant: "success" as const,
+    value: 'active',
+    label: 'Active',
+    labelId: 'Aktif',
+    color: '#10B981', // green
+    badgeVariant: 'success' as const,
   },
   inactive: {
-    value: "inactive",
-    label: "Inactive",
-    labelId: "Nonaktif",
-    color: "#6B7280", // gray
-    badgeVariant: "default" as const,
+    value: 'inactive',
+    label: 'Inactive',
+    labelId: 'Nonaktif',
+    color: '#6B7280', // gray
+    badgeVariant: 'default' as const,
   },
 };
 
@@ -262,7 +262,7 @@ export const getFundStatusLabel = (status: FundStatus): StatusLabel => {
   return FUND_STATUS_LABELS[status];
 };
 
-export const getTransactionTypeLabel = (type: "income" | "expense") => {
+export const getTransactionTypeLabel = (type: 'income' | 'expense') => {
   return TRANSACTION_TYPE_LABELS[type];
 };
 

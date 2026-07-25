@@ -1,5 +1,5 @@
-import { labelsController } from "@/controllers/labels.controller";
-import { Router } from "express";
+import { labelsController } from '../controllers/labels.controller.js';
+import { Router } from 'express';
 
 const router: Router = Router();
 
@@ -12,42 +12,42 @@ const router: Router = Router();
  * GET /
  * Get all status labels
  */
-router.get("/", labelsController.getAll);
+router.get('/', labelsController.getAll);
 
 /**
  * GET /bill-statuses
  * Get cash bill status labels
  */
-router.get("/bill-statuses", labelsController.getBillStatuses);
+router.get('/bill-statuses', labelsController.getBillStatuses);
 
 /**
  * GET /fund-statuses
  * Get fund application status labels
  */
-router.get("/fund-statuses", labelsController.getFundStatuses);
+router.get('/fund-statuses', labelsController.getFundStatuses);
 
 /**
  * GET /fund-categories
  * Get fund category labels
  */
-router.get("/fund-categories", labelsController.getFundCategories);
+router.get('/fund-categories', labelsController.getFundCategories);
 
 /**
  * GET /transaction-types
  * Get transaction type labels
  */
-router.get("/transaction-types", labelsController.getTransactionTypes);
+router.get('/transaction-types', labelsController.getTransactionTypes);
 
 /**
  * GET /transaction-categories
  * Get transaction category labels
  */
-router.get("/transaction-categories", labelsController.getTransactionCategories);
+router.get('/transaction-categories', labelsController.getTransactionCategories);
 
 /**
  * GET /payment-methods
  * Get payment method labels
  */
-router.get("/payment-methods", labelsController.getPaymentMethods);
+router.get('/payment-methods', labelsController.getPaymentMethods);
 
 export default router;

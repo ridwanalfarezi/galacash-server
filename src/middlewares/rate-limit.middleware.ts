@@ -1,7 +1,7 @@
-import { redisClient } from "@/config/redis.config";
-import { Request, Response } from "express";
-import { rateLimit } from "express-rate-limit";
-import RedisStore from "rate-limit-redis";
+import { connectRedis, redisClient } from '../config/redis.config.js';
+import { Request, Response } from 'express';
+import { rateLimit } from 'express-rate-limit';
+import RedisStore, { type RedisReply } from 'rate-limit-redis';
 
 /**
  * Helper to create Redis-backed rate limiter
@@ -14,6 +14,21 @@ const createLimiter = (options: {
   prefix: string;
 }) => {
   const { windowMs, max, message, skipSuccessfulRequests = false, prefix } = options;
+  const store = process.env.REDIS_URL
+    ? new RedisStore({
+        // RedisStore loads its Lua scripts during construction, before the
+        // request middleware has had a chance to establish the connection.
+        sendCommand: async (...args: string[]) => {
+          await connectRedis();
+          if (!redisClient || redisClient.status !== 'ready') {
+            throw new Error('Redis is unavailable');
+          }
+          // @ts-expect-error - ioredis call has command-specific tuple overloads
+          return (await redisClient.call(...args)) as RedisReply;
+        },
+        prefix: `rl:${prefix}:`,
+      })
+    : undefined;
 
   return rateLimit({
     windowMs,
@@ -21,26 +36,20 @@ const createLimiter = (options: {
     message: {
       success: false,
       error: {
-        code: "RATE_LIMIT_EXCEEDED",
-        message: message || "Too many requests, please try again later.",
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: message || 'Too many requests, please try again later.',
       },
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     skipSuccessfulRequests,
-    store: new RedisStore({
-      // @ts-expect-error - Known type mismatch with ioredis and rate-limit-redis
-      sendCommand: (...args: string[]) => redisClient!.call(...args),
-      prefix: `rl:${prefix}:`,
-    }),
-    // Fallback to memory store if Redis is not connected
-    skip: () => !redisClient || redisClient.status !== "ready",
+    store,
     handler: (_req: Request, res: Response) => {
       res.status(429).json({
         success: false,
         error: {
-          code: "RATE_LIMIT_EXCEEDED",
-          message: message || "Too many requests, please try again later.",
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: message || 'Too many requests, please try again later.',
         },
       });
     },
@@ -54,9 +63,9 @@ const createLimiter = (options: {
 export const authRateLimit = createLimiter({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: "Terlalu banyak percobaan login. Silakan coba lagi dalam 15 menit.",
+  message: 'Terlalu banyak percobaan login. Silakan coba lagi dalam 15 menit.',
   skipSuccessfulRequests: true,
-  prefix: "auth",
+  prefix: 'auth',
 });
 
 /**
@@ -66,8 +75,8 @@ export const authRateLimit = createLimiter({
 export const generalRateLimit = createLimiter({
   windowMs: 60 * 1000,
   max: 1000,
-  message: "Terlalu banyak permintaan. Silakan tunggu sebentar.",
-  prefix: "general",
+  message: 'Terlalu banyak permintaan. Silakan tunggu sebentar.',
+  prefix: 'general',
 });
 
 /**
@@ -77,8 +86,8 @@ export const generalRateLimit = createLimiter({
 export const uploadRateLimit = createLimiter({
   windowMs: 15 * 60 * 1000,
   max: 50,
-  message: "Terlalu banyak percobaan upload. Silakan coba lagi nanti.",
-  prefix: "upload",
+  message: 'Terlalu banyak percobaan upload. Silakan coba lagi nanti.',
+  prefix: 'upload',
 });
 
 /**
@@ -88,6 +97,6 @@ export const uploadRateLimit = createLimiter({
 export const strictRateLimit = createLimiter({
   windowMs: 15 * 60 * 1000,
   max: 30,
-  message: "Terlalu banyak percobaan untuk operasi ini. Silakan coba lagi nanti.",
-  prefix: "strict",
+  message: 'Terlalu banyak percobaan untuk operasi ini. Silakan coba lagi nanti.',
+  prefix: 'strict',
 });

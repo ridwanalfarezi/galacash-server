@@ -4,8 +4,8 @@ import {
   safeRedisGet,
   safeRedisIncr,
   safeRedisSet,
-} from '@/config/redis.config';
-import { logger } from '@/utils/logger';
+} from '../config/redis.config.js';
+import { logger } from '../utils/logger.js';
 
 const DEFAULT_TTL = 3600; // 1 hour
 

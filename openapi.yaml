@@ -1063,14 +1063,31 @@ paths:
 
   # ========== SCHEDULED JOBS ==========
   /cron/generate-bills:
-    post:
+    get:
       tags: [Cash Bills]
-      summary: Generate monthly cash bills
+      summary: Generate monthly cash bills from Vercel Cron
       description: Protected scheduler endpoint for idempotent monthly bill generation
       parameters:
-        - name: x-cron-secret
+        - name: Authorization
           in: header
           required: true
+          description: Bearer token matching the CRON_SECRET environment variable
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bill generation completed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Cash Bills]
+      summary: Generate monthly cash bills manually
+      description: Protected manual endpoint for idempotent monthly bill generation
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token matching the CRON_SECRET environment variable
           schema:
             type: string
       responses:

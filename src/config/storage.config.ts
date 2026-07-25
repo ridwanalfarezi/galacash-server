@@ -1,116 +1,106 @@
-import { Storage } from "@google-cloud/storage";
-import { logger } from "../utils/logger";
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '../utils/logger.js';
 
-const BUCKET_NAME = process.env.GCP_BUCKET_NAME || "galacash-bucket";
-const PROJECT_ID = process.env.GCP_PROJECT_ID;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SECRET_KEY =
+  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || 'galacash';
 
-let storage: Storage | null = null;
-let isGCPAvailable = false;
+export const isStorageAvailable = Boolean(SUPABASE_URL && SUPABASE_SECRET_KEY);
 
-/**
- * Initialize GCP Storage with graceful error handling
- */
-try {
-  if (!PROJECT_ID) {
-    logger.warn(
-      "⚠️  GCP_PROJECT_ID not set. File uploads will be disabled. Set GCP credentials in .env to enable."
-    );
-  } else {
-    storage = new Storage({
-      projectId: PROJECT_ID,
-      // Automatically uses GOOGLE_APPLICATION_CREDENTIALS env var
-    });
+let supabaseAdmin: SupabaseClient | null = null;
 
-    isGCPAvailable = true;
-    logger.info("✅ GCP Storage initialized successfully");
-  }
-} catch (error) {
-  logger.warn("⚠️  GCP Storage not available. File uploads will be disabled:", error);
-  isGCPAvailable = false;
-}
-
-/**
- * Get GCP Storage bucket
- */
-export function getBucket() {
-  if (!storage || !isGCPAvailable) {
+function getSupabaseAdmin(): SupabaseClient {
+  if (!isStorageAvailable || !SUPABASE_URL || !SUPABASE_SECRET_KEY) {
     throw new Error(
-      "GCP Storage is not configured. Please set GCP_PROJECT_ID, GCP_BUCKET_NAME, and GOOGLE_APPLICATION_CREDENTIALS."
-    );
-  }
-  return storage.bucket(BUCKET_NAME);
-}
-
-/**
- * Upload file to GCP Storage
- * @param file - Multer file object
- * @param folder - Folder path in bucket (e.g., 'avatars', 'payments', 'attachments')
- * @returns Public URL of uploaded file
- */
-export async function uploadToGCS(file: Express.Multer.File, folder: string): Promise<string> {
-  if (!isGCPAvailable) {
-    throw new Error(
-      "GCP Storage is not configured. Please set GCP credentials to enable file uploads."
+      'Supabase Storage is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY.'
     );
   }
 
-  const bucket = getBucket();
-  const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`;
-  const blob = bucket.file(fileName);
-
-  const blobStream = blob.createWriteStream({
-    resumable: false,
-    metadata: {
-      contentType: file.mimetype,
-    },
-  });
-
-  return new Promise((resolve, reject) => {
-    blobStream.on("error", (error) => {
-      logger.error("GCP upload error:", error);
-      reject(new Error("File upload failed"));
+  if (!supabaseAdmin) {
+    supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
     });
+  }
 
-    blobStream.on("finish", async () => {
-      // Make file publicly accessible
-      //await blob.makePublic();
-
-      // Generate public URL
-      const publicUrl = `https://storage.googleapis.com/${BUCKET_NAME}/${fileName}`;
-
-      logger.info(`File uploaded successfully: ${publicUrl}`);
-      resolve(publicUrl);
-    });
-
-    blobStream.end(file.buffer);
-  });
+  return supabaseAdmin;
 }
 
-/**
- * Delete file from GCP Storage
- * @param fileUrl - Public URL of the file to delete
- */
-export async function deleteFromGCS(fileUrl: string): Promise<void> {
-  if (!isGCPAvailable) {
-    logger.warn("GCP Storage not available, skipping file deletion");
-    return;
+function sanitizeFileName(originalName: string): string {
+  const baseName = originalName.split(/[\\/]/).pop() || 'upload';
+  const sanitized = baseName.replace(/[^a-zA-Z0-9._-]/g, '-').replace(/-+/g, '-');
+  return sanitized.slice(0, 180) || 'upload';
+}
+
+function getObjectPathFromPublicUrl(fileUrl: string): string | null {
+  if (!SUPABASE_URL) {
+    return null;
   }
 
   try {
-    // Extract file name from URL
-    const fileName = fileUrl.split(`${BUCKET_NAME}/`)[1];
-    if (!fileName) {
-      throw new Error("Invalid file URL");
+    const file = new URL(fileUrl);
+    const project = new URL(SUPABASE_URL);
+    const marker = `/storage/v1/object/public/${encodeURIComponent(STORAGE_BUCKET)}/`;
+
+    if (file.origin !== project.origin || !file.pathname.startsWith(marker)) {
+      return null;
     }
 
-    const bucket = getBucket();
-    await bucket.file(fileName).delete();
-
-    logger.info(`File deleted successfully: ${fileName}`);
-  } catch (error) {
-    logger.error("GCP delete error:", error);
-    throw new Error("File deletion failed");
+    return decodeURIComponent(file.pathname.slice(marker.length));
+  } catch {
+    return null;
   }
 }
 
-export { isGCPAvailable, storage };
+/**
+ * Upload a validated in-memory Multer file to a public Supabase Storage bucket.
+ * The service key remains server-side and bypasses Storage RLS for this operation.
+ */
+export async function uploadToStorage(file: Express.Multer.File, folder: string): Promise<string> {
+  const client = getSupabaseAdmin();
+  const objectPath = `${folder}/${Date.now()}-${crypto.randomUUID()}-${sanitizeFileName(
+    file.originalname
+  )}`;
+
+  const { error } = await client.storage.from(STORAGE_BUCKET).upload(objectPath, file.buffer, {
+    cacheControl: '3600',
+    contentType: file.mimetype,
+    upsert: false,
+  });
+
+  if (error) {
+    logger.error('Supabase Storage upload error:', error);
+    throw new Error('File upload failed');
+  }
+
+  const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(objectPath);
+  logger.info(`File uploaded successfully: ${data.publicUrl}`);
+  return data.publicUrl;
+}
+
+/**
+ * Delete an object previously uploaded to the configured Supabase bucket.
+ */
+export async function deleteFromStorage(fileUrl: string): Promise<void> {
+  if (!isStorageAvailable) {
+    logger.warn('Supabase Storage is unavailable, skipping file deletion');
+    return;
+  }
+
+  const objectPath = getObjectPathFromPublicUrl(fileUrl);
+  if (!objectPath) {
+    logger.warn('Skipping deletion for a URL outside the configured Supabase bucket');
+    return;
+  }
+
+  const { error } = await getSupabaseAdmin().storage.from(STORAGE_BUCKET).remove([objectPath]);
+  if (error) {
+    logger.error('Supabase Storage delete error:', error);
+    throw new Error('File deletion failed');
+  }
+
+  logger.info(`File deleted successfully: ${objectPath}`);
+}

@@ -5,20 +5,20 @@ import {
   Transaction,
   TransactionCategory,
   User,
-} from '@/prisma/generated/client';
-import { acquireLock, releaseLock } from '@/config/redis.config';
+} from '../prisma/generated/client.js';
+import { acquireLock, releaseLock } from '../config/redis.config.js';
 import {
   PaginatedResponse as BillPaginatedResponse,
   CashBillFilters,
   cashBillRepository,
-} from '@/repositories/cash-bill.repository';
-import { fundApplicationRepository } from '@/repositories/fund-application.repository';
-import { transactionRepository } from '@/repositories/transaction.repository';
-import { userRepository } from '@/repositories/user.repository';
-import { BusinessLogicError, NotFoundError } from '@/utils/errors';
-import { logger } from '@/utils/logger';
-import { prisma } from '@/utils/prisma-client';
-import { CacheService } from './cache.service';
+} from '../repositories/cash-bill.repository.js';
+import { fundApplicationRepository } from '../repositories/fund-application.repository.js';
+import { transactionRepository } from '../repositories/transaction.repository.js';
+import { userRepository } from '../repositories/user.repository.js';
+import { BusinessLogicError, NotFoundError } from '../utils/errors/index.js';
+import { logger } from '../utils/logger.js';
+import { prisma } from '../utils/prisma-client.js';
+import { CacheService } from './cache.service.js';
 
 export interface DashboardData {
   pendingFundApplications: number;

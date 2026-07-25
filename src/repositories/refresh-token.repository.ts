@@ -1,6 +1,6 @@
-import { Prisma, RefreshToken, User } from "@/prisma/generated/client";
-import { DatabaseError, NotFoundError } from "@/utils/errors";
-import { prisma } from "@/utils/prisma-client";
+import { Prisma, RefreshToken, User } from '../prisma/generated/client.js';
+import { DatabaseError, NotFoundError } from '../utils/errors/index.js';
+import { prisma } from '../utils/prisma-client.js';
 
 export class RefreshTokenRepository {
   /**
@@ -13,7 +13,7 @@ export class RefreshTokenRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to create refresh token");
+        throw new DatabaseError('Failed to create refresh token');
       }
       throw error;
     }
@@ -32,7 +32,7 @@ export class RefreshTokenRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to fetch refresh token");
+        throw new DatabaseError('Failed to fetch refresh token');
       }
       throw error;
     }
@@ -48,7 +48,7 @@ export class RefreshTokenRepository {
       });
 
       if (!refreshToken) {
-        throw new NotFoundError("Refresh token not found", "RefreshToken");
+        throw new NotFoundError('Refresh token not found', 'RefreshToken');
       }
 
       return await prisma.refreshToken.delete({
@@ -56,10 +56,10 @@ export class RefreshTokenRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2025") {
-          throw new NotFoundError("Refresh token not found", "RefreshToken");
+        if (error.code === 'P2025') {
+          throw new NotFoundError('Refresh token not found', 'RefreshToken');
         }
-        throw new DatabaseError("Failed to delete refresh token");
+        throw new DatabaseError('Failed to delete refresh token');
       }
       throw error;
     }
@@ -77,7 +77,7 @@ export class RefreshTokenRepository {
       return { count: result.count };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to delete user refresh tokens");
+        throw new DatabaseError('Failed to delete user refresh tokens');
       }
       throw error;
     }
@@ -99,7 +99,7 @@ export class RefreshTokenRepository {
       return { count: result.count };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Failed to cleanup expired tokens");
+        throw new DatabaseError('Failed to cleanup expired tokens');
       }
       throw error;
     }

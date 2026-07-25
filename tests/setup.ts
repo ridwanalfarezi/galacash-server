@@ -33,8 +33,6 @@ if (process.env.CI !== 'true' && fs.existsSync(testEnvPath)) {
   }
 }
 
-delete process.env.PRISMA_DATABASE_URL;
-
 process.env.JWT_SECRET ||= 'test-only-access-secret-at-least-32-characters';
 process.env.JWT_REFRESH_SECRET ||= 'test-only-refresh-secret-at-least-32-characters';
 
@@ -51,9 +49,9 @@ mock.module('express-rate-limit', () => ({
 
 // Keep upload tests hermetic: middleware generates deterministic mock:// URLs in test mode.
 mock.module('@/config/storage.config', () => ({
-  isGCPAvailable: false,
-  uploadToGCS: async () => {
-    throw new Error('uploadToGCS should not be called in tests');
+  isStorageAvailable: false,
+  uploadToStorage: async () => {
+    throw new Error('uploadToStorage should not be called in tests');
   },
 }));
 

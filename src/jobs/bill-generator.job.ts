@@ -1,6 +1,6 @@
-import { acquireLock } from '@/config/redis.config';
-import { logger } from '@/utils/logger';
-import { prisma } from '@/utils/prisma-client';
+import { acquireLock } from '../config/redis.config.js';
+import { logger } from '../utils/logger.js';
+import { prisma } from '../utils/prisma-client.js';
 import cron from 'node-cron';
 
 const BILL_GENERATION_SCHEDULE = process.env.BILL_GENERATION_SCHEDULE || '0 0 1 * *';
@@ -17,7 +17,7 @@ export type BillGenerationResult =
 /**
  * Generate monthly bills for all users using batch processing.
  * Idempotent: a Redis lock keyed by year-month prevents duplicate runs
- * even under GCP Cloud Scheduler's at-least-once delivery.
+ * even under a scheduler's at-least-once delivery.
  */
 async function generateMonthlyBills(): Promise<BillGenerationResult> {
   const now = new Date();

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "express",
+  "buildCommand": "bun run vercel-build",
+  "crons": [
+    {
+      "path": "/api/cron/generate-bills",
+      "schedule": "0 0 1 * *"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-import { FundApplication, FundCategory, FundStatus, Prisma } from '@/prisma/generated/client';
-import { DatabaseError, NotFoundError } from '@/utils/errors';
-import { prisma } from '@/utils/prisma-client';
+import { FundApplication, FundCategory, FundStatus, Prisma } from '../prisma/generated/client.js';
+import { DatabaseError, NotFoundError } from '../utils/errors/index.js';
+import { prisma } from '../utils/prisma-client.js';
 
 export interface FundApplicationFilters {
   classId?: string;

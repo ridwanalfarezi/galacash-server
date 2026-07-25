@@ -1,19 +1,38 @@
 import Redis, { RedisOptions } from 'ioredis';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 import {
   acquireRedisLock,
   releaseRedisLock,
   setRedisNx,
   type RedisLockClient,
-} from '../utils/redis-lock';
+} from '../utils/redis-lock.js';
 
 export let redisClient: Redis | null = null;
 export let isRedisAvailable = false;
+let redisConnectionPromise: Promise<void> | null = null;
 
 /**
- * Initialize Redis client
+ * Initialize Redis client once per warm process/function instance.
  */
 export async function connectRedis(): Promise<void> {
+  if (redisClient?.status === 'ready' && isRedisAvailable) {
+    return;
+  }
+
+  if (redisConnectionPromise) {
+    return redisConnectionPromise;
+  }
+
+  redisConnectionPromise = initializeRedis();
+
+  try {
+    await redisConnectionPromise;
+  } finally {
+    redisConnectionPromise = null;
+  }
+}
+
+async function initializeRedis(): Promise<void> {
   try {
     const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
     // Log connection target without credentials
@@ -50,6 +69,11 @@ export async function connectRedis(): Promise<void> {
       tls: isTLS ? {} : undefined,
     };
 
+    if (redisClient) {
+      redisClient.removeAllListeners();
+      redisClient.disconnect();
+    }
+
     redisClient = new Redis(REDIS_URL, options);
 
     redisClient.on('connect', () => {
@@ -72,6 +96,8 @@ export async function connectRedis(): Promise<void> {
   } catch (error) {
     logger.warn('Redis is not available. Running without cache:', error);
     isRedisAvailable = false;
+    redisClient?.disconnect();
+    redisClient = null;
   }
 }
 

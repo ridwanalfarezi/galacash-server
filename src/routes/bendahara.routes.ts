@@ -1,19 +1,19 @@
-import { uploadAttachment } from "@/config/multer.config";
-import { bendaharaController } from "@/controllers";
+import { uploadAttachment } from '../config/multer.config.js';
+import { bendaharaController } from '../controllers/index.js';
 import {
   authenticate,
   handleFileUpload,
   requireBendahara,
   validateBody,
   validateQuery,
-} from "@/middlewares";
+} from '../middlewares/index.js';
 import {
   cashBillFilterSchema,
   createTransactionSchema,
   rekapKasFilterSchema,
   rejectFundApplicationSchema,
-} from "@/validators/schemas";
-import { Router } from "express";
+} from '../validators/schemas.js';
+import { Router } from 'express';
 
 const router: Router = Router();
 
@@ -25,20 +25,20 @@ router.use(requireBendahara);
  * GET /dashboard
  * Get bendahara dashboard with overview
  */
-router.get("/dashboard", bendaharaController.getDashboard);
+router.get('/dashboard', bendaharaController.getDashboard);
 
 /**
  * POST /fund-applications/:id/approve
  * Approve a fund application
  */
-router.post("/fund-applications/:id/approve", bendaharaController.approveFundApplication);
+router.post('/fund-applications/:id/approve', bendaharaController.approveFundApplication);
 
 /**
  * POST /fund-applications/:id/reject
  * Reject a fund application with reason
  */
 router.post(
-  "/fund-applications/:id/reject",
+  '/fund-applications/:id/reject',
   validateBody(rejectFundApplicationSchema),
   bendaharaController.rejectFundApplication
 );
@@ -47,26 +47,26 @@ router.post(
  * GET /cash-bills
  * Get all cash bills with filtering
  */
-router.get("/cash-bills", validateQuery(cashBillFilterSchema), bendaharaController.getAllCashBills);
+router.get('/cash-bills', validateQuery(cashBillFilterSchema), bendaharaController.getAllCashBills);
 
 /**
  * POST /cash-bills/:id/confirm-payment
  * Confirm a cash bill payment
  */
-router.post("/cash-bills/:id/confirm-payment", bendaharaController.confirmPayment);
+router.post('/cash-bills/:id/confirm-payment', bendaharaController.confirmPayment);
 
 /**
  * POST /cash-bills/:id/reject-payment
  * Reject a cash bill payment
  */
-router.post("/cash-bills/:id/reject-payment", bendaharaController.rejectPayment);
+router.post('/cash-bills/:id/reject-payment', bendaharaController.rejectPayment);
 
 /**
  * Export rekap kas
  * GET /rekap-kas/export
  */
 router.get(
-  "/rekap-kas/export",
+  '/rekap-kas/export',
   validateQuery(rekapKasFilterSchema),
   bendaharaController.exportRekapKas
 );
@@ -75,28 +75,28 @@ router.get(
  * GET /rekap-kas
  * Get cash recap with date range and grouping
  */
-router.get("/rekap-kas", validateQuery(rekapKasFilterSchema), bendaharaController.getRekapKas);
+router.get('/rekap-kas', validateQuery(rekapKasFilterSchema), bendaharaController.getRekapKas);
 
 /**
  * GET /students
  * Get all students list
  */
-router.get("/students", bendaharaController.getStudents);
+router.get('/students', bendaharaController.getStudents);
 
 /**
  * GET /students/:id
  * Get student detail
  */
-router.get("/students/:id", bendaharaController.getStudentDetail);
+router.get('/students/:id', bendaharaController.getStudentDetail);
 
 /**
  * POST /transactions
  * Create manual transaction (income/expense)
  */
 router.post(
-  "/transactions",
-  uploadAttachment.single("attachment"),
-  handleFileUpload("transactions"),
+  '/transactions',
+  uploadAttachment.single('attachment'),
+  handleFileUpload('transactions'),
   validateBody(createTransactionSchema),
   bendaharaController.createTransaction
 );

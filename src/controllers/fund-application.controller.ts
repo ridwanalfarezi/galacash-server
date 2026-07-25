@@ -1,5 +1,5 @@
-import { fundApplicationService } from '@/services';
-import { asyncHandler } from '@/utils/errors';
+import { fundApplicationService } from '../services/index.js';
+import { asyncHandler } from '../utils/errors/index.js';
 import { Request, Response } from 'express';
 
 export const getAll = asyncHandler(async (req: Request, res: Response): Promise<void> => {

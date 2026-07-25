@@ -3,9 +3,9 @@ import {
   Transaction,
   TransactionCategory,
   TransactionType,
-} from '@/prisma/generated/client';
-import { DatabaseError } from '@/utils/errors';
-import { prisma } from '@/utils/prisma-client';
+} from '../prisma/generated/client.js';
+import { DatabaseError } from '../utils/errors/index.js';
+import { prisma } from '../utils/prisma-client.js';
 
 export interface TransactionFilters {
   classId?: string;

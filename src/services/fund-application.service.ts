@@ -1,12 +1,12 @@
-import { FundApplication, FundCategory, Prisma } from '@/prisma/generated/client';
+import { FundApplication, FundCategory, Prisma } from '../prisma/generated/client.js';
 import {
   FundApplicationFilters,
   fundApplicationRepository,
   PaginatedResponse,
-} from '@/repositories/fund-application.repository';
-import { AuthorizationError, NotFoundError } from '@/utils/errors';
-import { logger } from '@/utils/logger';
-import { CacheService } from './cache.service';
+} from '../repositories/fund-application.repository.js';
+import { AuthorizationError, NotFoundError } from '../utils/errors/index.js';
+import { logger } from '../utils/logger.js';
+import { CacheService } from './cache.service.js';
 
 export interface CreateFundApplicationData {
   purpose: string;

@@ -1,6 +1,6 @@
-import { ValidationError } from "@/utils/errors";
-import { NextFunction, Request, Response } from "express";
-import { Schema } from "joi";
+import { ValidationError } from '../utils/errors/index.js';
+import { NextFunction, Request, Response } from 'express';
+import { Schema } from 'joi';
 
 /**
  * Validate request body middleware
@@ -13,7 +13,7 @@ export const validateBody = (schema: Schema) => {
     });
 
     if (error) {
-      const message = error.details.map((detail) => detail.message).join(", ");
+      const message = error.details.map((detail) => detail.message).join(', ');
       next(new ValidationError(message));
       return;
     }
@@ -34,7 +34,7 @@ export const validateQuery = (schema: Schema) => {
     });
 
     if (error) {
-      const message = error.details.map((detail) => detail.message).join(", ");
+      const message = error.details.map((detail) => detail.message).join(', ');
       next(new ValidationError(message));
       return;
     }
@@ -56,7 +56,7 @@ export const validateParams = (schema: Schema) => {
     });
 
     if (error) {
-      const message = error.details.map((detail) => detail.message).join(", ");
+      const message = error.details.map((detail) => detail.message).join(', ');
       next(new ValidationError(message));
       return;
     }

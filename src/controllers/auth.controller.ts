@@ -1,9 +1,9 @@
-import { authService, refreshTokenService } from "@/services";
-import { CacheService } from "@/services/cache.service";
-import { getCookieOptions } from "@/utils/cookie-options";
-import { asyncHandler } from "@/utils/errors";
-import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
+import { authService, refreshTokenService } from '../services/index.js';
+import { CacheService } from '../services/cache.service.js';
+import { getCookieOptions } from '../utils/cookie-options.js';
+import { asyncHandler } from '../utils/errors/index.js';
+import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
 const cacheService = new CacheService();
 
@@ -20,12 +20,12 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
   // Set httpOnly cookies for tokens with environment-aware options
   const cookieOptions = getCookieOptions();
 
-  res.cookie("accessToken", result.accessToken, {
+  res.cookie('accessToken', result.accessToken, {
     ...cookieOptions,
     maxAge: 60 * 60 * 1000, // 1 hour
   });
 
-  res.cookie("refreshToken", result.refreshToken, {
+  res.cookie('refreshToken', result.refreshToken, {
     ...cookieOptions,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
@@ -36,7 +36,7 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
     data: {
       user: result.user,
     },
-    message: "Login berhasil",
+    message: 'Login berhasil',
   });
 });
 
@@ -53,8 +53,8 @@ export const refresh = asyncHandler(async (req: Request, res: Response): Promise
     res.status(401).json({
       success: false,
       error: {
-        code: "UNAUTHORIZED",
-        message: "Refresh token tidak ditemukan",
+        code: 'UNAUTHORIZED',
+        message: 'Refresh token tidak ditemukan',
       },
     });
     return;
@@ -65,19 +65,19 @@ export const refresh = asyncHandler(async (req: Request, res: Response): Promise
   // Set new tokens in cookies with environment-aware options
   const cookieOptions = getCookieOptions();
 
-  res.cookie("accessToken", result.accessToken, {
+  res.cookie('accessToken', result.accessToken, {
     ...cookieOptions,
     maxAge: 60 * 60 * 1000, // 1 hour
   });
 
-  res.cookie("refreshToken", result.refreshToken, {
+  res.cookie('refreshToken', result.refreshToken, {
     ...cookieOptions,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   res.status(200).json({
     success: true,
-    message: "Token berhasil diperbarui",
+    message: 'Token berhasil diperbarui',
   });
 });
 
@@ -93,8 +93,8 @@ export const logout = asyncHandler(async (req: Request, res: Response): Promise<
     res.status(401).json({
       success: false,
       error: {
-        code: "UNAUTHORIZED",
-        message: "User belum terautentikasi",
+        code: 'UNAUTHORIZED',
+        message: 'User belum terautentikasi',
       },
     });
     return;
@@ -120,11 +120,11 @@ export const logout = asyncHandler(async (req: Request, res: Response): Promise<
   // Clear cookies with environment-aware options
   const cookieOptions = getCookieOptions();
 
-  res.clearCookie("accessToken", cookieOptions);
-  res.clearCookie("refreshToken", cookieOptions);
+  res.clearCookie('accessToken', cookieOptions);
+  res.clearCookie('refreshToken', cookieOptions);
 
   res.status(200).json({
     success: true,
-    message: "Logout berhasil",
+    message: 'Logout berhasil',
   });
 });

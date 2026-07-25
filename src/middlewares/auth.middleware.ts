@@ -1,6 +1,6 @@
-import { CacheService } from '@/services/cache.service';
-import { AuthenticationError, AuthorizationError } from '@/utils/errors';
-import { AccessTokenPayload } from '@/utils/generate-tokens';
+import { CacheService } from '../services/cache.service.js';
+import { AuthenticationError, AuthorizationError } from '../utils/errors/index.js';
+import { AccessTokenPayload } from '../utils/generate-tokens.js';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 

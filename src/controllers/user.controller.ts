@@ -1,6 +1,6 @@
-import { refreshTokenService, userService } from '@/services';
-import { getCookieOptions } from '@/utils/cookie-options';
-import { asyncHandler } from '@/utils/errors';
+import { refreshTokenService, userService } from '../services/index.js';
+import { getCookieOptions } from '../utils/cookie-options.js';
+import { asyncHandler } from '../utils/errors/index.js';
 import { Request, Response } from 'express';
 
 export const getProfile = asyncHandler(async (req: Request, res: Response): Promise<void> => {

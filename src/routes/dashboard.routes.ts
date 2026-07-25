@@ -1,7 +1,7 @@
-import { dashboardController } from "@/controllers";
-import { authenticate, requireUser, validateQuery } from "@/middlewares";
-import { dateRangeSchema } from "@/validators/schemas";
-import { Router } from "express";
+import { dashboardController } from '../controllers/index.js';
+import { authenticate, requireUser, validateQuery } from '../middlewares/index.js';
+import { dateRangeSchema } from '../validators/schemas.js';
+import { Router } from 'express';
 
 const router: Router = Router();
 
@@ -13,18 +13,18 @@ router.use(requireUser);
  * GET /summary
  * Get dashboard summary with optional date range
  */
-router.get("/summary", validateQuery(dateRangeSchema), dashboardController.getSummary);
+router.get('/summary', validateQuery(dateRangeSchema), dashboardController.getSummary);
 
 /**
  * GET /pending-bills
  * Get pending cash bills
  */
-router.get("/pending-bills", dashboardController.getPendingBills);
+router.get('/pending-bills', dashboardController.getPendingBills);
 
 /**
  * GET /pending-applications
  * Get pending fund applications
  */
-router.get("/pending-applications", dashboardController.getPendingApplications);
+router.get('/pending-applications', dashboardController.getPendingApplications);
 
 export default router;

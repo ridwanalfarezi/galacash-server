@@ -1,5 +1,5 @@
-import { cashBillService } from '@/services';
-import { asyncHandler } from '@/utils/errors';
+import { cashBillService } from '../services/index.js';
+import { asyncHandler } from '../utils/errors/index.js';
 import { Request, Response } from 'express';
 
 export const getMyBills = asyncHandler(async (req: Request, res: Response): Promise<void> => {

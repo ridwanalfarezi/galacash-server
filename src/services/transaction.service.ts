@@ -1,15 +1,15 @@
-import { Prisma, Transaction } from '@/prisma/generated/client';
+import { Prisma, Transaction } from '../prisma/generated/client.js';
 import {
   BalanceData,
   ChartDataPoint,
   PaginatedResponse,
   TransactionFilters,
   transactionRepository,
-} from '@/repositories/transaction.repository';
-import { AuthorizationError, NotFoundError } from '@/utils/errors';
-import { logger } from '@/utils/logger';
-import { prisma } from '@/utils/prisma-client';
-import { CacheService } from './cache.service';
+} from '../repositories/transaction.repository.js';
+import { AuthorizationError, NotFoundError } from '../utils/errors/index.js';
+import { logger } from '../utils/logger.js';
+import { prisma } from '../utils/prisma-client.js';
+import { CacheService } from './cache.service.js';
 
 /**
  * Transaction service for handling transaction operations

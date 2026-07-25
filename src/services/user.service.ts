@@ -1,7 +1,7 @@
-import { User } from '@/prisma/generated/client';
-import { userRepository } from '@/repositories/user.repository';
-import { AuthenticationError, NotFoundError } from '@/utils/errors';
-import { CacheService } from './cache.service';
+import { User } from '../prisma/generated/client.js';
+import { userRepository } from '../repositories/user.repository.js';
+import { AuthenticationError, NotFoundError } from '../utils/errors/index.js';
+import { CacheService } from './cache.service.js';
 
 export interface UpdateProfileData {
   name?: string;
@@ -117,7 +117,7 @@ export class UserService {
     });
 
     // Revoke all sessions across devices by incrementing tokenVersion and wiping refresh tokens
-    const { authService } = await import('./auth.service');
+    const { authService } = await import('./auth.service.js');
     await authService.revokeAllSessions(userId);
 
     // Invalidate cache

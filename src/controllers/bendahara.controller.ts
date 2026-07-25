@@ -1,5 +1,5 @@
-import { bendaharaService, userService } from '@/services';
-import { asyncHandler } from '@/utils/errors';
+import { bendaharaService, userService } from '../services/index.js';
+import { asyncHandler } from '../utils/errors/index.js';
 import { Request, Response } from 'express';
 
 export const getDashboard = asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -134,7 +134,7 @@ export const getRekapKas = asyncHandler(async (req: Request, res: Response): Pro
 export const exportRekapKas = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const { startDate, endDate, search, paymentStatus, classId } = req.query;
 
-  const { exportService } = await import('@/services/export.service');
+  const { exportService } = await import('../services/export.service.js');
 
   const start = startDate ? new Date(startDate as string) : undefined;
   const end = endDate ? new Date(endDate as string) : undefined;

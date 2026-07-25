@@ -52,9 +52,12 @@ coverage/
 !tsconfig.test.json
 !tsconfig.eslint.json
 !package.json
+!vercel.json
 
 # Misc
 .cache/
 temp/
 tmp/
 bun.lockb
+.vercel
+.env*

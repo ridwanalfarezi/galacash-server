@@ -1,5 +1,5 @@
-import { cashBillService, fundApplicationService, transactionService } from '@/services';
-import { asyncHandler } from '@/utils/errors';
+import { cashBillService, fundApplicationService, transactionService } from '../services/index.js';
+import { asyncHandler } from '../utils/errors/index.js';
 import { Request, Response } from 'express';
 
 export const getSummary = asyncHandler(async (req: Request, res: Response): Promise<void> => {

@@ -1,5 +1,5 @@
-import { transactionService } from '@/services';
-import { asyncHandler } from '@/utils/errors';
+import { transactionService } from '../services/index.js';
+import { asyncHandler } from '../utils/errors/index.js';
 import { Request, Response } from 'express';
 
 export const getTransactions = asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -100,7 +100,7 @@ export const exportTransactions = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const { format, type, category, startDate, endDate, search } = req.query;
 
-    const { exportService } = await import('@/services/export.service');
+    const { exportService } = await import('../services/export.service.js');
 
     const filters = {
       type: type ? (type as 'income' | 'expense') : undefined,
