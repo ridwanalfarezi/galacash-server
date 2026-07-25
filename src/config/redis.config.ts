@@ -10,6 +10,7 @@ import {
 export let redisClient: Redis | null = null;
 export let isRedisAvailable = false;
 let redisConnectionPromise: Promise<void> | null = null;
+const redisKeyPrefix = (process.env.REDIS_KEY_PREFIX || '').trim();
 
 /**
  * Initialize Redis client once per warm process/function instance.
@@ -54,6 +55,7 @@ async function initializeRedis(): Promise<void> {
     const isUpstash = urlObj?.hostname?.includes('upstash.io') ?? false;
 
     const options: RedisOptions = {
+      keyPrefix: redisKeyPrefix || undefined,
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => {
         if (times > 3) {
@@ -79,6 +81,7 @@ async function initializeRedis(): Promise<void> {
     redisClient.on('connect', () => {
       logger.info('✅ Redis connected successfully');
       isRedisAvailable = true;
+      logger.info(`Redis key namespace: ${redisKeyPrefix || '(none)'}`);
     });
 
     redisClient.on('error', (err) => {
@@ -162,7 +165,8 @@ export async function safeRedisDel(pattern: string): Promise<void> {
     try {
       // Use SCAN instead of KEYS to avoid blocking the Redis server
       const stream = redisClient!.scanStream({
-        match: pattern,
+        // ioredis does not apply keyPrefix to SCAN patterns.
+        match: `${redisKeyPrefix}${pattern}`,
         count: 100,
       });
 
@@ -170,9 +174,17 @@ export async function safeRedisDel(pattern: string): Promise<void> {
       let hasKeys = false;
 
       stream.on('data', (keys: string[]) => {
-        if (keys.length > 0) {
+        // SCAN returns physical keys. Remove the namespace before passing them
+        // to a prefixed pipeline so the prefix is not applied twice.
+        const logicalKeys = redisKeyPrefix
+          ? keys
+              .filter((key) => key.startsWith(redisKeyPrefix))
+              .map((key) => key.slice(redisKeyPrefix.length))
+          : keys;
+
+        if (logicalKeys.length > 0) {
           hasKeys = true;
-          pipeline.del(...keys);
+          pipeline.del(...logicalKeys);
         }
       });
 

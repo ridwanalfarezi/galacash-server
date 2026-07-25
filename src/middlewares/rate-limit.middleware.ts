@@ -26,6 +26,7 @@ const createLimiter = (options: {
           // @ts-expect-error - ioredis call has command-specific tuple overloads
           return (await redisClient.call(...args)) as RedisReply;
         },
+        // ioredis applies REDIS_KEY_PREFIX to EVAL/EVALSHA key arguments.
         prefix: `rl:${prefix}:`,
       })
     : undefined;

@@ -19,6 +19,7 @@
     "prisma:deploy": "bun node_modules/prisma/build/index.js migrate deploy",
     "prisma:studio": "bun node_modules/prisma/build/index.js studio",
     "supabase:bootstrap": "bun scripts/bootstrap-supabase.ts",
+    "verify:database-security": "bun scripts/verify-database-security.ts",
     "migrate:legacy": "bun scripts/migrate-legacy-data.ts",
     "seed": "bun prisma/seed.ts",
     "seed:past-bills": "bun scripts/seed-past-cash-bills.ts",

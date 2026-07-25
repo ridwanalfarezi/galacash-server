@@ -52,7 +52,12 @@ export function validateEnvironment(): void {
   if (isProduction) {
     const databaseUrl =
       process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL || process.env.DATABASE_URL;
-    const requiredProductionVariables = ['REDIS_URL', 'SUPABASE_URL', 'SUPABASE_STORAGE_BUCKET'];
+    const requiredProductionVariables = [
+      'REDIS_URL',
+      'REDIS_KEY_PREFIX',
+      'SUPABASE_URL',
+      'SUPABASE_STORAGE_BUCKET',
+    ];
 
     for (const key of requiredProductionVariables) {
       if (!process.env[key]) {
@@ -74,6 +79,15 @@ export function validateEnvironment(): void {
 
     if (process.env.REDIS_URL && !process.env.REDIS_URL.startsWith('rediss://')) {
       errors.push('REDIS_URL must use rediss:// in production');
+    }
+
+    if (
+      process.env.REDIS_KEY_PREFIX &&
+      !/^[a-z0-9][a-z0-9:_-]*:$/.test(process.env.REDIS_KEY_PREFIX)
+    ) {
+      errors.push(
+        'REDIS_KEY_PREFIX must be a lowercase namespace ending in a colon (for example prod:)'
+      );
     }
   }
 

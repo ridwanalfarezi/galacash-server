@@ -75,7 +75,8 @@ cd galacash-server
 bun install
 ```
 
-Copy `.env.example` to `.env` and set development values. For the included
+Copy `.env.example` to `.env.local` and set development values. Bun loads this
+file automatically. For the included
 Compose services, the core values are:
 
 ```dotenv
@@ -83,6 +84,7 @@ NODE_ENV=development
 PORT=3000
 DATABASE_URL=postgresql://galacash:galacash123@localhost:5433/galacash_db
 REDIS_URL=redis://localhost:6379
+REDIS_KEY_PREFIX=local:
 JWT_SECRET=replace-with-at-least-32-random-characters
 JWT_REFRESH_SECRET=replace-with-at-least-32-random-characters
 CORS_ORIGIN=http://localhost:5173,http://localhost:3000
@@ -91,6 +93,23 @@ USE_LOCAL_CRON=true
 
 Do not commit real credentials. Supabase Storage variables are required when
 testing persisted uploads locally.
+
+### Environment isolation
+
+| Environment | PostgreSQL and Storage | Redis | Secret source |
+| --- | --- | --- | --- |
+| Local | Docker PostgreSQL; optional local Supabase CLI for Storage | Docker with `local:` prefix | Ignored `.env.local` |
+| Vercel Preview | Dedicated `galacash-dev` Supabase project | Shared Upstash database with `dev:` prefix | Vercel Preview variables |
+| Vercel Production | Production Supabase project | Shared Upstash database with `prod:` prefix | Vercel Production variables |
+
+Preview must never receive production database or Supabase keys. The shared
+free Upstash database is acceptable only because every application key,
+distributed lock, and rate-limit key is namespaced by `REDIS_KEY_PREFIX`.
+This prevents collisions but is logical isolation, not separate credentials.
+
+Keep `.env.production` ignored and use it only as a local variable-name
+reference. Vercel is the source of truth for deployed secrets. Test migrations
+locally and in Preview before merging them to `main`.
 
 ### Start infrastructure and apply migrations
 
