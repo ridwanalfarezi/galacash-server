@@ -95,11 +95,14 @@ Status values are `accepted`, `provisional`, or `open`.
 ## D-011: Bun is the runtime and package manager
 
 - Status: accepted
-- Decision: use Bun 1.2.14 for dependency installation, scripts, tests, and
-  application runtime. `bun.lock` is authoritative.
-- Evidence: `package.json`, `bun.lock`, CI, and Dockerfiles.
-- Consequence: do not create npm or pnpm lockfiles. The existing local
-  `.pnpm-store` is not a package-manager policy signal.
+- Decision: use Bun 1.2.14 for local dependency installation, scripts, and
+  tests. Production Vercel Functions use Vercel's managed Bun 1.x runtime
+  because authentication relies on `Bun.password`. `bun.lock` is authoritative.
+- Evidence: `package.json`, `bun.lock`, `vercel.json`, CI, and Dockerfiles.
+- Consequence: keep `bunVersion` enabled in `vercel.json`; otherwise Vercel
+  falls back to Node.js and password verification fails at runtime. Do not
+  create npm or pnpm lockfiles. The existing local `.pnpm-store` is not a
+  package-manager policy signal.
 
 ## Known maintenance items
 
